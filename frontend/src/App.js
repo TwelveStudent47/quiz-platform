@@ -116,7 +116,7 @@ export default function QuizPlatform() {
             onClick={handleLogin}
             className="w-full bg-indigo-600 text-white py-3 rounded-lg font-medium hover:bg-indigo-700 transition"
           >
-            Belépés Google-lal
+            Belépés Google fiókkal
           </button>
         </div>
       </div>

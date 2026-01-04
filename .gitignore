@@ -1,0 +1,17 @@
+# --- Node.js & Dependencies (A 20k fájl forrása) ---
+node_modules/
+package-lock.json  # Opcionális: sokan feltöltik, de ha zavar a sok változás, kiveheted
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+
+# --- Build kimenetek ---
+dist/
+build/
+frontend/build/
+frontend/dist/
+
+# --- OS fájlok ---
+.DS_Store
+Thumbs.db
+.vscode/

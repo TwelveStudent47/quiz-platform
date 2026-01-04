@@ -1,0 +1,47 @@
+version: '3.8'
+
+services:
+  # 1. Adatbázis Szolgáltatás
+  db:
+    image: postgres:15
+    container_name: pern_db
+    environment:
+      # ITT MÓDOSÍTOTTAM A TE ADATAIDRA:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: Laczkofamily60!2007
+      POSTGRES_DB: quiz_platform
+    ports:
+      - "5432:5432"
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+
+  # 2. Backend Szolgáltatás (Express)
+  server:
+    build: ./backend # Feltételezem, hogy a mappád neve 'backend'
+    container_name: pern_server
+    ports:
+      - "5000:5000"
+    environment:
+      # FONTOS: Mivel a kódod a DATABASE_URL-t keresi, itt azt adjuk meg neki.
+      # A trükk: 'localhost' helyett 'db'-t írunk, mert a konténer neve a host!
+      - DATABASE_URL=postgresql://postgres:Laczkofamily60!2007@db:5432/quiz_platform
+      - NODE_ENV=development # Hogy ne keressen SSL-t (a kódod alapján)
+      - PORT=5000
+    depends_on:
+      - db
+
+  # 3. Frontend Szolgáltatás (React)
+  client:
+    build: ./frontend # Feltételezem, hogy a mappád neve 'frontend'
+    container_name: pern_client
+    ports:
+      - "3000:3000"
+    stdin_open: true
+    tty: true
+    environment:
+      - REACT_APP_API_URL=http://localhost:5000
+    depends_on:
+      - server
+
+volumes:
+  pgdata:

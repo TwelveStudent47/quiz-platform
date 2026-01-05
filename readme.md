@@ -34,6 +34,7 @@ npm install
 
 Hozz létre egy .env fájlt:
 
+```bash
 env
 DATABASE_URL=postgresql://user:password@localhost:5432/quiz_platform
 GOOGLE_CLIENT_ID=your-client-id.apps.googleusercontent.com
@@ -42,6 +43,7 @@ SESSION_SECRET=your-random-secret-key-here
 FRONTEND_URL=http://localhost:3000
 PORT=5000
 NODE_ENV=development
+```
 
 ### 3. Adatbázis létrehozása
 
@@ -77,6 +79,35 @@ npm start
 
 Nyisd meg a: http://localhost:3000 
 
+## 📁 Projekt Struktúra
+
+```bash
+quiz-platform/
+├── backend/
+│ ├── app.js
+│ ├── schema.sql
+│ ├── package.json
+│ ├── package-lock.json
+│ ├── Dockerfile
+│ ├── test.json
+│ └── .env
+├── frontend/
+│ ├── src/
+│ │ ├── App.js
+│ │ ├── index.js
+│ │ ├── logo.svg
+│ │ ├── reportWebVitals.js
+│ │ ├── setupTests.js
+│ │ └── index.css
+│ ├── public/
+│ │ ├── favicon.ico
+│ │ └── index.html
+│ └── package.json
+├── docker-compose.yml
+├── .gitignore
+└── README.md
+```
+
 
 ## 🎯 Használat
 
@@ -88,6 +119,7 @@ Nyisd meg a: http://localhost:3000
 
 ### JSON Példa
 
+```bash
 {
   "title": "JavaScript Alapok",
   "topic": "Programming",
@@ -101,9 +133,10 @@ Nyisd meg a: http://localhost:3000
     }
   ]
 }
-
+```
 ### XML Példa
 
+```bash
 <?xml version="1.0" encoding="UTF-8"?>
 <quiz>
   <title>JavaScript Alapok</title>
@@ -123,6 +156,7 @@ Nyisd meg a: http://localhost:3000
     </question>
   </questions>
 </quiz>
+```
 
 ### Teszt Kitöltése
 
@@ -226,4 +260,4 @@ Ha hibát találsz, nyiss egy issue-t a következő információkkal:
 
 ## 👨‍💻 Szerző
 
-Készítette:*Kevin Laczko**
+Készítette: **Kevin Laczko**

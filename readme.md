@@ -104,6 +104,7 @@ quiz-platform/
 ├── .gitignore
 └── README.md
 
+
 ## 🎯 Használat
 
 ### Teszt Feltöltése
@@ -248,6 +249,7 @@ Ha hibát találsz, nyiss egy issue-t a következő információkkal:
 - [ ] Nehézségi szintek
 - [ ] Export eredmények PDF-be
 - [ ] Tanár/Diák nézet
+- [ ] Question Machine
 
 ## 👨‍💻 Szerző
 

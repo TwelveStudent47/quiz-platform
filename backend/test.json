@@ -1,0 +1,116 @@
+{
+  "title": "React Alapok Teszt",
+  "topic": "Frontend Fejlesztés",
+  "questions": [
+    {
+      "text": "Mi a JSX?",
+      "options": [
+        "Egy új programozási nyelv",
+        "JavaScript XML - szintaxis kiterjesztés",
+        "A JSON egy speciális típusa",
+        "Egy adatbázis lekérdező nyelv"
+      ],
+      "correctIndex": 1,
+      "explanation": "A JSX (JavaScript XML) lehetővé teszi, hogy HTML-szerű kódot írjunk JavaScript fájlokon belül."
+    },
+    {
+      "text": "Melyik Hook felelős a mellékhatások (side effects) kezeléséért?",
+      "options": [
+        "useState",
+        "useReducer",
+        "useEffect",
+        "useMemo"
+      ],
+      "correctIndex": 2,
+      "explanation": "A useEffect Hook-ot használjuk adatlekérésekhez, feliratkozásokhoz vagy a DOM kézi módosításához."
+    },
+    {
+      "text": "Hogyan adhatunk át adatot szülő komponensből gyermek komponensnek?",
+      "options": [
+        "State segítségével",
+        "Props segítségével",
+        "Local Storage segítségével",
+        "Event Listener segítségével"
+      ],
+      "correctIndex": 1,
+      "explanation": "A Reactben az adatok lefelé csorognak (top-down) a szülőtől a gyermek felé 'props' (tulajdonságok) formájában."
+    },
+    {
+      "text": "Mi a Virtual DOM szerepe?",
+      "options": [
+        "A szerver oldali renderelés gyorsítása",
+        "Közvetlen kapcsolat az adatbázissal",
+        "A valódi DOM hatékony frissítése a változások minimalizálásával",
+        "A CSS stílusok elkülönítése"
+      ],
+      "correctIndex": 2,
+      "explanation": "A React a Virtual DOM-ban számolja ki a változásokat, és csak a szükséges módosításokat hajtja végre az igazi DOM-on."
+    },
+    {
+      "text": "Mit kell használni listaelemek renderelésekor az elemek azonosítására?",
+      "options": [
+        "index",
+        "class",
+        "id",
+        "key"
+      ],
+      "correctIndex": 3,
+      "explanation": "A 'key' prop segít a Reactnek beazonosítani, hogy mely elemek változtak, kerültek hozzáadásra vagy eltávolításra."
+    },
+    {
+      "text": "Hogyan változtathatjuk meg a state értékét egy funkcionális komponensben (useState esetén)?",
+      "options": [
+        "Közvetlenül (pl. state = 5)",
+        "A setter függvénnyel",
+        "A this.setState paranccsal",
+        "A forceUpdate függvénnyel"
+      ],
+      "correctIndex": 1,
+      "explanation": "A state közvetlen módosítása nem vált ki újrarajzolást (re-render), ezért mindig a useState által visszaadott setter függvényt kell használni."
+    },
+    {
+      "text": "Melyik állítás IGAZ a React adatfolyamára?",
+      "options": [
+        "Kétirányú (Two-way data binding)",
+        "Egyirányú, lefelé (Unidirectional)",
+        "Ciklikus",
+        "Véletlenszerű"
+      ],
+      "correctIndex": 1,
+      "explanation": "A Reactben az adatfolyam szigorúan egyirányú: a szülőtől a gyermek felé áramlik."
+    },
+    {
+      "text": "Mi a React Fragment (<>...</>) célja?",
+      "options": [
+        "Stílusok hozzáadása",
+        "Elemek csoportosítása felesleges DOM csomópont létrehozása nélkül",
+        "Új komponens importálása",
+        "Hibaüzenetek elrejtése"
+      ],
+      "correctIndex": 1,
+      "explanation": "A Fragmentek lehetővé teszik több elem visszaadását anélkül, hogy egy felesleges <div>-be kellene csomagolni őket."
+    },
+    {
+      "text": "Melyik NEM egy beépített React Hook?",
+      "options": [
+        "useState",
+        "useContext",
+        "useRouter",
+        "useRef"
+      ],
+      "correctIndex": 2,
+      "explanation": "A useRouter általában külső könyvtárakhoz tartozik (pl. Next.js vagy React Router), nem része a React magnak."
+    },
+    {
+      "text": "Mi történik, ha a state vagy a props megváltozik egy komponensben?",
+      "options": [
+        "A komponens törlődik a DOM-ból",
+        "Az oldal teljesen újratöltődik",
+        "A komponens újrarenderelődik (re-render)",
+        "Semmi nem történik"
+      ],
+      "correctIndex": 2,
+      "explanation": "A state vagy props változása automatikusan kiváltja a komponens frissítését, hogy a felület tükrözze az új adatokat."
+    }
+  ]
+}

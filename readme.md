@@ -77,33 +77,6 @@ npm start
 
 Nyisd meg a: http://localhost:3000 
 
-## 📁 Projekt Struktúra
-
-quiz-platform/
-├── backend/
-│ ├── app.js
-│ ├── schema.sql
-│ ├── package.json
-│ ├── package-lock.json
-│ ├── Dockerfile
-│ ├── test.json
-│ └── .env
-├── frontend/
-│ ├── src/
-│ │ ├── App.js
-│ │ ├── index.js
-│ │ ├── logo.svg
-│ │ ├── reportWebVitals.js
-│ │ ├── setupTests.js
-│ │ └── index.css
-│ ├── public/
-│ │ ├── favicon.ico
-│ │ └── index.html
-│ └── package.json
-├── docker-compose.yml
-├── .gitignore
-└── README.md
-
 
 ## 🎯 Használat
 

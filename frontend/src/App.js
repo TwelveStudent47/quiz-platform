@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Search, Upload, BookOpen, TrendingUp, Clock, CheckCircle, X, LogOut, Eye, XCircle, Plus, Trash2, Edit3, Minus } from 'lucide-react';
+import { Search, Upload, BookOpen, TrendingUp, Clock, CheckCircle, X, LogOut, Eye, XCircle, Plus, Trash2, Edit3, Minus, Image } from 'lucide-react';
 
 const API_URL = 'http://localhost:5000';
 
@@ -636,6 +636,16 @@ function QuizView({ quiz, onComplete }) {
 
         <h3 className="text-2xl font-bold text-gray-800 mb-6">{currentQuestion.question_text}</h3>
 
+        {currentQuestion.question_image && (
+          <div className="mb-6">
+            <img 
+              src={currentQuestion.question_image} 
+              alt="Question illustration" 
+              className="w-full max-h-96 object-contain rounded-lg border border-gray-200"
+            />
+          </div>
+        )}
+
         <div className="space-y-3 mb-8">
           {currentQuestion.options.map((option, idx) => (
             <button
@@ -757,6 +767,16 @@ function ReviewView({ attempt, onClose }) {
                   </div>
                 </div>
 
+                {question.question_image && (
+                  <div className="mb-4">
+                    <img 
+                      src={question.question_image} 
+                      alt="Question" 
+                      className="w-full max-h-64 object-contain rounded-lg border border-gray-200"
+                    />
+                  </div>
+                )}
+
                 <div className="ml-9 space-y-3">
                   {question.options.map((option, optIdx) => {
                     const isUserAnswer = userAnswer === optIdx;
@@ -827,6 +847,7 @@ function CreateQuizView({ onCreateSuccess }) {
   const [description, setDescription] = useState('');
   const [questions, setQuestions] = useState([{
     text: '',
+    image: null,
     options: ['', '', '', ''],
     correctIndex: 0,
     explanation: ''
@@ -836,6 +857,7 @@ function CreateQuizView({ onCreateSuccess }) {
   const addQuestion = () => {
     setQuestions([...questions, {
       text: '',
+      image: null,
       options: ['', '', '', ''],
       correctIndex: 0,
       explanation: ''
@@ -878,6 +900,31 @@ function CreateQuizView({ onCreateSuccess }) {
       }
       setQuestions(newQuestions);
     }
+  };
+
+  const handleImageUpload = (qIndex, e) => {
+    const file = e.target.files[0];
+    if (file) {
+      // Check file size (max 2MB)
+      if (file.size > 2 * 1024 * 1024) {
+        alert('A kép mérete maximum 2MB lehet!');
+        return;
+      }
+
+      const reader = new FileReader();
+      reader.onloadend = () => {
+        const newQuestions = [...questions];
+        newQuestions[qIndex].image = reader.result;
+        setQuestions(newQuestions);
+      };
+      reader.readAsDataURL(file);
+    }
+  };
+
+  const removeImage = (qIndex) => {
+    const newQuestions = [...questions];
+    newQuestions[qIndex].image = null;
+    setQuestions(newQuestions);
   };
 
   const handleSave = async () => {
@@ -1015,6 +1062,45 @@ function CreateQuizView({ onCreateSuccess }) {
                   rows={2}
                   className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent"
                 />
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">
+                  Kép hozzáadása (opcionális)
+                </label>
+                {question.image ? (
+                  <div className="relative">
+                    <img 
+                      src={question.image} 
+                      alt="Question" 
+                      className="w-full max-h-64 object-contain rounded-lg border border-gray-300"
+                    />
+                    <button
+                      onClick={() => removeImage(qIndex)}
+                      className="absolute top-2 right-2 p-2 bg-red-500 text-white rounded-lg hover:bg-red-600 transition"
+                    >
+                      <X className="w-4 h-4" />
+                    </button>
+                  </div>
+                ) : (
+                  <div className="border-2 border-dashed border-gray-300 rounded-lg p-6 text-center hover:border-indigo-400 transition">
+                    <Image className="w-12 h-12 text-gray-400 mx-auto mb-2" />
+                    <input
+                      type="file"
+                      accept="image/*"
+                      onChange={(e) => handleImageUpload(qIndex, e)}
+                      className="hidden"
+                      id={`image-upload-${qIndex}`}
+                    />
+                    <label
+                      htmlFor={`image-upload-${qIndex}`}
+                      className="cursor-pointer text-indigo-600 hover:text-indigo-700 font-medium"
+                    >
+                      Kép feltöltése
+                    </label>
+                    <p className="text-xs text-gray-500 mt-1">PNG, JPG, GIF (max 2MB)</p>
+                  </div>
+                )}
               </div>
 
               <div>

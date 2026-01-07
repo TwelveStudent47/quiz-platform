@@ -20,6 +20,7 @@ CREATE TABLE questions (
   id SERIAL PRIMARY KEY,
   quiz_id INTEGER REFERENCES quizzes(id) ON DELETE CASCADE,
   question_text TEXT NOT NULL,
+  question_image TEXT,
   options JSONB NOT NULL,
   correct_index INTEGER NOT NULL,
   explanation TEXT,

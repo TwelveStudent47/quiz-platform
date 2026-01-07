@@ -1058,7 +1058,7 @@ function CreateQuizView({ onCreateSuccess }) {
           </button>
           <button
             onClick={() => {
-              if (confirm('Biztosan elveted a változásokat?')) {
+              if (window.confirm('Biztosan elveted a változásokat?')) {
                 onCreateSuccess();
               }
             }}

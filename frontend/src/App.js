@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Search, Upload, BookOpen, TrendingUp, Clock, CheckCircle, X, LogOut, Eye, XCircle, Plus, Trash2, Edit3 } from 'lucide-react';
+import { Search, Upload, BookOpen, TrendingUp, Clock, CheckCircle, X, LogOut, Eye, XCircle, Plus, Trash2, Edit3, Minus } from 'lucide-react';
 
 const API_URL = 'http://localhost:5000';
 
@@ -860,6 +860,26 @@ function CreateQuizView({ onCreateSuccess }) {
     setQuestions(newQuestions);
   };
 
+  const addOption = (qIndex) => {
+    const newQuestions = [...questions];
+    if (newQuestions[qIndex].options.length < 6) {
+      newQuestions[qIndex].options.push('');
+      setQuestions(newQuestions);
+    }
+  };
+
+  const removeOption = (qIndex) => {
+    const newQuestions = [...questions];
+    if (newQuestions[qIndex].options.length > 2) {
+      newQuestions[qIndex].options.pop();
+      // Adjust correctIndex if it's out of bounds
+      if (newQuestions[qIndex].correctIndex >= newQuestions[qIndex].options.length) {
+        newQuestions[qIndex].correctIndex = newQuestions[qIndex].options.length - 1;
+      }
+      setQuestions(newQuestions);
+    }
+  };
+
   const handleSave = async () => {
     // Validation
     if (!title.trim()) {
@@ -998,9 +1018,29 @@ function CreateQuizView({ onCreateSuccess }) {
               </div>
 
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">
-                  Válaszlehetőségek *
-                </label>
+                <div className="flex items-center justify-between mb-2">
+                  <label className="block text-sm font-medium text-gray-700">
+                    Válaszlehetőségek * ({question.options.length})
+                  </label>
+                  <div className="flex items-center gap-2">
+                    <button
+                      onClick={() => removeOption(qIndex)}
+                      disabled={question.options.length <= 2}
+                      className="p-1 text-gray-600 hover:bg-gray-100 rounded disabled:opacity-50 disabled:cursor-not-allowed"
+                      title="Válasz törlése"
+                    >
+                      <Minus className="w-4 h-4" />
+                    </button>
+                    <button
+                      onClick={() => addOption(qIndex)}
+                      disabled={question.options.length >= 6}
+                      className="p-1 text-gray-600 hover:bg-gray-100 rounded disabled:opacity-50 disabled:cursor-not-allowed"
+                      title="Új válasz"
+                    >
+                      <Plus className="w-4 h-4" />
+                    </button>
+                  </div>
+                </div>
                 <div className="space-y-2">
                   {question.options.map((option, oIndex) => (
                     <div key={oIndex} className="flex items-center gap-3">
@@ -1028,7 +1068,7 @@ function CreateQuizView({ onCreateSuccess }) {
                   ))}
                 </div>
                 <p className="text-xs text-gray-500 mt-2">
-                  💡 Kattints a kör ikonra, hogy beállítsd a helyes választ
+                  💡 Kattints a kör ikonra, hogy beállítsd a helyes választ • Min 2, max 6 válasz
                 </p>
               </div>
 

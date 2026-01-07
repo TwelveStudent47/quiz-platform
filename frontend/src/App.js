@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Search, Upload, BookOpen, TrendingUp, Clock, CheckCircle, X, LogOut, Eye, XCircle } from 'lucide-react';
+import { Search, Upload, BookOpen, TrendingUp, Clock, CheckCircle, X, LogOut, Eye, XCircle, Plus, Trash2, Edit3 } from 'lucide-react';
 
 const API_URL = 'http://localhost:5000';
 
@@ -116,7 +116,7 @@ export default function QuizPlatform() {
             onClick={handleLogin}
             className="w-full bg-indigo-600 text-white py-3 rounded-lg font-medium hover:bg-indigo-700 transition"
           >
-            Belépés Google fiókkal
+            Belépés Google-lal
           </button>
         </div>
       </div>
@@ -146,6 +146,12 @@ export default function QuizPlatform() {
               className={`px-4 py-2 rounded-lg ${view === 'upload' ? 'bg-indigo-100 text-indigo-700' : 'text-gray-600 hover:bg-gray-100'}`}
             >
               Feltöltés
+            </button>
+            <button
+              onClick={() => setView('create')}
+              className={`px-4 py-2 rounded-lg ${view === 'create' ? 'bg-indigo-100 text-indigo-700' : 'text-gray-600 hover:bg-gray-100'}`}
+            >
+              Kérdés Készítő
             </button>
             <div className="relative">
               <button
@@ -189,6 +195,8 @@ export default function QuizPlatform() {
         )}
 
         {view === 'upload' && <UploadView onUploadSuccess={() => { loadQuizzes(); setView('dashboard'); }} />}
+
+        {view === 'create' && <CreateQuizView onCreateSuccess={() => { loadQuizzes(); setView('dashboard'); }} />}
 
         {view === 'quiz' && currentQuiz && (
           <QuizView
@@ -808,6 +816,257 @@ function ReviewView({ attempt, onClose }) {
         >
           Bezárás
         </button>
+      </div>
+    </div>
+  );
+}
+
+function CreateQuizView({ onCreateSuccess }) {
+  const [title, setTitle] = useState('');
+  const [topic, setTopic] = useState('');
+  const [description, setDescription] = useState('');
+  const [questions, setQuestions] = useState([{
+    text: '',
+    options: ['', '', '', ''],
+    correctIndex: 0,
+    explanation: ''
+  }]);
+  const [saving, setSaving] = useState(false);
+
+  const addQuestion = () => {
+    setQuestions([...questions, {
+      text: '',
+      options: ['', '', '', ''],
+      correctIndex: 0,
+      explanation: ''
+    }]);
+  };
+
+  const removeQuestion = (index) => {
+    if (questions.length > 1) {
+      setQuestions(questions.filter((_, i) => i !== index));
+    }
+  };
+
+  const updateQuestion = (index, field, value) => {
+    const newQuestions = [...questions];
+    newQuestions[index][field] = value;
+    setQuestions(newQuestions);
+  };
+
+  const updateOption = (qIndex, oIndex, value) => {
+    const newQuestions = [...questions];
+    newQuestions[qIndex].options[oIndex] = value;
+    setQuestions(newQuestions);
+  };
+
+  const handleSave = async () => {
+    // Validation
+    if (!title.trim()) {
+      alert('Kérlek adj meg egy címet!');
+      return;
+    }
+
+    const validQuestions = questions.filter(q => 
+      q.text.trim() && q.options.every(o => o.trim())
+    );
+
+    if (validQuestions.length === 0) {
+      alert('Legalább egy teljes kérdést ki kell tölteni!');
+      return;
+    }
+
+    setSaving(true);
+
+    try {
+      const res = await fetch(`${API_URL}/api/create-quiz`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        credentials: 'include',
+        body: JSON.stringify({
+          title,
+          topic,
+          description,
+          questions: validQuestions
+        })
+      });
+
+      if (res.ok) {
+        alert('Teszt sikeresen létrehozva!');
+        onCreateSuccess();
+      } else {
+        alert('Hiba történt a mentés során');
+      }
+    } catch (err) {
+      console.error('Save failed:', err);
+      alert('Hiba történt a mentés során');
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  return (
+    <div className="max-w-4xl mx-auto">
+      <div className="bg-white rounded-xl shadow-sm p-8">
+        <div className="flex items-center gap-3 mb-6">
+          <Edit3 className="w-8 h-8 text-indigo-600" />
+          <h2 className="text-2xl font-bold text-gray-800">Új Teszt Készítése</h2>
+        </div>
+
+        {/* Quiz details */}
+        <div className="space-y-4 mb-8 p-6 bg-gray-50 rounded-lg">
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-2">
+              Teszt címe *
+            </label>
+            <input
+              type="text"
+              value={title}
+              onChange={(e) => setTitle(e.target.value)}
+              placeholder="pl. JavaScript Alapok"
+              className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent"
+            />
+          </div>
+
+          <div className="grid md:grid-cols-2 gap-4">
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-2">
+                Témakör
+              </label>
+              <input
+                type="text"
+                value={topic}
+                onChange={(e) => setTopic(e.target.value)}
+                placeholder="pl. Programming"
+                className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent"
+              />
+            </div>
+
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-2">
+                Leírás
+              </label>
+              <input
+                type="text"
+                value={description}
+                onChange={(e) => setDescription(e.target.value)}
+                placeholder="pl. Alapvető JS koncepciók"
+                className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent"
+              />
+            </div>
+          </div>
+        </div>
+
+        {/* Questions */}
+        <div className="space-y-6">
+          <div className="flex items-center justify-between">
+            <h3 className="text-lg font-bold text-gray-800">Kérdések ({questions.length})</h3>
+            <button
+              onClick={addQuestion}
+              className="flex items-center gap-2 px-4 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 transition"
+            >
+              <Plus className="w-4 h-4" />
+              Új Kérdés
+            </button>
+          </div>
+
+          {questions.map((question, qIndex) => (
+            <div key={qIndex} className="p-6 border-2 border-gray-200 rounded-lg space-y-4">
+              <div className="flex items-start justify-between">
+                <h4 className="text-lg font-semibold text-gray-800">Kérdés {qIndex + 1}</h4>
+                {questions.length > 1 && (
+                  <button
+                    onClick={() => removeQuestion(qIndex)}
+                    className="p-2 text-red-600 hover:bg-red-50 rounded-lg transition"
+                  >
+                    <Trash2 className="w-5 h-5" />
+                  </button>
+                )}
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">
+                  Kérdés szövege *
+                </label>
+                <textarea
+                  value={question.text}
+                  onChange={(e) => updateQuestion(qIndex, 'text', e.target.value)}
+                  placeholder="Írd ide a kérdést..."
+                  rows={2}
+                  className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent"
+                />
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">
+                  Válaszlehetőségek *
+                </label>
+                <div className="space-y-2">
+                  {question.options.map((option, oIndex) => (
+                    <div key={oIndex} className="flex items-center gap-3">
+                      <input
+                        type="radio"
+                        name={`correct-${qIndex}`}
+                        checked={question.correctIndex === oIndex}
+                        onChange={() => updateQuestion(qIndex, 'correctIndex', oIndex)}
+                        className="w-5 h-5 text-indigo-600 cursor-pointer"
+                      />
+                      <span className="font-medium text-gray-700 w-6">
+                        {String.fromCharCode(65 + oIndex)}.
+                      </span>
+                      <input
+                        type="text"
+                        value={option}
+                        onChange={(e) => updateOption(qIndex, oIndex, e.target.value)}
+                        placeholder={`Válasz ${String.fromCharCode(65 + oIndex)}`}
+                        className="flex-1 px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent"
+                      />
+                      {question.correctIndex === oIndex && (
+                        <CheckCircle className="w-5 h-5 text-green-500" />
+                      )}
+                    </div>
+                  ))}
+                </div>
+                <p className="text-xs text-gray-500 mt-2">
+                  💡 Kattints a kör ikonra, hogy beállítsd a helyes választ
+                </p>
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">
+                  Magyarázat (opcionális)
+                </label>
+                <textarea
+                  value={question.explanation}
+                  onChange={(e) => updateQuestion(qIndex, 'explanation', e.target.value)}
+                  placeholder="Magyarázat a helyes válaszhoz..."
+                  rows={2}
+                  className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent"
+                />
+              </div>
+            </div>
+          ))}
+        </div>
+
+        <div className="mt-8 flex gap-4">
+          <button
+            onClick={handleSave}
+            disabled={saving}
+            className="flex-1 bg-green-600 text-white py-3 rounded-lg font-medium hover:bg-green-700 transition disabled:bg-gray-300 disabled:cursor-not-allowed"
+          >
+            {saving ? 'Mentés...' : 'Teszt Mentése'}
+          </button>
+          <button
+            onClick={() => {
+              if (confirm('Biztosan elveted a változásokat?')) {
+                onCreateSuccess();
+              }
+            }}
+            className="px-6 py-3 border border-gray-300 rounded-lg hover:bg-gray-50 transition"
+          >
+            Mégse
+          </button>
+        </div>
       </div>
     </div>
   );

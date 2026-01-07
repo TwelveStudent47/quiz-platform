@@ -1,3 +1,4 @@
+// server.js - Quiz Platform Backend
 const express = require('express');
 const session = require('express-session');
 const passport = require('passport');
@@ -11,11 +12,13 @@ require('dotenv').config()
 const app = express();
 const upload = multer({ storage: multer.memoryStorage() });
 
+// Database connection
 const pool = new Pool({
   connectionString: process.env.DATABASE_URL,
   ssl: process.env.NODE_ENV === 'production' ? { rejectUnauthorized: false } : false
 });
 
+// Middleware
 app.use(cors({ origin: process.env.FRONTEND_URL || 'http://localhost:3000', credentials: true }));
 app.use(express.json());
 app.use(session({
@@ -27,6 +30,7 @@ app.use(session({
 app.use(passport.initialize());
 app.use(passport.session());
 
+// Passport Google OAuth Strategy
 passport.use(new GoogleStrategy({
   clientID: process.env.GOOGLE_CLIENT_ID,
   clientSecret: process.env.GOOGLE_CLIENT_SECRET,
@@ -63,11 +67,15 @@ passport.deserializeUser(async (id, done) => {
   }
 });
 
+// Auth middleware
 const isAuthenticated = (req, res, next) => {
   if (req.isAuthenticated()) return next();
   res.status(401).json({ error: 'Not authenticated' });
 };
 
+// Routes
+
+// Auth
 app.get('/auth/google', passport.authenticate('google', { scope: ['profile', 'email'] }));
 
 app.get('/auth/google/callback',
@@ -91,6 +99,7 @@ app.get('/auth/user', (req, res) => {
   }
 });
 
+// File parser utility
 async function parseQuizFile(buffer, fileType) {
   if (fileType === 'json') {
     return JSON.parse(buffer.toString());
@@ -100,6 +109,7 @@ async function parseQuizFile(buffer, fileType) {
         if (err) {
           reject(err);
         } else {
+          // Convert XML structure to our JSON format
           const quiz = result.quiz;
           const formatted = {
             title: quiz.title[0],
@@ -120,6 +130,7 @@ async function parseQuizFile(buffer, fileType) {
   throw new Error('Unsupported file type');
 }
 
+// Upload quiz
 app.post('/api/upload', isAuthenticated, upload.single('file'), async (req, res) => {
   try {
     const file = req.file;
@@ -127,6 +138,7 @@ app.post('/api/upload', isAuthenticated, upload.single('file'), async (req, res)
     
     const quizData = await parseQuizFile(file.buffer, fileType);
     
+    // Insert quiz
     const quizResult = await pool.query(
       'INSERT INTO quizzes (user_id, title, description, topic) VALUES ($1, $2, $3, $4) RETURNING id',
       [req.user.id, quizData.title, quizData.description || '', quizData.topic || '']
@@ -134,6 +146,7 @@ app.post('/api/upload', isAuthenticated, upload.single('file'), async (req, res)
     
     const quizId = quizResult.rows[0].id;
     
+    // Insert questions
     for (let i = 0; i < quizData.questions.length; i++) {
       const q = quizData.questions[i];
       await pool.query(
@@ -149,6 +162,41 @@ app.post('/api/upload', isAuthenticated, upload.single('file'), async (req, res)
   }
 });
 
+// Create quiz manually
+app.post('/api/create-quiz', isAuthenticated, async (req, res) => {
+  try {
+    const { title, description, topic, questions } = req.body;
+    
+    // Validation
+    if (!title || !questions || questions.length === 0) {
+      return res.status(400).json({ error: 'Title and questions are required' });
+    }
+    
+    // Insert quiz
+    const quizResult = await pool.query(
+      'INSERT INTO quizzes (user_id, title, description, topic) VALUES ($1, $2, $3, $4) RETURNING id',
+      [req.user.id, title, description || '', topic || '']
+    );
+    
+    const quizId = quizResult.rows[0].id;
+    
+    // Insert questions
+    for (let i = 0; i < questions.length; i++) {
+      const q = questions[i];
+      await pool.query(
+        'INSERT INTO questions (quiz_id, question_text, options, correct_index, explanation, order_index) VALUES ($1, $2, $3, $4, $5, $6)',
+        [quizId, q.text, JSON.stringify(q.options), q.correctIndex, q.explanation || null, i]
+      );
+    }
+    
+    res.json({ success: true, quizId });
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ error: 'Failed to create quiz' });
+  }
+});
+
+// Get all quizzes (with search)
 app.get('/api/quizzes', isAuthenticated, async (req, res) => {
   try {
     const { search } = req.query;
@@ -170,6 +218,7 @@ app.get('/api/quizzes', isAuthenticated, async (req, res) => {
   }
 });
 
+// Get single quiz with questions
 app.get('/api/quizzes/:id', isAuthenticated, async (req, res) => {
   try {
     const quizResult = await pool.query(
@@ -196,10 +245,12 @@ app.get('/api/quizzes/:id', isAuthenticated, async (req, res) => {
   }
 });
 
+// Submit quiz attempt
 app.post('/api/submit', isAuthenticated, async (req, res) => {
   try {
     const { quizId, answers, timeSpent } = req.body;
     
+    // Get correct answers
     const { rows: questions } = await pool.query(
       'SELECT id, correct_index FROM questions WHERE quiz_id = $1',
       [quizId]
@@ -210,6 +261,7 @@ app.post('/api/submit', isAuthenticated, async (req, res) => {
       if (answers[q.id] === q.correct_index) score++;
     });
     
+    // Save attempt
     const result = await pool.query(
       'INSERT INTO attempts (user_id, quiz_id, score, total_questions, answers, time_spent) VALUES ($1, $2, $3, $4, $5, $6) RETURNING *',
       [req.user.id, quizId, score, questions.length, JSON.stringify(answers), timeSpent]
@@ -222,6 +274,7 @@ app.post('/api/submit', isAuthenticated, async (req, res) => {
   }
 });
 
+// Get attempt history
 app.get('/api/history', isAuthenticated, async (req, res) => {
   try {
     const { rows } = await pool.query(
@@ -240,6 +293,7 @@ app.get('/api/history', isAuthenticated, async (req, res) => {
   }
 });
 
+// Get quiz statistics
 app.get('/api/stats/:quizId', isAuthenticated, async (req, res) => {
   try {
     const { rows } = await pool.query(

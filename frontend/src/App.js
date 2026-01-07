@@ -32,31 +32,6 @@ export default function QuizPlatform() {
     }
   };
 
-  const getAvatarColor = (name) => {
-    const colors = [
-      'bg-red-500',
-      'bg-blue-500',
-      'bg-green-500',
-      'bg-yellow-500',
-      'bg-purple-500',
-      'bg-pink-500',
-      'bg-indigo-500',
-      'bg-orange-500',
-      'bg-teal-500',
-      'bg-cyan-500'
-    ];
-    const index = name.charCodeAt(0) % colors.length;
-    return colors[index];
-  };
-
-  const getInitials = (name) => {
-    const words = name.split(' ');
-    if (words.length >= 2) {
-      return (words[0][0] + words[1][0]).toUpperCase();
-    }
-    return name.substring(0, 2).toUpperCase();
-  };
-
   const loadQuizzes = async (search = '') => {
     try {
       const url = search ? `${API_URL}/api/quizzes?search=${search}` : `${API_URL}/api/quizzes`;
@@ -103,6 +78,55 @@ export default function QuizPlatform() {
     } catch (err) {
       console.error('Failed to load quiz for review:', err);
     }
+  };
+
+  const handleDeleteQuiz = async (quizId) => {
+    if (!window.confirm('Biztosan törlöd ezt a tesztet? Ez véglegesen törli az összes hozzá tartozó eredményt is!')) {
+      return;
+    }
+
+    try {
+      const res = await fetch(`${API_URL}/api/quizzes/${quizId}`, {
+        method: 'DELETE',
+        credentials: 'include'
+      });
+
+      if (res.ok) {
+        alert('Teszt sikeresen törölve!');
+        loadQuizzes();
+        loadHistory();
+      } else {
+        alert('Hiba történt a törlés során');
+      }
+    } catch (err) {
+      console.error('Delete failed:', err);
+      alert('Hiba történt a törlés során');
+    }
+  };
+
+  const getAvatarColor = (name) => {
+    const colors = [
+      'bg-red-500',
+      'bg-blue-500',
+      'bg-green-500',
+      'bg-yellow-500',
+      'bg-purple-500',
+      'bg-pink-500',
+      'bg-indigo-500',
+      'bg-orange-500',
+      'bg-teal-500',
+      'bg-cyan-500'
+    ];
+    const index = name.charCodeAt(0) % colors.length;
+    return colors[index];
+  };
+
+  const getInitials = (name) => {
+    const words = name.split(' ');
+    if (words.length >= 2) {
+      return (words[0][0] + words[1][0]).toUpperCase();
+    }
+    return name.substring(0, 2).toUpperCase();
   };
 
   if (!user) {
@@ -191,6 +215,7 @@ export default function QuizPlatform() {
               setView('quiz');
             }}
             onReviewAttempt={handleReviewAttempt}
+            onDeleteQuiz={handleDeleteQuiz}
           />
         )}
 
@@ -223,7 +248,7 @@ export default function QuizPlatform() {
   );
 }
 
-function Dashboard({ quizzes, history, searchTerm, onSearch, onStartQuiz, onReviewAttempt }) {
+function Dashboard({ quizzes, history, searchTerm, onSearch, onStartQuiz, onReviewAttempt, onDeleteQuiz }) {
   return (
     <div className="space-y-6">
       <div className="bg-white rounded-xl shadow-sm p-6">
@@ -252,13 +277,38 @@ function Dashboard({ quizzes, history, searchTerm, onSearch, onStartQuiz, onRevi
               quizzes.map((quiz) => (
                 <div
                   key={quiz.id}
-                  className="border border-gray-200 rounded-lg p-4 hover:border-indigo-300 hover:shadow-md transition cursor-pointer"
-                  onClick={() => onStartQuiz(quiz)}
+                  className="border border-gray-200 rounded-lg p-4 hover:border-indigo-300 hover:shadow-md transition"
                 >
-                  <h3 className="font-semibold text-gray-800">{quiz.title}</h3>
-                  <div className="flex justify-between items-center mt-2 text-sm text-gray-500">
-                    <span>{quiz.question_count} kérdés</span>
-                    {quiz.topic && <span className="bg-indigo-100 text-indigo-700 px-2 py-1 rounded">{quiz.topic}</span>}
+                  <div 
+                    className="cursor-pointer"
+                    onClick={() => onStartQuiz(quiz)}
+                  >
+                    <h3 className="font-semibold text-gray-800">{quiz.title}</h3>
+                    <div className="flex justify-between items-center mt-2 text-sm text-gray-500">
+                      <span>{quiz.question_count} kérdés</span>
+                      {quiz.topic && <span className="bg-indigo-100 text-indigo-700 px-2 py-1 rounded">{quiz.topic}</span>}
+                    </div>
+                  </div>
+                  <div className="mt-3 pt-3 border-t border-gray-200 flex gap-2">
+                    <button
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        onStartQuiz(quiz);
+                      }}
+                      className="flex-1 px-3 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 transition text-sm font-medium"
+                    >
+                      Kitöltés
+                    </button>
+                    <button
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        onDeleteQuiz(quiz.id);
+                      }}
+                      className="px-3 py-2 bg-red-50 text-red-600 rounded-lg hover:bg-red-100 transition"
+                      title="Teszt törlése"
+                    >
+                      <Trash2 className="w-4 h-4" />
+                    </button>
                   </div>
                 </div>
               ))
@@ -461,6 +511,382 @@ function UploadView({ onUploadSuccess }) {
   );
 }
 
+function CreateQuizView({ onCreateSuccess }) {
+  const [title, setTitle] = useState('');
+  const [topic, setTopic] = useState('');
+  const [description, setDescription] = useState('');
+  const [questions, setQuestions] = useState([{
+    text: '',
+    image: null,
+    options: ['', '', '', ''],
+    correctIndex: 0,
+    points: 1,
+    explanation: ''
+  }]);
+  const [saving, setSaving] = useState(false);
+
+  const addQuestion = () => {
+    setQuestions([...questions, {
+      text: '',
+      image: null,
+      options: ['', '', '', ''],
+      correctIndex: 0,
+      points: 1,
+      explanation: ''
+    }]);
+  };
+
+  const removeQuestion = (index) => {
+    if (questions.length > 1) {
+      setQuestions(questions.filter((_, i) => i !== index));
+    }
+  };
+
+  const updateQuestion = (index, field, value) => {
+    const newQuestions = [...questions];
+    newQuestions[index][field] = value;
+    setQuestions(newQuestions);
+  };
+
+  const updateOption = (qIndex, oIndex, value) => {
+    const newQuestions = [...questions];
+    newQuestions[qIndex].options[oIndex] = value;
+    setQuestions(newQuestions);
+  };
+
+  const addOption = (qIndex) => {
+    const newQuestions = [...questions];
+    if (newQuestions[qIndex].options.length < 6) {
+      newQuestions[qIndex].options.push('');
+      setQuestions(newQuestions);
+    }
+  };
+
+  const removeOption = (qIndex) => {
+    const newQuestions = [...questions];
+    if (newQuestions[qIndex].options.length > 2) {
+      newQuestions[qIndex].options.pop();
+      if (newQuestions[qIndex].correctIndex >= newQuestions[qIndex].options.length) {
+        newQuestions[qIndex].correctIndex = newQuestions[qIndex].options.length - 1;
+      }
+      setQuestions(newQuestions);
+    }
+  };
+
+  const handleImageUpload = (qIndex, e) => {
+    const file = e.target.files[0];
+    if (file) {
+      if (file.size > 2 * 1024 * 1024) {
+        alert('A kép mérete maximum 2MB lehet!');
+        return;
+      }
+
+      const reader = new FileReader();
+      reader.onloadend = () => {
+        const newQuestions = [...questions];
+        newQuestions[qIndex].image = reader.result;
+        setQuestions(newQuestions);
+      };
+      reader.readAsDataURL(file);
+    }
+  };
+
+  const removeImage = (qIndex) => {
+    const newQuestions = [...questions];
+    newQuestions[qIndex].image = null;
+    setQuestions(newQuestions);
+  };
+
+  const handleSave = async () => {
+    if (!title.trim()) {
+      alert('Kérlek adj meg egy címet!');
+      return;
+    }
+
+    const validQuestions = questions.filter(q => 
+      q.text.trim() && q.options.every(o => o.trim())
+    );
+
+    if (validQuestions.length === 0) {
+      alert('Legalább egy teljes kérdést ki kell tölteni!');
+      return;
+    }
+
+    setSaving(true);
+
+    try {
+      const res = await fetch(`${API_URL}/api/create-quiz`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        credentials: 'include',
+        body: JSON.stringify({
+          title,
+          topic,
+          description,
+          questions: validQuestions
+        })
+      });
+
+      if (res.ok) {
+        alert('Teszt sikeresen létrehozva!');
+        onCreateSuccess();
+      } else {
+        alert('Hiba történt a mentés során');
+      }
+    } catch (err) {
+      console.error('Save failed:', err);
+      alert('Hiba történt a mentés során');
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  return (
+    <div className="max-w-4xl mx-auto">
+      <div className="bg-white rounded-xl shadow-sm p-8">
+        <div className="flex items-center gap-3 mb-6">
+          <Edit3 className="w-8 h-8 text-indigo-600" />
+          <h2 className="text-2xl font-bold text-gray-800">Új Teszt Készítése</h2>
+        </div>
+
+        <div className="space-y-4 mb-8 p-6 bg-gray-50 rounded-lg">
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-2">
+              Teszt címe *
+            </label>
+            <input
+              type="text"
+              value={title}
+              onChange={(e) => setTitle(e.target.value)}
+              placeholder="pl. JavaScript Alapok"
+              className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent"
+            />
+          </div>
+
+          <div className="grid md:grid-cols-2 gap-4">
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-2">
+                Témakör
+              </label>
+              <input
+                type="text"
+                value={topic}
+                onChange={(e) => setTopic(e.target.value)}
+                placeholder="pl. Programming"
+                className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent"
+              />
+            </div>
+
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-2">
+                Leírás
+              </label>
+              <input
+                type="text"
+                value={description}
+                onChange={(e) => setDescription(e.target.value)}
+                placeholder="pl. Alapvető JS koncepciók"
+                className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent"
+              />
+            </div>
+          </div>
+        </div>
+
+        <div className="space-y-6">
+          <div className="flex items-center justify-between">
+            <h3 className="text-lg font-bold text-gray-800">Kérdések ({questions.length})</h3>
+            <button
+              onClick={addQuestion}
+              className="flex items-center gap-2 px-4 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 transition"
+            >
+              <Plus className="w-4 h-4" />
+              Új Kérdés
+            </button>
+          </div>
+
+          {questions.map((question, qIndex) => (
+            <div key={qIndex} className="p-6 border-2 border-gray-200 rounded-lg space-y-4">
+              <div className="flex items-start justify-between">
+                <div className="flex items-center gap-3">
+                  <h4 className="text-lg font-semibold text-gray-800">Kérdés {qIndex + 1}</h4>
+                  <span className="px-3 py-1 bg-indigo-100 text-indigo-700 rounded-full text-sm font-medium">
+                    {question.points} pont
+                  </span>
+                </div>
+                {questions.length > 1 && (
+                  <button
+                    onClick={() => removeQuestion(qIndex)}
+                    className="p-2 text-red-600 hover:bg-red-50 rounded-lg transition"
+                  >
+                    <Trash2 className="w-5 h-5" />
+                  </button>
+                )}
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">
+                  Kérdés szövege *
+                </label>
+                <textarea
+                  value={question.text}
+                  onChange={(e) => updateQuestion(qIndex, 'text', e.target.value)}
+                  placeholder="Írd ide a kérdést..."
+                  rows={2}
+                  className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent"
+                />
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">
+                  Pontérték *
+                </label>
+                <input
+                  type="number"
+                  min="1"
+                  max="100"
+                  value={question.points}
+                  onChange={(e) => updateQuestion(qIndex, 'points', parseInt(e.target.value) || 1)}
+                  className="w-32 px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent"
+                />
+                <p className="text-xs text-gray-500 mt-1">
+                  💡 Nehezebb kérdéseknek adj több pontot (1-100)
+                </p>
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">
+                  Kép hozzáadása (opcionális)
+                </label>
+                {question.image ? (
+                  <div className="relative">
+                    <img 
+                      src={question.image} 
+                      alt="Question" 
+                      className="w-full max-h-64 object-contain rounded-lg border border-gray-300"
+                    />
+                    <button
+                      onClick={() => removeImage(qIndex)}
+                      className="absolute top-2 right-2 p-2 bg-red-500 text-white rounded-lg hover:bg-red-600 transition"
+                    >
+                      <X className="w-4 h-4" />
+                    </button>
+                  </div>
+                ) : (
+                  <div className="border-2 border-dashed border-gray-300 rounded-lg p-6 text-center hover:border-indigo-400 transition">
+                    <Image className="w-12 h-12 text-gray-400 mx-auto mb-2" />
+                    <input
+                      type="file"
+                      accept="image/*"
+                      onChange={(e) => handleImageUpload(qIndex, e)}
+                      className="hidden"
+                      id={`image-upload-${qIndex}`}
+                    />
+                    <label
+                      htmlFor={`image-upload-${qIndex}`}
+                      className="cursor-pointer text-indigo-600 hover:text-indigo-700 font-medium"
+                    >
+                      Kép feltöltése
+                    </label>
+                    <p className="text-xs text-gray-500 mt-1">PNG, JPG, GIF (max 2MB)</p>
+                  </div>
+                )}
+              </div>
+
+              <div>
+                <div className="flex items-center justify-between mb-2">
+                  <label className="block text-sm font-medium text-gray-700">
+                    Válaszlehetőségek * ({question.options.length})
+                  </label>
+                  <div className="flex items-center gap-2">
+                    <button
+                      onClick={() => removeOption(qIndex)}
+                      disabled={question.options.length <= 2}
+                      className="p-1 text-gray-600 hover:bg-gray-100 rounded disabled:opacity-50 disabled:cursor-not-allowed"
+                      title="Válasz törlése"
+                    >
+                      <Minus className="w-4 h-4" />
+                    </button>
+                    <button
+                      onClick={() => addOption(qIndex)}
+                      disabled={question.options.length >= 6}
+                      className="p-1 text-gray-600 hover:bg-gray-100 rounded disabled:opacity-50 disabled:cursor-not-allowed"
+                      title="Új válasz"
+                    >
+                      <Plus className="w-4 h-4" />
+                    </button>
+                  </div>
+                </div>
+                <div className="space-y-2">
+                  {question.options.map((option, oIndex) => (
+                    <div key={oIndex} className="flex items-center gap-3">
+                      <input
+                        type="radio"
+                        name={`correct-${qIndex}`}
+                        checked={question.correctIndex === oIndex}
+                        onChange={() => updateQuestion(qIndex, 'correctIndex', oIndex)}
+                        className="w-5 h-5 text-indigo-600 cursor-pointer"
+                      />
+                      <span className="font-medium text-gray-700 w-6">
+                        {String.fromCharCode(65 + oIndex)}.
+                      </span>
+                      <input
+                        type="text"
+                        value={option}
+                        onChange={(e) => updateOption(qIndex, oIndex, e.target.value)}
+                        placeholder={`Válasz ${String.fromCharCode(65 + oIndex)}`}
+                        className="flex-1 px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent"
+                      />
+                      {question.correctIndex === oIndex && (
+                        <CheckCircle className="w-5 h-5 text-green-500" />
+                      )}
+                    </div>
+                  ))}
+                </div>
+                <p className="text-xs text-gray-500 mt-2">
+                  💡 Kattints a kör ikonra, hogy beállítsd a helyes választ • Min 2, max 6 válasz
+                </p>
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">
+                  Magyarázat (opcionális)
+                </label>
+                <textarea
+                  value={question.explanation}
+                  onChange={(e) => updateQuestion(qIndex, 'explanation', e.target.value)}
+                  placeholder="Magyarázat a helyes válaszhoz..."
+                  rows={2}
+                  className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent"
+                />
+              </div>
+            </div>
+          ))}
+        </div>
+
+        <div className="mt-8 flex gap-4">
+          <button
+            onClick={handleSave}
+            disabled={saving}
+            className="flex-1 bg-green-600 text-white py-3 rounded-lg font-medium hover:bg-green-700 transition disabled:bg-gray-300 disabled:cursor-not-allowed"
+          >
+            {saving ? 'Mentés...' : 'Teszt Mentése'}
+          </button>
+          <button
+            onClick={() => {
+              if (window.confirm('Biztosan elveted a változásokat?')) {
+                onCreateSuccess();
+              }
+            }}
+            className="px-6 py-3 border border-gray-300 rounded-lg hover:bg-gray-50 transition"
+          >
+            Mégse
+          </button>
+        </div>
+      </div>
+    </div>
+  );
+}
+
 function QuizView({ quiz, onComplete }) {
   const [questions, setQuestions] = useState([]);
   const [currentIndex, setCurrentIndex] = useState(0);
@@ -486,13 +912,10 @@ function QuizView({ quiz, onComplete }) {
       const res = await fetch(`${API_URL}/api/quizzes/${quiz.id}`, { credentials: 'include' });
       const data = await res.json();
       
-      // Shuffle questions
       const shuffledQuestions = shuffleArray(data.questions).map(q => {
-        // Create mapping for shuffled options
         const optionsWithIndex = q.options.map((opt, idx) => ({ option: opt, originalIndex: idx }));
         const shuffledOptions = shuffleArray(optionsWithIndex);
         
-        // Find new position of correct answer
         const newCorrectIndex = shuffledOptions.findIndex(
           item => item.originalIndex === q.correct_index
         );
@@ -519,11 +942,9 @@ function QuizView({ quiz, onComplete }) {
   const handleSubmit = async () => {
     const timeSpent = Math.floor((Date.now() - startTime) / 1000);
     
-    // Convert shuffled answers back to original indices
     const originalAnswers = {};
     questions.forEach(q => {
       if (answers[q.id] !== undefined) {
-        // Find which original option was selected
         const selectedOption = q.options[answers[q.id]];
         const originalIndex = q.originalOptions.indexOf(selectedOption);
         originalAnswers[q.id] = originalIndex;
@@ -846,387 +1267,6 @@ function ReviewView({ attempt, onClose }) {
         >
           Bezárás
         </button>
-      </div>
-    </div>
-  );
-}
-
-function CreateQuizView({ onCreateSuccess }) {
-  const [title, setTitle] = useState('');
-  const [topic, setTopic] = useState('');
-  const [description, setDescription] = useState('');
-  const [questions, setQuestions] = useState([{
-    text: '',
-    image: null,
-    options: ['', '', '', ''],
-    correctIndex: 0,
-    points: 1,
-    explanation: ''
-  }]);
-  const [saving, setSaving] = useState(false);
-
-  const addQuestion = () => {
-    setQuestions([...questions, {
-      text: '',
-      image: null,
-      options: ['', '', '', ''],
-      correctIndex: 0,
-      points: 1,
-      explanation: ''
-    }]);
-  };
-
-  const removeQuestion = (index) => {
-    if (questions.length > 1) {
-      setQuestions(questions.filter((_, i) => i !== index));
-    }
-  };
-
-  const updateQuestion = (index, field, value) => {
-    const newQuestions = [...questions];
-    newQuestions[index][field] = value;
-    setQuestions(newQuestions);
-  };
-
-  const updateOption = (qIndex, oIndex, value) => {
-    const newQuestions = [...questions];
-    newQuestions[qIndex].options[oIndex] = value;
-    setQuestions(newQuestions);
-  };
-
-  const addOption = (qIndex) => {
-    const newQuestions = [...questions];
-    if (newQuestions[qIndex].options.length < 6) {
-      newQuestions[qIndex].options.push('');
-      setQuestions(newQuestions);
-    }
-  };
-
-  const removeOption = (qIndex) => {
-    const newQuestions = [...questions];
-    if (newQuestions[qIndex].options.length > 2) {
-      newQuestions[qIndex].options.pop();
-      // Adjust correctIndex if it's out of bounds
-      if (newQuestions[qIndex].correctIndex >= newQuestions[qIndex].options.length) {
-        newQuestions[qIndex].correctIndex = newQuestions[qIndex].options.length - 1;
-      }
-      setQuestions(newQuestions);
-    }
-  };
-
-  const handleImageUpload = (qIndex, e) => {
-    const file = e.target.files[0];
-    if (file) {
-      // Check file size (max 2MB)
-      if (file.size > 2 * 1024 * 1024) {
-        alert('A kép mérete maximum 2MB lehet!');
-        return;
-      }
-
-      const reader = new FileReader();
-      reader.onloadend = () => {
-        const newQuestions = [...questions];
-        newQuestions[qIndex].image = reader.result;
-        setQuestions(newQuestions);
-      };
-      reader.readAsDataURL(file);
-    }
-  };
-
-  const removeImage = (qIndex) => {
-    const newQuestions = [...questions];
-    newQuestions[qIndex].image = null;
-    setQuestions(newQuestions);
-  };
-
-  const handleSave = async () => {
-    // Validation
-    if (!title.trim()) {
-      alert('Kérlek adj meg egy címet!');
-      return;
-    }
-
-    const validQuestions = questions.filter(q => 
-      q.text.trim() && q.options.every(o => o.trim())
-    );
-
-    if (validQuestions.length === 0) {
-      alert('Legalább egy teljes kérdést ki kell tölteni!');
-      return;
-    }
-
-    setSaving(true);
-
-    try {
-      const res = await fetch(`${API_URL}/api/create-quiz`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        credentials: 'include',
-        body: JSON.stringify({
-          title,
-          topic,
-          description,
-          questions: validQuestions
-        })
-      });
-
-      if (res.ok) {
-        alert('Teszt sikeresen létrehozva!');
-        onCreateSuccess();
-      } else {
-        alert('Hiba történt a mentés során');
-      }
-    } catch (err) {
-      console.error('Save failed:', err);
-      alert('Hiba történt a mentés során');
-    } finally {
-      setSaving(false);
-    }
-  };
-
-  return (
-    <div className="max-w-4xl mx-auto">
-      <div className="bg-white rounded-xl shadow-sm p-8">
-        <div className="flex items-center gap-3 mb-6">
-          <Edit3 className="w-8 h-8 text-indigo-600" />
-          <h2 className="text-2xl font-bold text-gray-800">Új Teszt Készítése</h2>
-        </div>
-
-        {/* Quiz details */}
-        <div className="space-y-4 mb-8 p-6 bg-gray-50 rounded-lg">
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">
-              Teszt címe *
-            </label>
-            <input
-              type="text"
-              value={title}
-              onChange={(e) => setTitle(e.target.value)}
-              placeholder="pl. JavaScript Alapok"
-              className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent"
-            />
-          </div>
-
-          <div className="grid md:grid-cols-2 gap-4">
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">
-                Témakör
-              </label>
-              <input
-                type="text"
-                value={topic}
-                onChange={(e) => setTopic(e.target.value)}
-                placeholder="pl. Programming"
-                className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent"
-              />
-            </div>
-
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">
-                Leírás
-              </label>
-              <input
-                type="text"
-                value={description}
-                onChange={(e) => setDescription(e.target.value)}
-                placeholder="pl. Alapvető JS koncepciók"
-                className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent"
-              />
-            </div>
-          </div>
-        </div>
-
-        {/* Questions */}
-        <div className="space-y-6">
-          <div className="flex items-center justify-between">
-            <h3 className="text-lg font-bold text-gray-800">Kérdések ({questions.length})</h3>
-            <button
-              onClick={addQuestion}
-              className="flex items-center gap-2 px-4 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 transition"
-            >
-              <Plus className="w-4 h-4" />
-              Új Kérdés
-            </button>
-          </div>
-
-          {questions.map((question, qIndex) => (
-            <div key={qIndex} className="p-6 border-2 border-gray-200 rounded-lg space-y-4">
-              <div className="flex items-start justify-between">
-                <div className="flex items-center gap-3">
-                  <h4 className="text-lg font-semibold text-gray-800">Kérdés {qIndex + 1}</h4>
-                  <span className="px-3 py-1 bg-indigo-100 text-indigo-700 rounded-full text-sm font-medium">
-                    {question.points} pont
-                  </span>
-                </div>
-                {questions.length > 1 && (
-                  <button
-                    onClick={() => removeQuestion(qIndex)}
-                    className="p-2 text-red-600 hover:bg-red-50 rounded-lg transition"
-                  >
-                    <Trash2 className="w-5 h-5" />
-                  </button>
-                )}
-              </div>
-
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">
-                  Kérdés szövege *
-                </label>
-                <textarea
-                  value={question.text}
-                  onChange={(e) => updateQuestion(qIndex, 'text', e.target.value)}
-                  placeholder="Írd ide a kérdést..."
-                  rows={2}
-                  className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent"
-                />
-              </div>
-
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">
-                  Pontérték *
-                </label>
-                <input
-                  type="number"
-                  min="1"
-                  max="100"
-                  value={question.points}
-                  onChange={(e) => updateQuestion(qIndex, 'points', parseInt(e.target.value) || 1)}
-                  className="w-32 px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent"
-                />
-                <p className="text-xs text-gray-500 mt-1">
-                  💡 Nehezebb kérdéseknek adj több pontot (1-100)
-                </p>
-              </div>
-
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">
-                  Kép hozzáadása (opcionális)
-                </label>
-                {question.image ? (
-                  <div className="relative">
-                    <img 
-                      src={question.image} 
-                      alt="Question" 
-                      className="w-full max-h-64 object-contain rounded-lg border border-gray-300"
-                    />
-                    <button
-                      onClick={() => removeImage(qIndex)}
-                      className="absolute top-2 right-2 p-2 bg-red-500 text-white rounded-lg hover:bg-red-600 transition"
-                    >
-                      <X className="w-4 h-4" />
-                    </button>
-                  </div>
-                ) : (
-                  <div className="border-2 border-dashed border-gray-300 rounded-lg p-6 text-center hover:border-indigo-400 transition">
-                    <Image className="w-12 h-12 text-gray-400 mx-auto mb-2" />
-                    <input
-                      type="file"
-                      accept="image/*"
-                      onChange={(e) => handleImageUpload(qIndex, e)}
-                      className="hidden"
-                      id={`image-upload-${qIndex}`}
-                    />
-                    <label
-                      htmlFor={`image-upload-${qIndex}`}
-                      className="cursor-pointer text-indigo-600 hover:text-indigo-700 font-medium"
-                    >
-                      Kép feltöltése
-                    </label>
-                    <p className="text-xs text-gray-500 mt-1">PNG, JPG, GIF (max 2MB)</p>
-                  </div>
-                )}
-              </div>
-
-              <div>
-                <div className="flex items-center justify-between mb-2">
-                  <label className="block text-sm font-medium text-gray-700">
-                    Válaszlehetőségek * ({question.options.length})
-                  </label>
-                  <div className="flex items-center gap-2">
-                    <button
-                      onClick={() => removeOption(qIndex)}
-                      disabled={question.options.length <= 2}
-                      className="p-1 text-gray-600 hover:bg-gray-100 rounded disabled:opacity-50 disabled:cursor-not-allowed"
-                      title="Válasz törlése"
-                    >
-                      <Minus className="w-4 h-4" />
-                    </button>
-                    <button
-                      onClick={() => addOption(qIndex)}
-                      disabled={question.options.length >= 6}
-                      className="p-1 text-gray-600 hover:bg-gray-100 rounded disabled:opacity-50 disabled:cursor-not-allowed"
-                      title="Új válasz"
-                    >
-                      <Plus className="w-4 h-4" />
-                    </button>
-                  </div>
-                </div>
-                <div className="space-y-2">
-                  {question.options.map((option, oIndex) => (
-                    <div key={oIndex} className="flex items-center gap-3">
-                      <input
-                        type="radio"
-                        name={`correct-${qIndex}`}
-                        checked={question.correctIndex === oIndex}
-                        onChange={() => updateQuestion(qIndex, 'correctIndex', oIndex)}
-                        className="w-5 h-5 text-indigo-600 cursor-pointer"
-                      />
-                      <span className="font-medium text-gray-700 w-6">
-                        {String.fromCharCode(65 + oIndex)}.
-                      </span>
-                      <input
-                        type="text"
-                        value={option}
-                        onChange={(e) => updateOption(qIndex, oIndex, e.target.value)}
-                        placeholder={`Válasz ${String.fromCharCode(65 + oIndex)}`}
-                        className="flex-1 px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent"
-                      />
-                      {question.correctIndex === oIndex && (
-                        <CheckCircle className="w-5 h-5 text-green-500" />
-                      )}
-                    </div>
-                  ))}
-                </div>
-                <p className="text-xs text-gray-500 mt-2">
-                  💡 Kattints a kör ikonra, hogy beállítsd a helyes választ • Min 2, max 6 válasz
-                </p>
-              </div>
-
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">
-                  Magyarázat (opcionális)
-                </label>
-                <textarea
-                  value={question.explanation}
-                  onChange={(e) => updateQuestion(qIndex, 'explanation', e.target.value)}
-                  placeholder="Magyarázat a helyes válaszhoz..."
-                  rows={2}
-                  className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent"
-                />
-              </div>
-            </div>
-          ))}
-        </div>
-
-        <div className="mt-8 flex gap-4">
-          <button
-            onClick={handleSave}
-            disabled={saving}
-            className="flex-1 bg-green-600 text-white py-3 rounded-lg font-medium hover:bg-green-700 transition disabled:bg-gray-300 disabled:cursor-not-allowed"
-          >
-            {saving ? 'Mentés...' : 'Teszt Mentése'}
-          </button>
-          <button
-            onClick={() => {
-              if (window.confirm('Biztosan elveted a változásokat?')) {
-                onCreateSuccess();
-              }
-            }}
-            className="px-6 py-3 border border-gray-300 rounded-lg hover:bg-gray-50 transition"
-          >
-            Mégse
-          </button>
-        </div>
       </div>
     </div>
   );

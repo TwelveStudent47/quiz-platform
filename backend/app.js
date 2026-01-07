@@ -296,6 +296,26 @@ app.get('/api/stats/:quizId', isAuthenticated, async (req, res) => {
   }
 });
 
+app.delete('/api/quizzes/:id', isAuthenticated, async (req, res) => {
+  try {
+    const { rows } = await pool.query(
+      'SELECT * FROM quizzes WHERE id = $1 AND user_id = $2',
+      [req.params.id, req.user.id]
+    );
+    
+    if (rows.length === 0) {
+      return res.status(404).json({ error: 'Quiz not found or unauthorized' });
+    }
+
+    await pool.query('DELETE FROM quizzes WHERE id = $1', [req.params.id]);
+    
+    res.json({ success: true, message: 'Quiz deleted successfully' });
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ error: 'Failed to delete quiz' });
+  }
+});
+
 const PORT = process.env.PORT || 5000;
 app.listen(PORT, () => {
   console.log(`Server running on port ${PORT}`);

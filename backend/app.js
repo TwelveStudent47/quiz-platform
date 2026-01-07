@@ -1,3 +1,4 @@
+// server.js - Quiz Platform Backend
 const express = require('express');
 const session = require('express-session');
 const passport = require('passport');
@@ -109,6 +110,7 @@ async function parseQuizFile(buffer, fileType) {
               text: q.text[0],
               options: q.options[0].option,
               correctIndex: parseInt(q.correctIndex[0]),
+              points: q.points ? parseInt(q.points[0]) : 1,
               explanation: q.explanation ? q.explanation[0] : null
             }))
           };
@@ -126,19 +128,19 @@ app.post('/api/upload', isAuthenticated, upload.single('file'), async (req, res)
     const fileType = file.originalname.endsWith('.json') ? 'json' : 'xml';
     
     const quizData = await parseQuizFile(file.buffer, fileType);
-    
+
     const quizResult = await pool.query(
       'INSERT INTO quizzes (user_id, title, description, topic) VALUES ($1, $2, $3, $4) RETURNING id',
       [req.user.id, quizData.title, quizData.description || '', quizData.topic || '']
     );
     
     const quizId = quizResult.rows[0].id;
-    
+
     for (let i = 0; i < quizData.questions.length; i++) {
       const q = quizData.questions[i];
       await pool.query(
-        'INSERT INTO questions (quiz_id, question_text, question_image, options, correct_index, explanation, order_index) VALUES ($1, $2, $3, $4, $5, $6, $7)',
-        [quizId, q.text, q.image || null, JSON.stringify(q.options), q.correctIndex, q.explanation || null, i]
+        'INSERT INTO questions (quiz_id, question_text, question_image, options, correct_index, points, explanation, order_index) VALUES ($1, $2, $3, $4, $5, $6, $7, $8)',
+        [quizId, q.text, q.image || null, JSON.stringify(q.options), q.correctIndex, q.points || 1, q.explanation || null, i]
       );
     }
     
@@ -152,23 +154,23 @@ app.post('/api/upload', isAuthenticated, upload.single('file'), async (req, res)
 app.post('/api/create-quiz', isAuthenticated, async (req, res) => {
   try {
     const { title, description, topic, questions } = req.body;
-    
+
     if (!title || !questions || questions.length === 0) {
       return res.status(400).json({ error: 'Title and questions are required' });
     }
-    
+
     const quizResult = await pool.query(
       'INSERT INTO quizzes (user_id, title, description, topic) VALUES ($1, $2, $3, $4) RETURNING id',
       [req.user.id, title, description || '', topic || '']
     );
     
     const quizId = quizResult.rows[0].id;
-    
+
     for (let i = 0; i < questions.length; i++) {
       const q = questions[i];
       await pool.query(
-        'INSERT INTO questions (quiz_id, question_text, question_image, options, correct_index, explanation, order_index) VALUES ($1, $2, $3, $4, $5, $6, $7)',
-        [quizId, q.text, q.image || null, JSON.stringify(q.options), q.correctIndex, q.explanation || null, i]
+        'INSERT INTO questions (quiz_id, question_text, question_image, options, correct_index, points, explanation, order_index) VALUES ($1, $2, $3, $4, $5, $6, $7, $8)',
+        [quizId, q.text, q.image || null, JSON.stringify(q.options), q.correctIndex, q.points || 1, q.explanation || null, i]
       );
     }
     
@@ -231,18 +233,23 @@ app.post('/api/submit', isAuthenticated, async (req, res) => {
     const { quizId, answers, timeSpent } = req.body;
 
     const { rows: questions } = await pool.query(
-      'SELECT id, correct_index FROM questions WHERE quiz_id = $1',
+      'SELECT id, correct_index, points FROM questions WHERE quiz_id = $1',
       [quizId]
     );
     
     let score = 0;
-    questions.forEach(q => {
-      if (answers[q.id] === q.correct_index) score++;
-    });
+    let totalPoints = 0;
     
+    questions.forEach(q => {
+      totalPoints += q.points || 1;
+      if (answers[q.id] === q.correct_index) {
+        score += q.points || 1;
+      }
+    });
+
     const result = await pool.query(
-      'INSERT INTO attempts (user_id, quiz_id, score, total_questions, answers, time_spent) VALUES ($1, $2, $3, $4, $5, $6) RETURNING *',
-      [req.user.id, quizId, score, questions.length, JSON.stringify(answers), timeSpent]
+      'INSERT INTO attempts (user_id, quiz_id, score, total_points, total_questions, answers, time_spent) VALUES ($1, $2, $3, $4, $5, $6, $7) RETURNING *',
+      [req.user.id, quizId, score, totalPoints, questions.length, JSON.stringify(answers), timeSpent]
     );
     
     res.json(result.rows[0]);

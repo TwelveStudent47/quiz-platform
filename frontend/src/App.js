@@ -288,7 +288,7 @@ function Dashboard({ quizzes, history, searchTerm, onSearch, onStartQuiz, onRevi
                       <div className={`text-2xl font-bold ${attempt.percentage >= 70 ? 'text-green-600' : 'text-orange-600'}`}>
                         {Math.round(attempt.percentage)}%
                       </div>
-                      <div className="text-sm text-gray-500">{attempt.score}/{attempt.total_questions}</div>
+                      <div className="text-sm text-gray-500">{attempt.score}/{attempt.total_points} pont</div>
                     </div>
                   </div>
                   <button
@@ -422,6 +422,7 @@ function UploadView({ onUploadSuccess }) {
       "text": "Mi a useState?",
       "options": ["DB", "Hook", "Komponens", "Szerver"],
       "correctIndex": 1,
+      "points": 5,
       "explanation": "A useState egy React Hook"
     }
   ]
@@ -447,6 +448,7 @@ function UploadView({ onUploadSuccess }) {
         <option>Nem létezik</option>
       </options>
       <correctIndex>2</correctIndex>
+      <points>3</points>
       <explanation>Strict equality, típust is ellenőriz</explanation>
     </question>
   </questions>
@@ -559,8 +561,11 @@ function QuizView({ quiz, onComplete }) {
             <div className="text-6xl font-bold text-indigo-600 my-6">
               {Math.round(result.percentage)}%
             </div>
-            <p className="text-xl text-gray-600 mb-8">
-              {result.score} helyes válasz {result.total_questions}-ból
+            <p className="text-xl text-gray-600 mb-2">
+              {result.score} / {result.total_points} pont
+            </p>
+            <p className="text-gray-500">
+              {questions.filter(q => answers[q.id] === q.correct_index).length} helyes válasz {result.total_questions}-ból
             </p>
           </div>
 
@@ -573,7 +578,12 @@ function QuizView({ quiz, onComplete }) {
               <div className="space-y-4">
                 {wrongAnswers.map((q, idx) => (
                   <div key={q.id} className="bg-red-50 border border-red-200 rounded-lg p-4">
-                    <p className="font-semibold text-gray-800 mb-3">{q.question_text}</p>
+                    <div className="flex items-start justify-between mb-3">
+                      <p className="font-semibold text-gray-800">{q.question_text}</p>
+                      <span className="px-2 py-1 bg-red-200 text-red-800 rounded text-xs font-medium">
+                        -{q.points || 1} pont
+                      </span>
+                    </div>
                     <div className="space-y-2 text-sm">
                       <div className="flex items-start gap-2">
                         <XCircle className="w-4 h-4 text-red-500 mt-0.5 flex-shrink-0" />
@@ -728,7 +738,7 @@ function ReviewView({ attempt, onClose }) {
             </div>
             <div>
               <p className="text-gray-600 text-sm">Helyes válaszok</p>
-              <p className="text-2xl font-semibold text-gray-800">{attempt.score} / {attempt.total_questions}</p>
+              <p className="text-2xl font-semibold text-gray-800">{attempt.score} / {attempt.total_points} pont</p>
             </div>
             {attempt.time_spent && (
               <div>
@@ -850,6 +860,7 @@ function CreateQuizView({ onCreateSuccess }) {
     image: null,
     options: ['', '', '', ''],
     correctIndex: 0,
+    points: 1,
     explanation: ''
   }]);
   const [saving, setSaving] = useState(false);
@@ -860,6 +871,7 @@ function CreateQuizView({ onCreateSuccess }) {
       image: null,
       options: ['', '', '', ''],
       correctIndex: 0,
+      points: 1,
       explanation: ''
     }]);
   };
@@ -1040,7 +1052,12 @@ function CreateQuizView({ onCreateSuccess }) {
           {questions.map((question, qIndex) => (
             <div key={qIndex} className="p-6 border-2 border-gray-200 rounded-lg space-y-4">
               <div className="flex items-start justify-between">
-                <h4 className="text-lg font-semibold text-gray-800">Kérdés {qIndex + 1}</h4>
+                <div className="flex items-center gap-3">
+                  <h4 className="text-lg font-semibold text-gray-800">Kérdés {qIndex + 1}</h4>
+                  <span className="px-3 py-1 bg-indigo-100 text-indigo-700 rounded-full text-sm font-medium">
+                    {question.points} pont
+                  </span>
+                </div>
                 {questions.length > 1 && (
                   <button
                     onClick={() => removeQuestion(qIndex)}
@@ -1062,6 +1079,23 @@ function CreateQuizView({ onCreateSuccess }) {
                   rows={2}
                   className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent"
                 />
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">
+                  Pontérték *
+                </label>
+                <input
+                  type="number"
+                  min="1"
+                  max="100"
+                  value={question.points}
+                  onChange={(e) => updateQuestion(qIndex, 'points', parseInt(e.target.value) || 1)}
+                  className="w-32 px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent"
+                />
+                <p className="text-xs text-gray-500 mt-1">
+                  💡 Nehezebb kérdéseknek adj több pontot (1-100)
+                </p>
               </div>
 
               <div>

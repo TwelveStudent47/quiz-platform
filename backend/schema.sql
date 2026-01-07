@@ -23,6 +23,7 @@ CREATE TABLE questions (
   question_image TEXT,
   options JSONB NOT NULL,
   correct_index INTEGER NOT NULL,
+  points INTEGER DEFAULT 1,
   explanation TEXT,
   order_index INTEGER DEFAULT 0
 );
@@ -32,10 +33,11 @@ CREATE TABLE attempts (
   user_id INTEGER REFERENCES users(id) ON DELETE CASCADE,
   quiz_id INTEGER REFERENCES quizzes(id) ON DELETE CASCADE,
   score INTEGER NOT NULL,
+  total_points INTEGER NOT NULL,
   total_questions INTEGER NOT NULL,
   percentage DECIMAL(5,2) GENERATED ALWAYS AS (
     CASE 
-      WHEN total_questions > 0 THEN (score::DECIMAL / total_questions * 100)
+      WHEN total_points > 0 THEN (score::DECIMAL / total_points * 100)
       ELSE 0 
     END
   ) STORED,

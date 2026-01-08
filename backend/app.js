@@ -1,3 +1,4 @@
+// server.js - Quiz Platform Backend
 const express = require('express');
 const session = require('express-session');
 const passport = require('passport');
@@ -105,13 +106,53 @@ async function parseQuizFile(buffer, fileType) {
             title: quiz.title[0],
             topic: quiz.topic ? quiz.topic[0] : '',
             description: quiz.description ? quiz.description[0] : '',
-            questions: quiz.questions[0].question.map(q => ({
-              text: q.text[0],
-              options: q.options[0].option,
-              correctIndex: parseInt(q.correctIndex[0]),
-              points: q.points ? parseInt(q.points[0]) : 1,
-              explanation: q.explanation ? q.explanation[0] : null
-            }))
+            timeLimit: quiz.timeLimit ? parseInt(quiz.timeLimit[0]) : null,
+            questions: quiz.questions[0].question.map(q => {
+              const type = q.type ? q.type[0] : 'single_choice';
+              let data = {};
+
+              if (type === 'single_choice') {
+                data = {
+                  options: q.data[0].options[0].option,
+                  correctIndex: parseInt(q.data[0].correctIndex[0])
+                };
+              } else if (type === 'multiple_choice') {
+                data = {
+                  options: q.data[0].options[0].option,
+                  correctIndices: q.data[0].correctIndices[0].index.map(i => parseInt(i))
+                };
+              } else if (type === 'true_false') {
+                data = {
+                  correctAnswer: q.data[0].correctAnswer[0] === 'true'
+                };
+              } else if (type === 'numeric') {
+                data = {
+                  correctAnswer: parseFloat(q.data[0].correctAnswer[0]),
+                  unit: q.data[0].unit ? q.data[0].unit[0] : ''
+                };
+              } else if (type === 'matching') {
+                const pairs = q.data[0].pairs[0].pair.map(p => ({
+                  left: p.left[0],
+                  right: p.right[0]
+                }));
+                const correctPairs = {};
+                if (q.data[0].correctPairs) {
+                  q.data[0].correctPairs[0].entry.forEach(e => {
+                    correctPairs[e.key[0]] = parseInt(e.value[0]);
+                  });
+                }
+                data = { pairs, correctPairs };
+              }
+              
+              return {
+                type,
+                text: q.text[0],
+                image: q.image ? q.image[0] : null,
+                data,
+                points: q.points ? parseInt(q.points[0]) : 1,
+                explanation: q.explanation ? q.explanation[0] : null
+              };
+            })
           };
           resolve(formatted);
         }
@@ -138,8 +179,8 @@ app.post('/api/upload', isAuthenticated, upload.single('file'), async (req, res)
     for (let i = 0; i < quizData.questions.length; i++) {
       const q = quizData.questions[i];
       await pool.query(
-        'INSERT INTO questions (quiz_id, question_text, question_image, options, correct_index, points, explanation, order_index) VALUES ($1, $2, $3, $4, $5, $6, $7, $8)',
-        [quizId, q.text, q.image || null, JSON.stringify(q.options), q.correctIndex, q.points || 1, q.explanation || null, i]
+        'INSERT INTO questions (quiz_id, question_type, question_text, question_image, question_data, points, explanation, order_index) VALUES ($1, $2, $3, $4, $5, $6, $7, $8)',
+        [quizId, q.type || 'single_choice', q.text, q.image || null, JSON.stringify(q.data), q.points || 1, q.explanation || null, i]
       );
     }
     
@@ -168,8 +209,8 @@ app.post('/api/create-quiz', isAuthenticated, async (req, res) => {
     for (let i = 0; i < questions.length; i++) {
       const q = questions[i];
       await pool.query(
-        'INSERT INTO questions (quiz_id, question_text, question_image, options, correct_index, points, explanation, order_index) VALUES ($1, $2, $3, $4, $5, $6, $7, $8)',
-        [quizId, q.text, q.image || null, JSON.stringify(q.options), q.correctIndex, q.points || 1, q.explanation || null, i]
+        'INSERT INTO questions (quiz_id, question_type, question_text, question_image, question_data, points, explanation, order_index) VALUES ($1, $2, $3, $4, $5, $6, $7, $8)',
+        [quizId, q.type || 'single_choice', q.text, q.image || null, JSON.stringify(q.data), q.points || 1, q.explanation || null, i]
       );
     }
     
@@ -230,9 +271,10 @@ app.get('/api/quizzes/:id', isAuthenticated, async (req, res) => {
 app.post('/api/submit', isAuthenticated, async (req, res) => {
   try {
     const { quizId, answers, timeSpent } = req.body;
-
+    
+    // Get questions with points and type
     const { rows: questions } = await pool.query(
-      'SELECT id, correct_index, points FROM questions WHERE quiz_id = $1',
+      'SELECT id, question_type, question_data, points FROM questions WHERE quiz_id = $1',
       [quizId]
     );
     
@@ -241,7 +283,30 @@ app.post('/api/submit', isAuthenticated, async (req, res) => {
     
     questions.forEach(q => {
       totalPoints += q.points || 1;
-      if (answers[q.id] === q.correct_index) {
+      const userAnswer = answers[q.id];
+      const data = q.question_data;
+      
+      let isCorrect = false;
+      
+      switch(q.question_type) {
+        case 'single_choice':
+          isCorrect = userAnswer === data.correctIndex;
+          break;
+        case 'multiple_choice':
+          isCorrect = JSON.stringify(userAnswer?.sort()) === JSON.stringify(data.correctIndices?.sort());
+          break;
+        case 'true_false':
+          isCorrect = userAnswer === data.correctAnswer;
+          break;
+        case 'numeric':
+          isCorrect = Math.abs(parseFloat(userAnswer) - parseFloat(data.correctAnswer)) < 0.01;
+          break;
+        case 'matching':
+          isCorrect = JSON.stringify(userAnswer) === JSON.stringify(data.correctPairs);
+          break;
+      }
+      
+      if (isCorrect) {
         score += q.points || 1;
       }
     });

@@ -451,19 +451,73 @@ function UploadView({ onUploadSuccess }) {
             <h3 className="font-semibold text-gray-800 mb-2">Példa JSON formátum:</h3>
             <pre className="text-xs bg-white p-3 rounded overflow-x-auto">
 {`{
-  "title": "React Alapok",
-  "topic": "Frontend",
+  "title": "Programozás Alapok",
+  "topic": "Informatika",
+  "description": "Python és JavaScript alapok",
+  "timeLimit": 10,
   "questions": [
     {
-      "text": "Mi a useState?",
-      "options": ["DB", "Hook", "Komponens", "Szerver"],
-      "correctIndex": 1,
-      "points": 5,
-      "explanation": "A useState egy React Hook"
+      "type": "single_choice",
+      "text": "Mi a Python fő jellemzője?",
+      "image": "data:image/png;base64,...",
+      "data": {
+        "options": ["Gyors", "Olvasható", "Bonyolult", "Régi"],
+        "correctIndex": 1
+      },
+      "points": 2,
+      "explanation": "A Python az olvashatóságra épül"
+    },
+    {
+      "type": "multiple_choice",
+      "text": "Melyek dinamikus nyelvek?",
+      "data": {
+        "options": ["Python", "Java", "JavaScript", "C++"],
+        "correctIndices": [0, 2]
+      },
+      "points": 3
+    },
+    {
+      "type": "true_false",
+      "text": "A JavaScript csak böngészőben fut",
+      "data": {
+        "correctAnswer": false
+      },
+      "points": 2
+    },
+    {
+      "type": "numeric",
+      "text": "Hány biten tárol egy byte?",
+      "data": {
+        "correctAnswer": 8,
+        "unit": "bit"
+      },
+      "points": 2
+    },
+    {
+      "type": "matching",
+      "text": "Párosítsd a nyelvet a típusával",
+      "data": {
+        "pairs": [
+          {"left": "Python", "right": "Értelmezett"},
+          {"left": "C", "right": "Fordított"}
+        ],
+        "correctPairs": {"0": 0, "1": 1}
+      },
+      "points": 4
     }
   ]
 }`}
             </pre>
+            <div className="mt-3 p-3 bg-blue-100 rounded text-sm">
+              <p className="font-semibold text-blue-900 mb-2">📌 Kérdéstípusok:</p>
+              <ul className="space-y-1 text-blue-800 text-xs">
+                <li><strong>single_choice:</strong> Egy helyes válasz (correctIndex)</li>
+                <li><strong>multiple_choice:</strong> Több helyes válasz (correctIndices tömb)</li>
+                <li><strong>true_false:</strong> Igaz/Hamis (correctAnswer: true/false)</li>
+                <li><strong>numeric:</strong> Szám válasz (correctAnswer + opcionális unit)</li>
+                <li><strong>matching:</strong> Párosítás (pairs tömb + correctPairs objektum)</li>
+              </ul>
+            </div>
           </div>
 
           <div className="p-4 bg-green-50 rounded-lg">
@@ -471,25 +525,46 @@ function UploadView({ onUploadSuccess }) {
             <pre className="text-xs bg-white p-3 rounded overflow-x-auto">
 {`<?xml version="1.0" encoding="UTF-8"?>
 <quiz>
-  <title>JavaScript Alapok</title>
-  <topic>Programming</topic>
-  <description>JS koncepciók tesztelése</description>
+  <title>Történelem Kvíz</title>
+  <topic>Történelem</topic>
+  <description>Magyar történelem alapok</description>
+  <timeLimit>15</timeLimit>
   <questions>
     <question>
-      <text>Mi az === operátor?</text>
-      <options>
-        <option>Hozzárendelés</option>
-        <option>Egyenlőség típus-konverzióval</option>
-        <option>Szigorú egyenlőség</option>
-        <option>Nem létezik</option>
-      </options>
-      <correctIndex>2</correctIndex>
-      <points>3</points>
-      <explanation>Strict equality, típust is ellenőriz</explanation>
+      <type>single_choice</type>
+      <text>Mikor volt a mohácsi csata?</text>
+      <data>
+        <options>
+          <option>1456</option>
+          <option>1526</option>
+          <option>1848</option>
+          <option>1956</option>
+        </options>
+        <correctIndex>1</correctIndex>
+      </data>
+      <points>2</points>
+      <explanation>1526-ban volt a mohácsi csata</explanation>
+    </question>
+    <question>
+      <type>true_false</type>
+      <text>Mátyás király apja Hunyadi János volt</text>
+      <data>
+        <correctAnswer>true</correctAnswer>
+      </data>
+      <points>2</points>
     </question>
   </questions>
 </quiz>`}
             </pre>
+            <div className="mt-3 p-3 bg-green-100 rounded text-sm">
+              <p className="font-semibold text-green-900 mb-2">💡 Tippek:</p>
+              <ul className="space-y-1 text-green-800 text-xs">
+                <li><strong>timeLimit:</strong> percekben (opcionális, null = nincs korlát)</li>
+                <li><strong>image:</strong> base64 kép vagy URL (opcionális)</li>
+                <li><strong>points:</strong> kérdés pontértéke (alapértelmezett: 1)</li>
+                <li><strong>explanation:</strong> magyarázat a helyes válaszhoz (opcionális)</li>
+              </ul>
+            </div>
           </div>
         </div>
       </div>
@@ -504,10 +579,13 @@ function CreateQuizView({ onCreateSuccess }) {
   const [isTimeLimited, setIsTimeLimited] = useState(false);
   const [timeLimit, setTimeLimit] = useState(30);
   const [questions, setQuestions] = useState([{
+    type: 'single_choice',
     text: '',
     image: null,
-    options: ['', '', '', ''],
-    correctIndex: 0,
+    data: {
+      options: ['', '', '', ''],
+      correctIndex: 0
+    },
     points: 1,
     explanation: ''
   }]);
@@ -515,13 +593,42 @@ function CreateQuizView({ onCreateSuccess }) {
 
   const addQuestion = () => {
     setQuestions([...questions, {
+      type: 'single_choice',
       text: '',
       image: null,
-      options: ['', '', '', ''],
-      correctIndex: 0,
+      data: {
+        options: ['', '', '', ''],
+        correctIndex: 0
+      },
       points: 1,
       explanation: ''
     }]);
+  };
+
+  const changeQuestionType = (qIndex, newType) => {
+    const newQuestions = [...questions];
+    newQuestions[qIndex].type = newType;
+    
+    // Set default data based on type
+    switch(newType) {
+      case 'single_choice':
+        newQuestions[qIndex].data = { options: ['', '', '', ''], correctIndex: 0 };
+        break;
+      case 'multiple_choice':
+        newQuestions[qIndex].data = { options: ['', '', '', ''], correctIndices: [] };
+        break;
+      case 'true_false':
+        newQuestions[qIndex].data = { correctAnswer: true };
+        break;
+      case 'numeric':
+        newQuestions[qIndex].data = { correctAnswer: 0, unit: '' };
+        break;
+      case 'matching':
+        newQuestions[qIndex].data = { pairs: [{ left: '', right: '' }, { left: '', right: '' }], correctPairs: {} };
+        break;
+    }
+    
+    setQuestions(newQuestions);
   };
 
   const removeQuestion = (index) => {
@@ -536,29 +643,82 @@ function CreateQuizView({ onCreateSuccess }) {
     setQuestions(newQuestions);
   };
 
+  const updateQuestionData = (qIndex, field, value) => {
+    const newQuestions = [...questions];
+    newQuestions[qIndex].data[field] = value;
+    setQuestions(newQuestions);
+  };
+
   const updateOption = (qIndex, oIndex, value) => {
     const newQuestions = [...questions];
-    newQuestions[qIndex].options[oIndex] = value;
+    newQuestions[qIndex].data.options[oIndex] = value;
     setQuestions(newQuestions);
   };
 
   const addOption = (qIndex) => {
     const newQuestions = [...questions];
-    if (newQuestions[qIndex].options.length < 6) {
-      newQuestions[qIndex].options.push('');
+    if (newQuestions[qIndex].data.options.length < 6) {
+      newQuestions[qIndex].data.options.push('');
       setQuestions(newQuestions);
     }
   };
 
   const removeOption = (qIndex) => {
     const newQuestions = [...questions];
-    if (newQuestions[qIndex].options.length > 2) {
-      newQuestions[qIndex].options.pop();
-      if (newQuestions[qIndex].correctIndex >= newQuestions[qIndex].options.length) {
-        newQuestions[qIndex].correctIndex = newQuestions[qIndex].options.length - 1;
+    if (newQuestions[qIndex].data.options.length > 2) {
+      newQuestions[qIndex].data.options.pop();
+      const q = newQuestions[qIndex];
+      if (q.type === 'single_choice' && q.data.correctIndex >= q.data.options.length) {
+        q.data.correctIndex = q.data.options.length - 1;
+      }
+      if (q.type === 'multiple_choice') {
+        q.data.correctIndices = q.data.correctIndices.filter(i => i < q.data.options.length);
       }
       setQuestions(newQuestions);
     }
+  };
+
+  const toggleMultipleChoice = (qIndex, optionIndex) => {
+    const newQuestions = [...questions];
+    const indices = newQuestions[qIndex].data.correctIndices || [];
+    const idx = indices.indexOf(optionIndex);
+    
+    if (idx > -1) {
+      indices.splice(idx, 1);
+    } else {
+      indices.push(optionIndex);
+    }
+    
+    newQuestions[qIndex].data.correctIndices = indices;
+    setQuestions(newQuestions);
+  };
+
+  const addMatchingPair = (qIndex) => {
+    const newQuestions = [...questions];
+    newQuestions[qIndex].data.pairs.push({ left: '', right: '' });
+    setQuestions(newQuestions);
+  };
+
+  const removeMatchingPair = (qIndex, pairIndex) => {
+    const newQuestions = [...questions];
+    if (newQuestions[qIndex].data.pairs.length > 2) {
+      newQuestions[qIndex].data.pairs.splice(pairIndex, 1);
+      setQuestions(newQuestions);
+    }
+  };
+
+  const updateMatchingPair = (qIndex, pairIndex, side, value) => {
+    const newQuestions = [...questions];
+    newQuestions[qIndex].data.pairs[pairIndex][side] = value;
+    
+    // Auto-generate correct pairs (left index -> right index mapping)
+    const correctPairs = {};
+    newQuestions[qIndex].data.pairs.forEach((pair, idx) => {
+      correctPairs[idx] = idx;
+    });
+    newQuestions[qIndex].data.correctPairs = correctPairs;
+    
+    setQuestions(newQuestions);
   };
 
   const handleImageUpload = (qIndex, e) => {
@@ -780,6 +940,23 @@ function CreateQuizView({ onCreateSuccess }) {
 
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-2">
+                  Kérdés típusa *
+                </label>
+                <select
+                  value={question.type}
+                  onChange={(e) => changeQuestionType(qIndex, e.target.value)}
+                  className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent"
+                >
+                  <option value="single_choice">Egy válaszos</option>
+                  <option value="multiple_choice">Több válaszos</option>
+                  <option value="true_false">Igaz/Hamis</option>
+                  <option value="numeric">Számos válasz</option>
+                  <option value="matching">Illesztéses</option>
+                </select>
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">
                   Kép hozzáadása (opcionális)
                 </label>
                 {question.image ? (
@@ -790,6 +967,7 @@ function CreateQuizView({ onCreateSuccess }) {
                       className="w-full max-h-64 object-contain rounded-lg border border-gray-300"
                     />
                     <button
+                      type="button"
                       onClick={() => removeImage(qIndex)}
                       className="absolute top-2 right-2 p-2 bg-red-500 text-white rounded-lg hover:bg-red-600 transition"
                     >
@@ -817,60 +995,242 @@ function CreateQuizView({ onCreateSuccess }) {
                 )}
               </div>
 
-              <div>
-                <div className="flex items-center justify-between mb-2">
-                  <label className="block text-sm font-medium text-gray-700">
-                    Válaszlehetőségek * ({question.options.length})
+              {/* Render based on question type */}
+              {question.type === 'single_choice' && (
+                <div>
+                  <div className="flex items-center justify-between mb-2">
+                    <label className="block text-sm font-medium text-gray-700">
+                      Válaszlehetőségek * ({question.data.options?.length || 0})
+                    </label>
+                    <div className="flex items-center gap-2">
+                      <button
+                        onClick={() => removeOption(qIndex)}
+                        disabled={(question.data.options?.length || 0) <= 2}
+                        className="p-1 text-gray-600 hover:bg-gray-100 rounded disabled:opacity-50"
+                        type="button"
+                      >
+                        <Minus className="w-4 h-4" />
+                      </button>
+                      <button
+                        onClick={() => addOption(qIndex)}
+                        disabled={(question.data.options?.length || 0) >= 6}
+                        className="p-1 text-gray-600 hover:bg-gray-100 rounded disabled:opacity-50"
+                        type="button"
+                      >
+                        <Plus className="w-4 h-4" />
+                      </button>
+                    </div>
+                  </div>
+                  <div className="space-y-2">
+                    {(question.data.options || []).map((option, oIndex) => (
+                      <div key={oIndex} className="flex items-center gap-3">
+                        <input
+                          type="radio"
+                          name={`correct-${qIndex}`}
+                          checked={question.data.correctIndex === oIndex}
+                          onChange={() => updateQuestionData(qIndex, 'correctIndex', oIndex)}
+                          className="w-5 h-5 text-indigo-600 cursor-pointer"
+                        />
+                        <span className="font-medium text-gray-700 w-6">
+                          {String.fromCharCode(65 + oIndex)}.
+                        </span>
+                        <input
+                          type="text"
+                          value={option}
+                          onChange={(e) => updateOption(qIndex, oIndex, e.target.value)}
+                          placeholder={`Válasz ${String.fromCharCode(65 + oIndex)}`}
+                          className="flex-1 px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500"
+                        />
+                        {question.data.correctIndex === oIndex && (
+                          <CheckCircle className="w-5 h-5 text-green-500" />
+                        )}
+                      </div>
+                    ))}
+                  </div>
+                  <p className="text-xs text-gray-500 mt-2">
+                    💡 Kattints a kör ikonra a helyes válaszhoz • Min 2, max 6 válasz
+                  </p>
+                </div>
+              )}
+
+              {question.type === 'multiple_choice' && (
+                <div>
+                  <div className="flex items-center justify-between mb-2">
+                    <label className="block text-sm font-medium text-gray-700">
+                      Válaszlehetőségek * ({question.data.correctIndices?.length || 0} helyes)
+                    </label>
+                    <div className="flex items-center gap-2">
+                      <button
+                        onClick={() => removeOption(qIndex)}
+                        disabled={(question.data.options?.length || 0) <= 2}
+                        className="p-1 text-gray-600 hover:bg-gray-100 rounded disabled:opacity-50"
+                        type="button"
+                      >
+                        <Minus className="w-4 h-4" />
+                      </button>
+                      <button
+                        onClick={() => addOption(qIndex)}
+                        disabled={(question.data.options?.length || 0) >= 6}
+                        className="p-1 text-gray-600 hover:bg-gray-100 rounded disabled:opacity-50"
+                        type="button"
+                      >
+                        <Plus className="w-4 h-4" />
+                      </button>
+                    </div>
+                  </div>
+                  <div className="space-y-2">
+                    {(question.data.options || []).map((option, oIndex) => (
+                      <div key={oIndex} className="flex items-center gap-3">
+                        <input
+                          type="checkbox"
+                          checked={question.data.correctIndices?.includes(oIndex)}
+                          onChange={() => toggleMultipleChoice(qIndex, oIndex)}
+                          className="w-5 h-5 text-indigo-600 rounded cursor-pointer"
+                        />
+                        <span className="font-medium text-gray-700 w-6">
+                          {String.fromCharCode(65 + oIndex)}.
+                        </span>
+                        <input
+                          type="text"
+                          value={option}
+                          onChange={(e) => updateOption(qIndex, oIndex, e.target.value)}
+                          placeholder={`Válasz ${String.fromCharCode(65 + oIndex)}`}
+                          className="flex-1 px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500"
+                        />
+                        {question.data.correctIndices?.includes(oIndex) && (
+                          <CheckCircle className="w-5 h-5 text-green-500" />
+                        )}
+                      </div>
+                    ))}
+                  </div>
+                  <p className="text-xs text-gray-500 mt-2">
+                    💡 Pipáld be az összes helyes választ
+                  </p>
+                </div>
+              )}
+
+              {question.type === 'true_false' && (
+                <div className="space-y-3">
+                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                    Helyes válasz *
                   </label>
-                  <div className="flex items-center gap-2">
+                  <div className="flex gap-4">
                     <button
-                      onClick={() => removeOption(qIndex)}
-                      disabled={question.options.length <= 2}
-                      className="p-1 text-gray-600 hover:bg-gray-100 rounded disabled:opacity-50 disabled:cursor-not-allowed"
-                      title="Válasz törlése"
+                      type="button"
+                      onClick={() => updateQuestionData(qIndex, 'correctAnswer', true)}
+                      className={`flex-1 px-6 py-4 rounded-lg border-2 transition ${
+                        question.data.correctAnswer === true
+                          ? 'border-green-500 bg-green-50 text-green-700'
+                          : 'border-gray-300 hover:border-gray-400'
+                      }`}
                     >
-                      <Minus className="w-4 h-4" />
+                      <div className="flex items-center justify-center gap-2">
+                        <CheckCircle className="w-6 h-6" />
+                        <span className="font-semibold text-lg">IGAZ</span>
+                      </div>
                     </button>
                     <button
-                      onClick={() => addOption(qIndex)}
-                      disabled={question.options.length >= 6}
-                      className="p-1 text-gray-600 hover:bg-gray-100 rounded disabled:opacity-50 disabled:cursor-not-allowed"
-                      title="Új válasz"
+                      type="button"
+                      onClick={() => updateQuestionData(qIndex, 'correctAnswer', false)}
+                      className={`flex-1 px-6 py-4 rounded-lg border-2 transition ${
+                        question.data.correctAnswer === false
+                          ? 'border-red-500 bg-red-50 text-red-700'
+                          : 'border-gray-300 hover:border-gray-400'
+                      }`}
                     >
-                      <Plus className="w-4 h-4" />
+                      <div className="flex items-center justify-center gap-2">
+                        <XCircle className="w-6 h-6" />
+                        <span className="font-semibold text-lg">HAMIS</span>
+                      </div>
                     </button>
                   </div>
                 </div>
-                <div className="space-y-2">
-                  {question.options.map((option, oIndex) => (
-                    <div key={oIndex} className="flex items-center gap-3">
-                      <input
-                        type="radio"
-                        name={`correct-${qIndex}`}
-                        checked={question.correctIndex === oIndex}
-                        onChange={() => updateQuestion(qIndex, 'correctIndex', oIndex)}
-                        className="w-5 h-5 text-indigo-600 cursor-pointer"
-                      />
-                      <span className="font-medium text-gray-700 w-6">
-                        {String.fromCharCode(65 + oIndex)}.
-                      </span>
-                      <input
-                        type="text"
-                        value={option}
-                        onChange={(e) => updateOption(qIndex, oIndex, e.target.value)}
-                        placeholder={`Válasz ${String.fromCharCode(65 + oIndex)}`}
-                        className="flex-1 px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent"
-                      />
-                      {question.correctIndex === oIndex && (
-                        <CheckCircle className="w-5 h-5 text-green-500" />
-                      )}
-                    </div>
-                  ))}
+              )}
+
+              {question.type === 'numeric' && (
+                <div className="space-y-3">
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-2">
+                      Helyes válasz (szám) *
+                    </label>
+                    <input
+                      type="number"
+                      step="any"
+                      value={question.data.correctAnswer || 0}
+                      onChange={(e) => updateQuestionData(qIndex, 'correctAnswer', parseFloat(e.target.value) || 0)}
+                      className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500"
+                      placeholder="pl. 42"
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-2">
+                      Mértékegység (opcionális)
+                    </label>
+                    <input
+                      type="text"
+                      value={question.data.unit || ''}
+                      onChange={(e) => updateQuestionData(qIndex, 'unit', e.target.value)}
+                      className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500"
+                      placeholder="pl. km, kg, °C"
+                    />
+                  </div>
+                  <p className="text-xs text-gray-500">
+                    💡 A felhasználónak számot kell beírnia válaszként
+                  </p>
                 </div>
-                <p className="text-xs text-gray-500 mt-2">
-                  💡 Kattints a kör ikonra, hogy beállítsd a helyes választ • Min 2, max 6 válasz
-                </p>
-              </div>
+              )}
+
+              {question.type === 'matching' && (
+                <div>
+                  <div className="flex items-center justify-between mb-3">
+                    <label className="block text-sm font-medium text-gray-700">
+                      Párosítandó elemek ({question.data.pairs?.length || 0} pár)
+                    </label>
+                    <button
+                      type="button"
+                      onClick={() => addMatchingPair(qIndex)}
+                      className="flex items-center gap-1 px-3 py-1 text-sm bg-indigo-50 text-indigo-600 rounded-lg hover:bg-indigo-100"
+                    >
+                      <Plus className="w-4 h-4" />
+                      Pár hozzáadása
+                    </button>
+                  </div>
+                  <div className="space-y-3">
+                    {(question.data.pairs || []).map((pair, pairIndex) => (
+                      <div key={pairIndex} className="flex items-center gap-3 p-3 bg-gray-50 rounded-lg">
+                        <span className="font-medium text-gray-600">{pairIndex + 1}.</span>
+                        <input
+                          type="text"
+                          value={pair.left}
+                          onChange={(e) => updateMatchingPair(qIndex, pairIndex, 'left', e.target.value)}
+                          placeholder="Bal oldal"
+                          className="flex-1 px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500"
+                        />
+                        <span className="text-gray-400">↔</span>
+                        <input
+                          type="text"
+                          value={pair.right}
+                          onChange={(e) => updateMatchingPair(qIndex, pairIndex, 'right', e.target.value)}
+                          placeholder="Jobb oldal"
+                          className="flex-1 px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500"
+                        />
+                        {(question.data.pairs?.length || 0) > 2 && (
+                          <button
+                            type="button"
+                            onClick={() => removeMatchingPair(qIndex, pairIndex)}
+                            className="p-2 text-red-600 hover:bg-red-50 rounded-lg"
+                          >
+                            <Trash2 className="w-4 h-4" />
+                          </button>
+                        )}
+                      </div>
+                    ))}
+                  </div>
+                  <p className="text-xs text-gray-500 mt-2">
+                    💡 A felhasználónak össze kell kötnie a bal és jobb oldali elemeket
+                  </p>
+                </div>
+              )}
 
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-2">
@@ -963,20 +1323,61 @@ function QuizView({ quiz, onComplete }) {
       setQuizData(data.quiz);
       
       const shuffledQuestions = shuffleArray(data.questions).map(q => {
-        const optionsWithIndex = q.options.map((opt, idx) => ({ option: opt, originalIndex: idx }));
-        const shuffledOptions = shuffleArray(optionsWithIndex);
+        // Only shuffle for choice-based questions
+        if (q.question_type === 'single_choice' || q.question_type === 'multiple_choice') {
+          const optionsWithIndex = q.question_data.options.map((opt, idx) => ({ option: opt, originalIndex: idx }));
+          const shuffledOptions = shuffleArray(optionsWithIndex);
+          
+          if (q.question_type === 'single_choice') {
+            const newCorrectIndex = shuffledOptions.findIndex(
+              item => item.originalIndex === q.question_data.correctIndex
+            );
+            
+            return {
+              ...q,
+              question_data: {
+                ...q.question_data,
+                options: shuffledOptions.map(item => item.option),
+                correctIndex: newCorrectIndex,
+                originalCorrectIndex: q.question_data.correctIndex
+              },
+              originalOptions: q.question_data.options
+            };
+          } else {
+            // Multiple choice - map old indices to new
+            const indexMap = {};
+            shuffledOptions.forEach((item, newIdx) => {
+              indexMap[item.originalIndex] = newIdx;
+            });
+            
+            const newCorrectIndices = q.question_data.correctIndices.map(oldIdx => indexMap[oldIdx]);
+            
+            return {
+              ...q,
+              question_data: {
+                ...q.question_data,
+                options: shuffledOptions.map(item => item.option),
+                correctIndices: newCorrectIndices,
+                originalCorrectIndices: q.question_data.correctIndices
+              },
+              originalOptions: q.question_data.options
+            };
+          }
+        }
         
-        const newCorrectIndex = shuffledOptions.findIndex(
-          item => item.originalIndex === q.correct_index
-        );
+        // For other types, shuffle matching pairs if applicable
+        if (q.question_type === 'matching') {
+          const rightItems = shuffleArray(q.question_data.pairs.map(p => p.right));
+          return {
+            ...q,
+            question_data: {
+              ...q.question_data,
+              shuffledRightItems: rightItems
+            }
+          };
+        }
         
-        return {
-          ...q,
-          options: shuffledOptions.map(item => item.option),
-          correct_index: newCorrectIndex,
-          originalOptions: q.options,
-          originalCorrectIndex: q.correct_index
-        };
+        return q;
       });
       
       setQuestions(shuffledQuestions);
@@ -989,15 +1390,43 @@ function QuizView({ quiz, onComplete }) {
     setAnswers({ ...answers, [questionId]: answerIndex });
   };
 
+  const handleMultipleAnswer = (questionId, optionIndex) => {
+    const currentAnswers = answers[questionId] || [];
+    const newAnswers = currentAnswers.includes(optionIndex)
+      ? currentAnswers.filter(i => i !== optionIndex)
+      : [...currentAnswers, optionIndex];
+    setAnswers({ ...answers, [questionId]: newAnswers });
+  };
+
+  const handleNumericAnswer = (questionId, value) => {
+    setAnswers({ ...answers, [questionId]: value });
+  };
+
+  const handleMatchingAnswer = (questionId, leftIndex, rightIndex) => {
+    const currentPairs = answers[questionId] || {};
+    setAnswers({ ...answers, [questionId]: { ...currentPairs, [leftIndex]: rightIndex } });
+  };
+
   const handleSubmit = async () => {
     const timeSpent = Math.floor((Date.now() - startTime) / 1000);
     
-    const originalAnswers = {};
+    const processedAnswers = {};
     questions.forEach(q => {
       if (answers[q.id] !== undefined) {
-        const selectedOption = q.options[answers[q.id]];
-        const originalIndex = q.originalOptions.indexOf(selectedOption);
-        originalAnswers[q.id] = originalIndex;
+        if (q.question_type === 'single_choice') {
+          const selectedOption = q.question_data.options[answers[q.id]];
+          const originalIndex = q.originalOptions.indexOf(selectedOption);
+          processedAnswers[q.id] = originalIndex;
+        } else if (q.question_type === 'multiple_choice') {
+          const selectedIndices = answers[q.id] || [];
+          const originalIndices = selectedIndices.map(idx => {
+            const selectedOption = q.question_data.options[idx];
+            return q.originalOptions.indexOf(selectedOption);
+          });
+          processedAnswers[q.id] = originalIndices;
+        } else {
+          processedAnswers[q.id] = answers[q.id];
+        }
       }
     });
     
@@ -1006,7 +1435,7 @@ function QuizView({ quiz, onComplete }) {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         credentials: 'include',
-        body: JSON.stringify({ quizId: quiz.id, answers: originalAnswers, timeSpent })
+        body: JSON.stringify({ quizId: quiz.id, answers: processedAnswers, timeSpent })
       });
       
       const data = await res.json();
@@ -1021,7 +1450,25 @@ function QuizView({ quiz, onComplete }) {
   }
 
   if (result) {
-    const wrongAnswers = questions.filter(q => answers[q.id] !== q.correct_index);
+    const wrongAnswers = questions.filter(q => {
+      const userAnswer = answers[q.id];
+      const data = q.question_data;
+      
+      switch(q.question_type) {
+        case 'single_choice':
+          return userAnswer !== data.correctIndex;
+        case 'multiple_choice':
+          return JSON.stringify((userAnswer || []).sort()) !== JSON.stringify((data.correctIndices || []).sort());
+        case 'true_false':
+          return userAnswer !== data.correctAnswer;
+        case 'numeric':
+          return Math.abs(parseFloat(userAnswer) - parseFloat(data.correctAnswer)) >= 0.01;
+        case 'matching':
+          return JSON.stringify(userAnswer) !== JSON.stringify(data.correctPairs);
+        default:
+          return true;
+      }
+    });
     
     return (
       <div className="max-w-2xl mx-auto">
@@ -1047,37 +1494,66 @@ function QuizView({ quiz, onComplete }) {
                 Elrontott kérdések ({wrongAnswers.length})
               </h3>
               <div className="space-y-4">
-                {wrongAnswers.map((q, idx) => (
-                  <div key={q.id} className="bg-red-50 border border-red-200 rounded-lg p-4">
-                    <div className="flex items-start justify-between mb-3">
-                      <p className="font-semibold text-gray-800">{q.question_text}</p>
-                      <span className="px-2 py-1 bg-red-200 text-red-800 rounded text-xs font-medium">
-                        -{q.points || 1} pont
-                      </span>
-                    </div>
-                    <div className="space-y-2 text-sm">
-                      <div className="flex items-start gap-2">
-                        <XCircle className="w-4 h-4 text-red-500 mt-0.5 flex-shrink-0" />
-                        <div>
-                          <span className="text-red-700 font-medium">Te: </span>
-                          <span className="text-gray-700">{q.options[answers[q.id]]}</span>
-                        </div>
+                {wrongAnswers.map((q, idx) => {
+                  const userAnswer = answers[q.id];
+                  const data = q.question_data;
+                  
+                  let userAnswerText = '';
+                  let correctAnswerText = '';
+                  
+                  // Format answers based on question type
+                  if (q.question_type === 'single_choice') {
+                    userAnswerText = data.options[userAnswer] || 'Nincs válasz';
+                    correctAnswerText = data.options[data.correctIndex];
+                  } else if (q.question_type === 'multiple_choice') {
+                    const userIndices = userAnswer || [];
+                    userAnswerText = userIndices.length > 0 
+                      ? userIndices.map(i => data.options[i]).join(', ') 
+                      : 'Nincs válasz';
+                    correctAnswerText = data.correctIndices.map(i => data.options[i]).join(', ');
+                  } else if (q.question_type === 'true_false') {
+                    userAnswerText = userAnswer === true ? 'IGAZ' : userAnswer === false ? 'HAMIS' : 'Nincs válasz';
+                    correctAnswerText = data.correctAnswer ? 'IGAZ' : 'HAMIS';
+                  } else if (q.question_type === 'numeric') {
+                    userAnswerText = userAnswer ? `${userAnswer}${data.unit ? ' ' + data.unit : ''}` : 'Nincs válasz';
+                    correctAnswerText = `${data.correctAnswer}${data.unit ? ' ' + data.unit : ''}`;
+                  } else if (q.question_type === 'matching') {
+                    userAnswerText = 'Helytelen párosítás';
+                    correctAnswerText = 'Helyes párosítás a teszt végén látható';
+                  }
+                  
+                  return (
+                    <div key={q.id} className="bg-red-50 border border-red-200 rounded-lg p-4">
+                      <div className="flex items-start justify-between mb-3">
+                        <p className="font-semibold text-gray-800">{q.question_text}</p>
+                        <span className="px-2 py-1 bg-red-200 text-red-800 rounded text-xs font-medium whitespace-nowrap ml-2">
+                          -{q.points || 1} pont
+                        </span>
                       </div>
-                      <div className="flex items-start gap-2">
-                        <CheckCircle className="w-4 h-4 text-green-500 mt-0.5 flex-shrink-0" />
-                        <div>
-                          <span className="text-green-700 font-medium">Helyes: </span>
-                          <span className="text-gray-700">{q.options[q.correct_index]}</span>
+                      <div className="space-y-2 text-sm">
+                        <div className="flex items-start gap-2">
+                          <XCircle className="w-4 h-4 text-red-500 mt-0.5 flex-shrink-0" />
+                          <div>
+                            <span className="text-red-700 font-medium">Te: </span>
+                            <span className="text-gray-700">{userAnswerText}</span>
+                          </div>
                         </div>
+                        <div className="flex items-start gap-2">
+                          <CheckCircle className="w-4 h-4 text-green-500 mt-0.5 flex-shrink-0" />
+                          <div>
+                            <span className="text-green-700 font-medium">Helyes: </span>
+                            <span className="text-gray-700">{correctAnswerText}</span>
+                          </div>
+                        </div>
+                        {q.explanation && (
+                          <div className="mt-2 pt-2 border-t border-red-200">
+                            <p className="text-gray-600 italic">{q.explanation}</p>
+                          </div>
+                        )}
                       </div>
-                      {q.explanation && (
-                        <div className="mt-2 pt-2 border-t border-red-200">
-                          <p className="text-gray-600 italic">{q.explanation}</p>
-                        </div>
-                      )}
                     </div>
-                  </div>
-                ))}
+                  );
+                })}
               </div>
             </div>
           )}
@@ -1146,19 +1622,126 @@ function QuizView({ quiz, onComplete }) {
         )}
 
         <div className="space-y-3 mb-8">
-          {currentQuestion.options.map((option, idx) => (
-            <button
-              key={idx}
-              onClick={() => handleAnswer(currentQuestion.id, idx)}
-              className={`w-full text-left p-4 rounded-lg border-2 transition ${
-                answers[currentQuestion.id] === idx
-                  ? 'border-indigo-500 bg-indigo-50'
-                  : 'border-gray-200 hover:border-gray-300'
-              }`}
-            >
-              <span className="font-medium">{String.fromCharCode(65 + idx)}.</span> {option}
-            </button>
-          ))}
+          {currentQuestion.question_type === 'single_choice' && (
+            <>
+              {currentQuestion.question_data.options.map((option, idx) => (
+                <button
+                  key={idx}
+                  onClick={() => handleAnswer(currentQuestion.id, idx)}
+                  className={`w-full text-left p-4 rounded-lg border-2 transition ${
+                    answers[currentQuestion.id] === idx
+                      ? 'border-indigo-500 bg-indigo-50'
+                      : 'border-gray-200 hover:border-gray-300'
+                  }`}
+                >
+                  <span className="font-medium">{String.fromCharCode(65 + idx)}.</span> {option}
+                </button>
+              ))}
+            </>
+          )}
+
+          {currentQuestion.question_type === 'multiple_choice' && (
+            <>
+              {currentQuestion.question_data.options.map((option, idx) => (
+                <button
+                  key={idx}
+                  onClick={() => handleMultipleAnswer(currentQuestion.id, idx)}
+                  className={`w-full text-left p-4 rounded-lg border-2 transition flex items-center gap-3 ${
+                    (answers[currentQuestion.id] || []).includes(idx)
+                      ? 'border-indigo-500 bg-indigo-50'
+                      : 'border-gray-200 hover:border-gray-300'
+                  }`}
+                >
+                  <input
+                    type="checkbox"
+                    checked={(answers[currentQuestion.id] || []).includes(idx)}
+                    readOnly
+                    className="w-5 h-5 text-indigo-600 rounded"
+                  />
+                  <span><span className="font-medium">{String.fromCharCode(65 + idx)}.</span> {option}</span>
+                </button>
+              ))}
+              <p className="text-sm text-gray-600 mt-2">💡 Több helyes válasz is lehet</p>
+            </>
+          )}
+
+          {currentQuestion.question_type === 'true_false' && (
+            <div className="flex gap-4">
+              <button
+                onClick={() => handleAnswer(currentQuestion.id, true)}
+                className={`flex-1 px-6 py-6 rounded-lg border-2 transition ${
+                  answers[currentQuestion.id] === true
+                    ? 'border-green-500 bg-green-50'
+                    : 'border-gray-200 hover:border-gray-300'
+                }`}
+              >
+                <div className="flex items-center justify-center gap-2">
+                  <CheckCircle className="w-8 h-8 text-green-600" />
+                  <span className="font-bold text-2xl">IGAZ</span>
+                </div>
+              </button>
+              <button
+                onClick={() => handleAnswer(currentQuestion.id, false)}
+                className={`flex-1 px-6 py-6 rounded-lg border-2 transition ${
+                  answers[currentQuestion.id] === false
+                    ? 'border-red-500 bg-red-50'
+                    : 'border-gray-200 hover:border-gray-300'
+                }`}
+              >
+                <div className="flex items-center justify-center gap-2">
+                  <XCircle className="w-8 h-8 text-red-600" />
+                  <span className="font-bold text-2xl">HAMIS</span>
+                </div>
+              </button>
+            </div>
+          )}
+
+          {currentQuestion.question_type === 'numeric' && (
+            <div>
+              <div className="flex items-center gap-3">
+                <input
+                  type="number"
+                  step="any"
+                  value={answers[currentQuestion.id] || ''}
+                  onChange={(e) => handleNumericAnswer(currentQuestion.id, e.target.value)}
+                  placeholder="Írd be a választ..."
+                  className="flex-1 px-6 py-4 text-2xl border-2 border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500"
+                />
+                {currentQuestion.question_data.unit && (
+                  <span className="text-2xl font-medium text-gray-600">
+                    {currentQuestion.question_data.unit}
+                  </span>
+                )}
+              </div>
+              <p className="text-sm text-gray-600 mt-2">💡 Adj meg egy számot válaszként</p>
+            </div>
+          )}
+
+          {currentQuestion.question_type === 'matching' && (
+            <div className="space-y-4">
+              <p className="text-sm text-gray-600 mb-4">💡 Kösd össze a megfelelő párokat</p>
+              {currentQuestion.question_data.pairs.map((pair, leftIdx) => (
+                <div key={leftIdx} className="flex items-center gap-4">
+                  <div className="flex-1 p-4 bg-blue-50 border-2 border-blue-200 rounded-lg font-medium">
+                    {pair.left}
+                  </div>
+                  <span className="text-gray-400">→</span>
+                  <select
+                    value={answers[currentQuestion.id]?.[leftIdx] ?? ''}
+                    onChange={(e) => handleMatchingAnswer(currentQuestion.id, leftIdx, parseInt(e.target.value))}
+                    className="flex-1 p-4 border-2 border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500"
+                  >
+                    <option value="">Válassz...</option>
+                    {currentQuestion.question_data.shuffledRightItems.map((rightItem, rightIdx) => (
+                      <option key={rightIdx} value={rightIdx}>
+                        {rightItem}
+                      </option>
+                    ))}
+                  </select>
+                </div>
+              ))}
+            </div>
+          )}
         </div>
 
         <div className="flex justify-between">
@@ -1242,7 +1825,27 @@ function ReviewView({ attempt, onClose }) {
           <h3 className="text-xl font-bold text-gray-800">Minden kérdés áttekintése</h3>
           {attempt.questions.map((question, idx) => {
             const userAnswer = answers[question.id];
-            const isCorrect = userAnswer === question.correct_index;
+            const data = question.question_data;
+            let isCorrect = false;
+            
+            // Check if answer is correct based on type
+            switch(question.question_type) {
+              case 'single_choice':
+                isCorrect = userAnswer === data.correctIndex;
+                break;
+              case 'multiple_choice':
+                isCorrect = JSON.stringify((userAnswer || []).sort()) === JSON.stringify((data.correctIndices || []).sort());
+                break;
+              case 'true_false':
+                isCorrect = userAnswer === data.correctAnswer;
+                break;
+              case 'numeric':
+                isCorrect = Math.abs(parseFloat(userAnswer) - parseFloat(data.correctAnswer)) < 0.01;
+                break;
+              case 'matching':
+                isCorrect = JSON.stringify(userAnswer) === JSON.stringify(data.correctPairs);
+                break;
+            }
             
             return (
               <div 
@@ -1260,9 +1863,26 @@ function ReviewView({ attempt, onClose }) {
                     <XCircle className="w-6 h-6 text-red-500 flex-shrink-0 mt-1" />
                   )}
                   <div className="flex-1">
-                    <p className="font-semibold text-gray-800 text-lg">
-                      {idx + 1}. {question.question_text}
-                    </p>
+                    <div className="flex items-start justify-between">
+                      <p className="font-semibold text-gray-800 text-lg">
+                        {idx + 1}. {question.question_text}
+                      </p>
+                      <span className={`px-2 py-1 rounded text-xs font-medium ml-2 whitespace-nowrap ${
+                        isCorrect ? 'bg-green-200 text-green-800' : 'bg-red-200 text-red-800'
+                      }`}>
+                        {question.points || 1} pont
+                      </span>
+                    </div>
+                    <span className="text-xs text-gray-500 mt-1 inline-block">
+                      Típus: {
+                        question.question_type === 'single_choice' ? 'Egy válaszos' :
+                        question.question_type === 'multiple_choice' ? 'Több válaszos' :
+                        question.question_type === 'true_false' ? 'Igaz/Hamis' :
+                        question.question_type === 'numeric' ? 'Számos' :
+                        question.question_type === 'matching' ? 'Illesztéses' : 
+                        question.question_type
+                      }
+                    </span>
                   </div>
                 </div>
 
@@ -1276,47 +1896,225 @@ function ReviewView({ attempt, onClose }) {
                   </div>
                 )}
 
-                <div className="ml-9 space-y-3">
-                  {question.options.map((option, optIdx) => {
-                    const isUserAnswer = userAnswer === optIdx;
-                    const isCorrectAnswer = question.correct_index === optIdx;
-                    
-                    return (
-                      <div
-                        key={optIdx}
-                        className={`p-3 rounded-lg ${
-                          isCorrectAnswer 
-                            ? 'bg-green-100 border-2 border-green-300' 
-                            : isUserAnswer 
-                            ? 'bg-red-100 border-2 border-red-300'
-                            : 'bg-white border border-gray-200'
-                        }`}
-                      >
-                        <div className="flex items-center gap-2">
-                          <span className="font-medium text-gray-700">
-                            {String.fromCharCode(65 + optIdx)}.
-                          </span>
-                          <span className={`flex-1 ${
-                            isCorrectAnswer ? 'font-semibold text-green-800' : 
-                            isUserAnswer ? 'font-semibold text-red-800' : 'text-gray-700'
-                          }`}>
-                            {option}
-                          </span>
-                          {isCorrectAnswer && (
-                            <span className="text-xs bg-green-200 text-green-800 px-2 py-1 rounded-full font-medium">
-                              Helyes válasz
+                {/* Single Choice */}
+                {question.question_type === 'single_choice' && (
+                  <div className="ml-9 space-y-3">
+                    {data.options.map((option, optIdx) => {
+                      const isUserAnswer = userAnswer === optIdx;
+                      const isCorrectAnswer = data.correctIndex === optIdx;
+                      
+                      return (
+                        <div
+                          key={optIdx}
+                          className={`p-3 rounded-lg ${
+                            isCorrectAnswer 
+                              ? 'bg-green-100 border-2 border-green-300' 
+                              : isUserAnswer 
+                              ? 'bg-red-100 border-2 border-red-300'
+                              : 'bg-white border border-gray-200'
+                          }`}
+                        >
+                          <div className="flex items-center gap-2">
+                            <span className="font-medium text-gray-700">
+                              {String.fromCharCode(65 + optIdx)}.
                             </span>
-                          )}
-                          {isUserAnswer && !isCorrectAnswer && (
-                            <span className="text-xs bg-red-200 text-red-800 px-2 py-1 rounded-full font-medium">
-                              A te válaszod
+                            <span className={`flex-1 ${
+                              isCorrectAnswer ? 'font-semibold text-green-800' : 
+                              isUserAnswer ? 'font-semibold text-red-800' : 'text-gray-700'
+                            }`}>
+                              {option}
                             </span>
-                          )}
+                            {isCorrectAnswer && (
+                              <span className="text-xs bg-green-200 text-green-800 px-2 py-1 rounded-full font-medium">
+                                Helyes válasz
+                              </span>
+                            )}
+                            {isUserAnswer && !isCorrectAnswer && (
+                              <span className="text-xs bg-red-200 text-red-800 px-2 py-1 rounded-full font-medium">
+                                A te válaszod
+                              </span>
+                            )}
+                          </div>
                         </div>
+                      );
+                    })}
+                  </div>
+                )}
+
+                {/* Multiple Choice */}
+                {question.question_type === 'multiple_choice' && (
+                  <div className="ml-9 space-y-3">
+                    {data.options.map((option, optIdx) => {
+                      // Get original indices from stored answers
+                      const userOriginalIndices = userAnswer || [];
+                      const correctOriginalIndices = data.correctIndices || [];
+                      
+                      const isUserAnswer = userOriginalIndices.includes(optIdx);
+                      const isCorrectAnswer = correctOriginalIndices.includes(optIdx);
+                      
+                      return (
+                        <div
+                          key={optIdx}
+                          className={`p-3 rounded-lg ${
+                            isCorrectAnswer && isUserAnswer
+                              ? 'bg-green-100 border-2 border-green-300' 
+                              : isCorrectAnswer && !isUserAnswer
+                              ? 'bg-yellow-100 border-2 border-yellow-300'
+                              : isUserAnswer && !isCorrectAnswer
+                              ? 'bg-red-100 border-2 border-red-300'
+                              : 'bg-white border border-gray-200'
+                          }`}
+                        >
+                          <div className="flex items-center gap-2">
+                            <input 
+                              type="checkbox" 
+                              checked={isUserAnswer} 
+                              readOnly 
+                              className="w-4 h-4"
+                            />
+                            <span className="font-medium text-gray-700">
+                              {String.fromCharCode(65 + optIdx)}.
+                            </span>
+                            <span className={`flex-1 ${
+                              isCorrectAnswer && isUserAnswer ? 'font-semibold text-green-800' : 
+                              isCorrectAnswer && !isUserAnswer ? 'font-semibold text-yellow-800' :
+                              isUserAnswer ? 'font-semibold text-red-800' : 'text-gray-700'
+                            }`}>
+                              {option}
+                            </span>
+                            {isCorrectAnswer && isUserAnswer && (
+                              <span className="text-xs bg-green-200 text-green-800 px-2 py-1 rounded-full font-medium">
+                                ✓ Helyesen választott
+                              </span>
+                            )}
+                            {isCorrectAnswer && !isUserAnswer && (
+                              <span className="text-xs bg-yellow-200 text-yellow-800 px-2 py-1 rounded-full font-medium">
+                                ✓ Helyes (nem választottad)
+                              </span>
+                            )}
+                            {isUserAnswer && !isCorrectAnswer && (
+                              <span className="text-xs bg-red-200 text-red-800 px-2 py-1 rounded-full font-medium">
+                                ✗ Tévesen választott
+                              </span>
+                            )}
+                          </div>
+                        </div>
+                      );
+                    })}
+                  </div>
+                )}
+
+                {/* True/False */}
+                {question.question_type === 'true_false' && (
+                  <div className="ml-9 flex gap-4">
+                    <div className={`flex-1 p-4 rounded-lg border-2 ${
+                      data.correctAnswer === true 
+                        ? 'bg-green-100 border-green-300' 
+                        : userAnswer === true 
+                        ? 'bg-red-100 border-red-300'
+                        : 'bg-white border-gray-200'
+                    }`}>
+                      <div className="flex items-center gap-2">
+                        <CheckCircle className="w-5 h-5 text-green-600" />
+                        <span className="font-bold">IGAZ</span>
+                        {data.correctAnswer === true && (
+                          <span className="text-xs bg-green-200 text-green-800 px-2 py-1 rounded-full ml-auto">
+                            Helyes
+                          </span>
+                        )}
+                        {userAnswer === true && data.correctAnswer !== true && (
+                          <span className="text-xs bg-red-200 text-red-800 px-2 py-1 rounded-full ml-auto">
+                            Te
+                          </span>
+                        )}
                       </div>
-                    );
-                  })}
-                </div>
+                    </div>
+                    <div className={`flex-1 p-4 rounded-lg border-2 ${
+                      data.correctAnswer === false 
+                        ? 'bg-green-100 border-green-300' 
+                        : userAnswer === false 
+                        ? 'bg-red-100 border-red-300'
+                        : 'bg-white border-gray-200'
+                    }`}>
+                      <div className="flex items-center gap-2">
+                        <XCircle className="w-5 h-5 text-red-600" />
+                        <span className="font-bold">HAMIS</span>
+                        {data.correctAnswer === false && (
+                          <span className="text-xs bg-green-200 text-green-800 px-2 py-1 rounded-full ml-auto">
+                            Helyes
+                          </span>
+                        )}
+                        {userAnswer === false && data.correctAnswer !== false && (
+                          <span className="text-xs bg-red-200 text-red-800 px-2 py-1 rounded-full ml-auto">
+                            Te
+                          </span>
+                        )}
+                      </div>
+                    </div>
+                  </div>
+                )}
+
+                {/* Numeric */}
+                {question.question_type === 'numeric' && (
+                  <div className="ml-9">
+                    <div className={`p-4 rounded-lg border-2 ${
+                      isCorrect ? 'bg-green-100 border-green-300' : 'bg-red-100 border-red-300'
+                    }`}>
+                      <div className="space-y-2">
+                        <div>
+                          <span className="text-sm font-medium text-gray-700">A te válaszod: </span>
+                          <span className={`font-bold ${isCorrect ? 'text-green-800' : 'text-red-800'}`}>
+                            {userAnswer || 'Nincs válasz'}{data.unit ? ' ' + data.unit : ''}
+                          </span>
+                        </div>
+                        {!isCorrect && (
+                          <div>
+                            <span className="text-sm font-medium text-gray-700">Helyes válasz: </span>
+                            <span className="font-bold text-green-800">
+                              {data.correctAnswer}{data.unit ? ' ' + data.unit : ''}
+                            </span>
+                          </div>
+                        )}
+                      </div>
+                    </div>
+                  </div>
+                )}
+
+                {/* Matching */}
+                {question.question_type === 'matching' && (
+                  <div className="ml-9">
+                    <div className={`p-4 rounded-lg border-2 ${
+                      isCorrect ? 'bg-green-100 border-green-300' : 'bg-red-100 border-red-300'
+                    }`}>
+                      <p className="text-sm font-medium text-gray-700 mb-3">
+                        {isCorrect ? 'Helyes párosítás!' : 'Helytelen párosítás'}
+                      </p>
+                      <div className="space-y-2">
+                        {data.pairs.map((pair, pIdx) => {
+                          const userPairIndex = userAnswer?.[pIdx];
+                          const correctPairIndex = data.correctPairs[pIdx];
+                          const isPairCorrect = userPairIndex === correctPairIndex;
+                          
+                          return (
+                            <div key={pIdx} className="flex items-center gap-3 text-sm">
+                              <span className="font-medium">{pair.left}</span>
+                              <span className="text-gray-400">→</span>
+                              <span className={isPairCorrect ? 'text-green-700 font-medium' : 'text-red-700 font-medium'}>
+                                {data.pairs[userPairIndex]?.right || 'Nincs válasz'}
+                              </span>
+                              {!isPairCorrect && (
+                                <>
+                                  <span className="text-gray-400">(Helyes:</span>
+                                  <span className="text-green-700 font-medium">{pair.right})</span>
+                                </>
+                              )}
+                            </div>
+                          );
+                        })}
+                      </div>
+                    </div>
+                  </div>
+                )}
 
                 {question.explanation && (
                   <div className="ml-9 mt-4 p-4 bg-blue-50 border border-blue-200 rounded-lg">

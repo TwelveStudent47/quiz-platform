@@ -1,116 +1,121 @@
 {
-  "title": "React Alapok Teszt",
-  "topic": "Frontend Fejlesztés",
+  "title": "Űrkutatás Alapok",
+  "topic": "Tudomány",
+  "description": "Alapvető ismeretek a világűrről és űrkutatásról",
+  "timeLimit": 5,
   "questions": [
     {
-      "text": "Mi a JSX?",
-      "options": [
-        "Egy új programozási nyelv",
-        "JavaScript XML - szintaxis kiterjesztés",
-        "A JSON egy speciális típusa",
-        "Egy adatbázis lekérdező nyelv"
-      ],
-      "correctIndex": 1,
-      "explanation": "A JSX (JavaScript XML) lehetővé teszi, hogy HTML-szerű kódot írjunk JavaScript fájlokon belül."
+      "type": "single_choice",
+      "text": "Melyik bolygó a legnagyobb a Naprendszerben?",
+      "data": {
+        "options": ["Mars", "Jupiter", "Szaturnusz", "Neptunusz"],
+        "correctIndex": 1
+      },
+      "points": 2,
+      "explanation": "A Jupiter a Naprendszer legnagyobbbolygója, átmérője körülbelül 11-szerese a Földének."
     },
     {
-      "text": "Melyik Hook felelős a mellékhatások (side effects) kezeléséért?",
-      "options": [
-        "useState",
-        "useReducer",
-        "useEffect",
-        "useMemo"
-      ],
-      "correctIndex": 2,
-      "explanation": "A useEffect Hook-ot használjuk adatlekérésekhez, feliratkozásokhoz vagy a DOM kézi módosításához."
+      "type": "multiple_choice",
+      "text": "Melyek közül rendelkeznek gyűrűkkel? (Több helyes válasz)",
+      "data": {
+        "options": ["Jupiter", "Szaturnusz", "Mars", "Uránusz", "Vénusz"],
+        "correctIndices": [0, 1, 3]
+      },
+      "points": 4,
+      "explanation": "A Jupiter, Szaturnusz és Uránusz mind rendelkeznek gyűrűkkel, bár a Szaturnuszé a leglátványosabb."
     },
     {
-      "text": "Hogyan adhatunk át adatot szülő komponensből gyermek komponensnek?",
-      "options": [
-        "State segítségével",
-        "Props segítségével",
-        "Local Storage segítségével",
-        "Event Listener segítségével"
-      ],
-      "correctIndex": 1,
-      "explanation": "A Reactben az adatok lefelé csorognak (top-down) a szülőtől a gyermek felé 'props' (tulajdonságok) formájában."
+      "type": "true_false",
+      "text": "A Hold saját fényt bocsát ki, ezért látjuk éjszaka.",
+      "data": {
+        "correctAnswer": false
+      },
+      "points": 2,
+      "explanation": "A Hold nem bocsát ki saját fényt, hanem a Nap fényét veri vissza."
     },
     {
-      "text": "Mi a Virtual DOM szerepe?",
-      "options": [
-        "A szerver oldali renderelés gyorsítása",
-        "Közvetlen kapcsolat az adatbázissal",
-        "A valódi DOM hatékony frissítése a változások minimalizálásával",
-        "A CSS stílusok elkülönítése"
-      ],
-      "correctIndex": 2,
-      "explanation": "A React a Virtual DOM-ban számolja ki a változásokat, és csak a szükséges módosításokat hajtja végre az igazi DOM-on."
+      "type": "numeric",
+      "text": "Hány perc alatt jut el a Nap fénye a Földhöz? (kerekítsd egész percre)",
+      "data": {
+        "correctAnswer": 8,
+        "unit": "perc"
+      },
+      "points": 3,
+      "explanation": "A Nap fénye körülbelül 8 perc alatt éri el a Földet, pontosabban 8 perc 20 másodperc."
     },
     {
-      "text": "Mit kell használni listaelemek renderelésekor az elemek azonosítására?",
-      "options": [
-        "index",
-        "class",
-        "id",
-        "key"
-      ],
-      "correctIndex": 3,
-      "explanation": "A 'key' prop segít a Reactnek beazonosítani, hogy mely elemek változtak, kerültek hozzáadásra vagy eltávolításra."
+      "type": "matching",
+      "text": "Párosítsd össze az űrmissziókat a célpontjaikkal!",
+      "data": {
+        "pairs": [
+          {"left": "Apollo 11", "right": "Hold"},
+          {"left": "Mars Rover", "right": "Mars"},
+          {"left": "Voyager", "right": "Naprendszer széle"},
+          {"left": "ISS", "right": "Földkörüli pálya"}
+        ],
+        "correctPairs": {
+          "0": 0,
+          "1": 1,
+          "2": 2,
+          "3": 3
+        }
+      },
+      "points": 5,
+      "explanation": "Ezek az emberiség legfontosabb űrmissziói különböző célpontokkal."
     },
     {
-      "text": "Hogyan változtathatjuk meg a state értékét egy funkcionális komponensben (useState esetén)?",
-      "options": [
-        "Közvetlenül (pl. state = 5)",
-        "A setter függvénnyel",
-        "A this.setState paranccsal",
-        "A forceUpdate függvénnyel"
-      ],
-      "correctIndex": 1,
-      "explanation": "A state közvetlen módosítása nem vált ki újrarajzolást (re-render), ezért mindig a useState által visszaadott setter függvényt kell használni."
+      "type": "single_choice",
+      "text": "Ki volt az első ember az űrben?",
+      "data": {
+        "options": ["Neil Armstrong", "Jurij Gagarin", "Buzz Aldrin", "John Glenn"],
+        "correctIndex": 1
+      },
+      "points": 2,
+      "explanation": "Jurij Gagarin volt az első ember az űrben 1961. április 12-én."
     },
     {
-      "text": "Melyik állítás IGAZ a React adatfolyamára?",
-      "options": [
-        "Kétirányú (Two-way data binding)",
-        "Egyirányú, lefelé (Unidirectional)",
-        "Ciklikus",
-        "Véletlenszerű"
-      ],
-      "correctIndex": 1,
-      "explanation": "A Reactben az adatfolyam szigorúan egyirányú: a szülőtől a gyermek felé áramlik."
+      "type": "true_false",
+      "text": "A Vénusz a legmelegebb bolygó a Naprendszerben.",
+      "data": {
+        "correctAnswer": true
+      },
+      "points": 3,
+      "explanation": "Bár a Merkúr közelebb van a Naphoz, a Vénusz sűrű atmoszférája miatt melegebb (kb. 465°C)."
     },
     {
-      "text": "Mi a React Fragment (<>...</>) célja?",
-      "options": [
-        "Stílusok hozzáadása",
-        "Elemek csoportosítása felesleges DOM csomópont létrehozása nélkül",
-        "Új komponens importálása",
-        "Hibaüzenetek elrejtése"
-      ],
-      "correctIndex": 1,
-      "explanation": "A Fragmentek lehetővé teszik több elem visszaadását anélkül, hogy egy felesleges <div>-be kellene csomagolni őket."
+      "type": "numeric",
+      "text": "Hány napig tart egy év a Marson? (kerekítsd a legközelebbi egész számra)",
+      "data": {
+        "correctAnswer": 687,
+        "unit": "nap"
+      },
+      "points": 4,
+      "explanation": "Egy marsi év 687 földi napig tart, mivel a Mars távolabb van a Naptól."
     },
     {
-      "text": "Melyik NEM egy beépített React Hook?",
-      "options": [
-        "useState",
-        "useContext",
-        "useRouter",
-        "useRef"
-      ],
-      "correctIndex": 2,
-      "explanation": "A useRouter általában külső könyvtárakhoz tartozik (pl. Next.js vagy React Router), nem része a React magnak."
+      "type": "multiple_choice",
+      "text": "Melyik állítások igazak a Holdról? (Több helyes válasz)",
+      "data": {
+        "options": [
+          "Nincs rajta atmoszféra",
+          "Van saját mágneses mezője",
+          "Mindig ugyanazt az oldalát mutatja a Földnek",
+          "Nagyobb, mint a Merkúr"
+        ],
+        "correctIndices": [0, 2]
+      },
+      "points": 3,
+      "explanation": "A Holdnak nincs atmoszférája és a pályakötöttség miatt mindig ugyanazt az oldalát látjuk."
     },
     {
-      "text": "Mi történik, ha a state vagy a props megváltozik egy komponensben?",
-      "options": [
-        "A komponens törlődik a DOM-ból",
-        "Az oldal teljesen újratöltődik",
-        "A komponens újrarenderelődik (re-render)",
-        "Semmi nem történik"
-      ],
-      "correctIndex": 2,
-      "explanation": "A state vagy props változása automatikusan kiváltja a komponens frissítését, hogy a felület tükrözze az új adatokat."
+      "type": "single_choice",
+      "text": "Melyik űrteleszkóp készítette a leghíresebb mélytér felvételeket?",
+      "data": {
+        "options": ["Kepler", "Hubble", "Spitzer", "Chandra"],
+        "correctIndex": 1
+      },
+      "points": 2,
+      "explanation": "A Hubble űrteleszkóp 1990 óta készít lenyűgöző felvételeket az univerzumról."
     }
   ]
 }

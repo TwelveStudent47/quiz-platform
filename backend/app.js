@@ -18,7 +18,8 @@ const pool = new Pool({
 });
 
 app.use(cors({ origin: process.env.FRONTEND_URL || 'http://localhost:3000', credentials: true }));
-app.use(express.json());
+app.use(express.json({ limit: '10mb' })); // Increase payload limit for images
+app.use(express.urlencoded({ limit: '10mb', extended: true }));
 app.use(session({
   secret: process.env.SESSION_SECRET || 'your-secret-key',
   resave: false,
@@ -101,6 +102,7 @@ async function parseQuizFile(buffer, fileType) {
         if (err) {
           reject(err);
         } else {
+          // Convert XML structure to our JSON format
           const quiz = result.quiz;
           const formatted = {
             title: quiz.title[0],
@@ -272,7 +274,6 @@ app.post('/api/submit', isAuthenticated, async (req, res) => {
   try {
     const { quizId, answers, timeSpent } = req.body;
     
-    // Get questions with points and type
     const { rows: questions } = await pool.query(
       'SELECT id, question_type, question_data, points FROM questions WHERE quiz_id = $1',
       [quizId]
@@ -284,33 +285,47 @@ app.post('/api/submit', isAuthenticated, async (req, res) => {
     questions.forEach(q => {
       totalPoints += q.points || 1;
       const userAnswer = answers[q.id];
-      const data = q.question_data;
+
+      const data = typeof q.question_data === 'string' 
+        ? JSON.parse(q.question_data) 
+        : q.question_data;
       
       let isCorrect = false;
       
       switch(q.question_type) {
         case 'single_choice':
-          isCorrect = userAnswer === data.correctIndex;
+          isCorrect = userAnswer !== undefined && userAnswer === data.correctIndex;
           break;
         case 'multiple_choice':
-          isCorrect = JSON.stringify(userAnswer?.sort()) === JSON.stringify(data.correctIndices?.sort());
+          if (userAnswer && Array.isArray(userAnswer) && Array.isArray(data.correctIndices)) {
+            const sortedUser = [...userAnswer].sort((a, b) => a - b);
+            const sortedCorrect = [...data.correctIndices].sort((a, b) => a - b);
+            isCorrect = JSON.stringify(sortedUser) === JSON.stringify(sortedCorrect);
+          }
           break;
         case 'true_false':
-          isCorrect = userAnswer === data.correctAnswer;
+          isCorrect = userAnswer !== undefined && userAnswer === data.correctAnswer;
           break;
         case 'numeric':
-          isCorrect = Math.abs(parseFloat(userAnswer) - parseFloat(data.correctAnswer)) < 0.01;
+          if (userAnswer !== undefined && userAnswer !== null && userAnswer !== '') {
+            const userNum = parseFloat(userAnswer);
+            const correctNum = parseFloat(data.correctAnswer);
+            isCorrect = !isNaN(userNum) && !isNaN(correctNum) && Math.abs(userNum - correctNum) < 0.01;
+          }
           break;
         case 'matching':
-          isCorrect = JSON.stringify(userAnswer) === JSON.stringify(data.correctPairs);
+          if (userAnswer && typeof userAnswer === 'object') {
+            isCorrect = JSON.stringify(userAnswer) === JSON.stringify(data.correctPairs);
+          }
           break;
+        default:
+          isCorrect = false;
       }
       
       if (isCorrect) {
         score += q.points || 1;
       }
     });
-
     const result = await pool.query(
       'INSERT INTO attempts (user_id, quiz_id, score, total_points, total_questions, answers, time_spent) VALUES ($1, $2, $3, $4, $5, $6, $7) RETURNING *',
       [req.user.id, quizId, score, totalPoints, questions.length, JSON.stringify(answers), timeSpent]
@@ -370,7 +385,6 @@ app.delete('/api/quizzes/:id', isAuthenticated, async (req, res) => {
     if (rows.length === 0) {
       return res.status(404).json({ error: 'Quiz not found or unauthorized' });
     }
-
     await pool.query('DELETE FROM quizzes WHERE id = $1', [req.params.id]);
     
     res.json({ success: true, message: 'Quiz deleted successfully' });

@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Search, Upload, BookOpen, TrendingUp, Clock, CheckCircle, X, LogOut, Eye, XCircle, Plus, Trash2, Edit3, Minus, Image } from 'lucide-react';
+import { Search, Upload, BookOpen, TrendingUp, Clock, CheckCircle, X, LogOut, Eye, XCircle, Plus, Trash2, Edit3, Minus, Image as ImageIcon } from 'lucide-react';
 
 const API_URL = 'http://localhost:5000';
 
@@ -723,20 +723,72 @@ function CreateQuizView({ onCreateSuccess }) {
 
   const handleImageUpload = (qIndex, e) => {
     const file = e.target.files[0];
-    if (file) {
-      if (file.size > 2 * 1024 * 1024) {
-        alert('A kép mérete maximum 2MB lehet!');
-        return;
-      }
-
-      const reader = new FileReader();
-      reader.onloadend = () => {
-        const newQuestions = [...questions];
-        newQuestions[qIndex].image = reader.result;
-        setQuestions(newQuestions);
-      };
-      reader.readAsDataURL(file);
+    if (!file) return;
+    
+    // Check file type
+    if (!file.type.startsWith('image/')) {
+      alert('Csak képfájlokat tölthetsz fel!');
+      return;
     }
+    
+    // Check file size (max 1MB for better compression)
+    if (file.size > 1 * 1024 * 1024) {
+      alert('A kép mérete maximum 1MB lehet!');
+      return;
+    }
+
+    const reader = new FileReader();
+    
+    reader.onloadend = () => {
+      try {
+        const img = new Image();
+        img.onload = () => {
+          // Resize image if too large
+          const canvas = document.createElement('canvas');
+          let width = img.width;
+          let height = img.height;
+          const maxWidth = 800;
+          const maxHeight = 600;
+          
+          if (width > maxWidth || height > maxHeight) {
+            if (width > height) {
+              height = (height * maxWidth) / width;
+              width = maxWidth;
+            } else {
+              width = (width * maxHeight) / height;
+              height = maxHeight;
+            }
+          }
+          
+          canvas.width = width;
+          canvas.height = height;
+          const ctx = canvas.getContext('2d');
+          ctx.drawImage(img, 0, 0, width, height);
+          
+          // Convert to base64 with compression
+          const compressedImage = canvas.toDataURL('image/jpeg', 0.7);
+          
+          const newQuestions = [...questions];
+          newQuestions[qIndex].image = compressedImage;
+          setQuestions(newQuestions);
+        };
+        
+        img.onerror = () => {
+          alert('Hiba történt a kép feldolgozása során');
+        };
+        
+        img.src = reader.result;
+      } catch (err) {
+        console.error('Image upload error:', err);
+        alert('Hiba történt a kép feltöltése során');
+      }
+    };
+    
+    reader.onerror = () => {
+      alert('Hiba történt a kép olvasása során');
+    };
+    
+    reader.readAsDataURL(file);
   };
 
   const removeImage = (qIndex) => {
@@ -751,9 +803,25 @@ function CreateQuizView({ onCreateSuccess }) {
       return;
     }
 
-    const validQuestions = questions.filter(q => 
-      q.text.trim() && q.options.every(o => o.trim())
-    );
+    const validQuestions = questions.filter(q => {
+      if (!q.text.trim()) return false;
+      
+      // Validate based on type
+      switch(q.type) {
+        case 'single_choice':
+        case 'multiple_choice':
+          return q.data.options && q.data.options.every(o => o.trim());
+        case 'true_false':
+          return q.data.correctAnswer !== undefined;
+        case 'numeric':
+          return q.data.correctAnswer !== undefined && q.data.correctAnswer !== null;
+        case 'matching':
+          return q.data.pairs && q.data.pairs.length >= 2 && 
+                 q.data.pairs.every(p => p.left.trim() && p.right.trim());
+        default:
+          return false;
+      }
+    });
 
     if (validQuestions.length === 0) {
       alert('Legalább egy teljes kérdést ki kell tölteni!');
@@ -976,7 +1044,7 @@ function CreateQuizView({ onCreateSuccess }) {
                   </div>
                 ) : (
                   <div className="border-2 border-dashed border-gray-300 rounded-lg p-6 text-center hover:border-indigo-400 transition">
-                    <Image className="w-12 h-12 text-gray-400 mx-auto mb-2" />
+                    <ImageIcon className="w-12 h-12 text-gray-400 mx-auto mb-2" />
                     <input
                       type="file"
                       accept="image/*"
@@ -990,7 +1058,7 @@ function CreateQuizView({ onCreateSuccess }) {
                     >
                       Kép feltöltése
                     </label>
-                    <p className="text-xs text-gray-500 mt-1">PNG, JPG, GIF (max 2MB)</p>
+                    <p className="text-xs text-gray-500 mt-1">PNG, JPG, GIF (max 1MB)</p>
                   </div>
                 )}
               </div>

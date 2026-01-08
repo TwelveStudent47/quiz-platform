@@ -501,6 +501,8 @@ function CreateQuizView({ onCreateSuccess }) {
   const [title, setTitle] = useState('');
   const [topic, setTopic] = useState('');
   const [description, setDescription] = useState('');
+  const [isTimeLimited, setIsTimeLimited] = useState(false);
+  const [timeLimit, setTimeLimit] = useState(30);
   const [questions, setQuestions] = useState([{
     text: '',
     image: null,
@@ -609,6 +611,7 @@ function CreateQuizView({ onCreateSuccess }) {
           title,
           topic,
           description,
+          timeLimit: isTimeLimited ? timeLimit : null,
           questions: validQuestions
         })
       });
@@ -674,6 +677,42 @@ function CreateQuizView({ onCreateSuccess }) {
                 placeholder="pl. Alapvető JS koncepciók"
                 className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent"
               />
+            </div>
+          </div>
+
+          <div className="border-t pt-4">
+            <div className="flex items-center justify-between">
+              <div>
+                <label className="flex items-center gap-3 cursor-pointer">
+                  <input
+                    type="checkbox"
+                    checked={isTimeLimited}
+                    onChange={(e) => setIsTimeLimited(e.target.checked)}
+                    className="w-5 h-5 text-indigo-600 rounded focus:ring-2 focus:ring-indigo-500"
+                  />
+                  <div>
+                    <span className="text-sm font-medium text-gray-700">Időzített teszt</span>
+                    <p className="text-xs text-gray-500">Időkorlát beállítása a teszt kitöltésére</p>
+                  </div>
+                </label>
+              </div>
+              
+              {isTimeLimited && (
+                <div className="flex items-center gap-3">
+                  <Clock className="w-5 h-5 text-gray-400" />
+                  <div className="flex items-center gap-2">
+                    <input
+                      type="number"
+                      min="1"
+                      max="300"
+                      value={timeLimit}
+                      onChange={(e) => setTimeLimit(parseInt(e.target.value) || 1)}
+                      className="w-20 px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent text-center"
+                    />
+                    <span className="text-sm text-gray-700 font-medium">perc</span>
+                  </div>
+                </div>
+              )}
             </div>
           </div>
         </div>
@@ -879,10 +918,34 @@ function QuizView({ quiz, onComplete }) {
   const [answers, setAnswers] = useState({});
   const [result, setResult] = useState(null);
   const [startTime] = useState(Date.now());
+  const [timeRemaining, setTimeRemaining] = useState(null);
+  const [quizData, setQuizData] = useState(null);
 
   useEffect(() => {
     loadQuiz();
   }, []);
+
+  useEffect(() => {
+    if (quizData?.time_limit && timeRemaining === null) {
+      setTimeRemaining(quizData.time_limit * 60);
+    }
+  }, [quizData]);
+
+  useEffect(() => {
+    if (timeRemaining === null || timeRemaining <= 0 || result) return;
+
+    const timer = setInterval(() => {
+      setTimeRemaining(prev => {
+        if (prev <= 1) {
+          handleSubmit();
+          return 0;
+        }
+        return prev - 1;
+      });
+    }, 1000);
+
+    return () => clearInterval(timer);
+  }, [timeRemaining, result]);
 
   const shuffleArray = (array) => {
     const shuffled = [...array];
@@ -897,6 +960,7 @@ function QuizView({ quiz, onComplete }) {
     try {
       const res = await fetch(`${API_URL}/api/quizzes/${quiz.id}`, { credentials: 'include' });
       const data = await res.json();
+      setQuizData(data.quiz);
       
       const shuffledQuestions = shuffleArray(data.questions).map(q => {
         const optionsWithIndex = q.options.map((opt, idx) => ({ option: opt, originalIndex: idx }));
@@ -1031,6 +1095,12 @@ function QuizView({ quiz, onComplete }) {
 
   const currentQuestion = questions[currentIndex];
 
+  const formatTime = (seconds) => {
+    const mins = Math.floor(seconds / 60);
+    const secs = seconds % 60;
+    return `${mins}:${secs.toString().padStart(2, '0')}`;
+  };
+
   return (
     <div className="max-w-3xl mx-auto">
       <div className="bg-white rounded-xl shadow-lg p-8">
@@ -1039,9 +1109,21 @@ function QuizView({ quiz, onComplete }) {
             <span className="text-sm font-medium text-gray-600">
               Kérdés {currentIndex + 1} / {questions.length}
             </span>
-            <span className="text-sm text-gray-500">
-              {Object.keys(answers).length} / {questions.length} megválaszolva
-            </span>
+            <div className="flex items-center gap-4">
+              <span className="text-sm text-gray-500">
+                {Object.keys(answers).length} / {questions.length} megválaszolva
+              </span>
+              {timeRemaining !== null && (
+                <div className={`flex items-center gap-2 px-3 py-1 rounded-lg font-medium ${
+                  timeRemaining < 60 ? 'bg-red-100 text-red-700' : 
+                  timeRemaining < 300 ? 'bg-orange-100 text-orange-700' : 
+                  'bg-blue-100 text-blue-700'
+                }`}>
+                  <Clock className="w-4 h-4" />
+                  <span>{formatTime(timeRemaining)}</span>
+                </div>
+              )}
+            </div>
           </div>
           <div className="w-full bg-gray-200 rounded-full h-2">
             <div

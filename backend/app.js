@@ -1,4 +1,3 @@
-// server.js - Quiz Platform Backend
 const express = require('express');
 const session = require('express-session');
 const passport = require('passport');
@@ -130,8 +129,8 @@ app.post('/api/upload', isAuthenticated, upload.single('file'), async (req, res)
     const quizData = await parseQuizFile(file.buffer, fileType);
 
     const quizResult = await pool.query(
-      'INSERT INTO quizzes (user_id, title, description, topic) VALUES ($1, $2, $3, $4) RETURNING id',
-      [req.user.id, quizData.title, quizData.description || '', quizData.topic || '']
+      'INSERT INTO quizzes (user_id, title, description, topic, time_limit) VALUES ($1, $2, $3, $4, $5) RETURNING id',
+      [req.user.id, quizData.title, quizData.description || '', quizData.topic || '', quizData.timeLimit || null]
     );
     
     const quizId = quizResult.rows[0].id;
@@ -153,15 +152,15 @@ app.post('/api/upload', isAuthenticated, upload.single('file'), async (req, res)
 
 app.post('/api/create-quiz', isAuthenticated, async (req, res) => {
   try {
-    const { title, description, topic, questions } = req.body;
+    const { title, description, topic, timeLimit, questions } = req.body;
 
     if (!title || !questions || questions.length === 0) {
       return res.status(400).json({ error: 'Title and questions are required' });
     }
 
     const quizResult = await pool.query(
-      'INSERT INTO quizzes (user_id, title, description, topic) VALUES ($1, $2, $3, $4) RETURNING id',
-      [req.user.id, title, description || '', topic || '']
+      'INSERT INTO quizzes (user_id, title, description, topic, time_limit) VALUES ($1, $2, $3, $4, $5) RETURNING id',
+      [req.user.id, title, description || '', topic || '', timeLimit]
     );
     
     const quizId = quizResult.rows[0].id;

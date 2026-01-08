@@ -1,0 +1,62 @@
+import React from 'react';
+import { Plus, Minus, CheckCircle } from 'lucide-react';
+
+const MultipleChoiceEditor = ({ question, qIndex, updateOption, addOption, removeOption, toggleMultipleChoice }) => {
+  return (
+    <div>
+      <div className="flex items-center justify-between mb-2">
+        <label className="block text-sm font-medium text-gray-700">
+          Válaszlehetőségek * ({question.data.correctIndices?.length || 0} helyes)
+        </label>
+        <div className="flex items-center gap-2">
+          <button
+            onClick={() => removeOption(qIndex)}
+            disabled={(question.data.options?.length || 0) <= 2}
+            className="p-1 text-gray-600 hover:bg-gray-100 rounded disabled:opacity-50"
+            type="button"
+          >
+            <Minus className="w-4 h-4" />
+          </button>
+          <button
+            onClick={() => addOption(qIndex)}
+            disabled={(question.data.options?.length || 0) >= 6}
+            className="p-1 text-gray-600 hover:bg-gray-100 rounded disabled:opacity-50"
+            type="button"
+          >
+            <Plus className="w-4 h-4" />
+          </button>
+        </div>
+      </div>
+      <div className="space-y-2">
+        {(question.data.options || []).map((option, oIndex) => (
+          <div key={oIndex} className="flex items-center gap-3">
+            <input
+              type="checkbox"
+              checked={question.data.correctIndices?.includes(oIndex)}
+              onChange={() => toggleMultipleChoice(qIndex, oIndex)}
+              className="w-5 h-5 text-indigo-600 rounded cursor-pointer"
+            />
+            <span className="font-medium text-gray-700 w-6">
+              {String.fromCharCode(65 + oIndex)}.
+            </span>
+            <input
+              type="text"
+              value={option}
+              onChange={(e) => updateOption(qIndex, oIndex, e.target.value)}
+              placeholder={`Válasz ${String.fromCharCode(65 + oIndex)}`}
+              className="flex-1 px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent"
+            />
+            {question.data.correctIndices?.includes(oIndex) && (
+              <CheckCircle className="w-5 h-5 text-green-500" />
+            )}
+          </div>
+        ))}
+      </div>
+      <p className="text-xs text-gray-500 mt-2">
+        💡 Pipáld be az összes helyes választ
+      </p>
+    </div>
+  );
+};
+
+export default MultipleChoiceEditor;

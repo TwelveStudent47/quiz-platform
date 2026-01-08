@@ -277,39 +277,25 @@ function Dashboard({ quizzes, history, searchTerm, onSearch, onStartQuiz, onRevi
               quizzes.map((quiz) => (
                 <div
                   key={quiz.id}
-                  className="border border-gray-200 rounded-lg p-4 hover:border-indigo-300 hover:shadow-md transition"
+                  className="relative border border-gray-200 rounded-lg p-4 hover:border-indigo-300 hover:shadow-md transition cursor-pointer group"
+                  onClick={() => onStartQuiz(quiz)}
                 >
-                  <div 
-                    className="cursor-pointer"
-                    onClick={() => onStartQuiz(quiz)}
+                  <h3 className="font-semibold text-gray-800 pr-8">{quiz.title}</h3>
+                  <div className="flex justify-between items-center mt-2 text-sm text-gray-500">
+                    <span>{quiz.question_count} kérdés</span>
+                    {quiz.topic && <span className="bg-indigo-100 text-indigo-700 px-2 py-1 rounded">{quiz.topic}</span>}
+                  </div>
+                  
+                  <button
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      onDeleteQuiz(quiz.id);
+                    }}
+                    className="absolute top-3 right-3 p-2 text-gray-400 hover:text-red-600 hover:bg-red-50 rounded-lg transition opacity-0 group-hover:opacity-100"
+                    title="Teszt törlése"
                   >
-                    <h3 className="font-semibold text-gray-800">{quiz.title}</h3>
-                    <div className="flex justify-between items-center mt-2 text-sm text-gray-500">
-                      <span>{quiz.question_count} kérdés</span>
-                      {quiz.topic && <span className="bg-indigo-100 text-indigo-700 px-2 py-1 rounded">{quiz.topic}</span>}
-                    </div>
-                  </div>
-                  <div className="mt-3 pt-3 border-t border-gray-200 flex gap-2">
-                    <button
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        onStartQuiz(quiz);
-                      }}
-                      className="flex-1 px-3 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 transition text-sm font-medium"
-                    >
-                      Kitöltés
-                    </button>
-                    <button
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        onDeleteQuiz(quiz.id);
-                      }}
-                      className="px-3 py-2 bg-red-50 text-red-600 rounded-lg hover:bg-red-100 transition"
-                      title="Teszt törlése"
-                    >
-                      <Trash2 className="w-4 h-4" />
-                    </button>
-                  </div>
+                    <Trash2 className="w-4 h-4" />
+                  </button>
                 </div>
               ))
             )}

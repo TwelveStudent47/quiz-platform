@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { Search, Upload, BookOpen, TrendingUp, Clock, CheckCircle, X, LogOut, Eye, XCircle } from 'lucide-react';
 
-const API_URL = 'http://localhost:5000';
+const API_URL = 'https://quiz-platform-hnww.onrender.com';
 
 export default function QuizPlatform() {
   const [user, setUser] = useState(null);

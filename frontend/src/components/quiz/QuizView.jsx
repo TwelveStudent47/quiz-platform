@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Clock, CheckCircle } from 'lucide-react';
+import { Clock, CheckCircle, Trophy, Star, Frown, Meh } from 'lucide-react';
 import { quizAPI } from '../../services/api';
 import { shuffleArray } from '../../utils/helpers';
 import Card, { CardBody } from '../common/Card';
@@ -169,16 +169,73 @@ const QuizView = ({ quiz, onComplete }) => {
   }
 
   if (result) {
+    const percentage = Math.round(result.percentage);
+    
+    // Dinamikus ikon és szín választás
+    const getResultIcon = () => {
+      if (percentage >= 90) {
+        return {
+          icon: Trophy,
+          color: 'text-yellow-500',
+          bgColor: 'bg-yellow-50',
+          message: 'Kiváló teljesítmény! 🎉'
+        };
+      } else if (percentage >= 80) {
+        return {
+          icon: Star,
+          color: 'text-green-500',
+          bgColor: 'bg-green-50',
+          message: 'Nagyon jó munka! ⭐'
+        };
+      } else if (percentage >= 70) {
+        return {
+          icon: CheckCircle,
+          color: 'text-green-500',
+          bgColor: 'bg-green-50',
+          message: 'Jó teljesítmény! ✓'
+        };
+      } else if (percentage >= 50) {
+        return {
+          icon: Meh,
+          color: 'text-orange-500',
+          bgColor: 'bg-orange-50',
+          message: 'Még van mit fejlődni! 💪'
+        };
+      } else {
+        return {
+          icon: Frown,
+          color: 'text-red-500',
+          bgColor: 'bg-red-50',
+          message: 'Ne add fel, próbáld újra! 🔄'
+        };
+      }
+    };
+    
+    const resultIcon = getResultIcon();
+    const ResultIcon = resultIcon.icon;
+    
     return (
       <div className="max-w-2xl mx-auto">
         <Card>
           <CardBody className="p-8">
             <div className="text-center">
-              <CheckCircle className="w-20 h-20 text-green-500 mx-auto mb-4" />
-              <h2 className="text-3xl font-bold text-gray-800 mb-2">Teszt Befejezve!</h2>
-              <div className="text-6xl font-bold text-indigo-600 my-6">
-                {Math.round(result.percentage)}%
+              {/* Dinamikus ikon színes háttérrel */}
+              <div className={`inline-flex items-center justify-center w-24 h-24 ${resultIcon.bgColor} rounded-full mb-4`}>
+                <ResultIcon className={`w-16 h-16 ${resultIcon.color}`} />
               </div>
+              
+              <h2 className="text-3xl font-bold text-gray-800 mb-2">Teszt Befejezve!</h2>
+              
+              {/* Üzenet */}
+              <p className="text-lg font-medium text-gray-700 mb-4">
+                {resultIcon.message}
+              </p>
+              
+              {/* Százalék - dinamikus szín */}
+              <div className={`text-6xl font-bold my-6 ${resultIcon.color}`}>
+                {percentage}%
+              </div>
+              
               <p className="text-xl text-gray-600 mb-2">
                 {result.score} / {result.total_points} pont
               </p>

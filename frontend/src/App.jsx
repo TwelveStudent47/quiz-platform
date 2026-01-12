@@ -4,7 +4,6 @@ import { useQuizzes } from './hooks/useQuizzes';
 import { useHistory } from './hooks/useHistory';
 import { quizAPI } from './services/api';
 
-// Components
 import LoginPage from './components/auth/LoginPage';
 import Header from './components/layout/Header';
 import Dashboard from './components/dashboard/Dashboard';
@@ -51,7 +50,6 @@ function AppContent() {
 
   const handleReviewAttempt = async (attempt) => {
     try {
-      // Use new endpoint that returns attempt with questions
       const response = await fetch(`http://localhost:5000/api/attempts/${attempt.id}`, {
         credentials: 'include'
       });

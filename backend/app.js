@@ -1,4 +1,3 @@
-// server.js - Quiz Platform Backend
 const express = require('express');
 const session = require('express-session');
 const passport = require('passport');
@@ -18,7 +17,7 @@ const pool = new Pool({
 });
 
 app.use(cors({ origin: process.env.FRONTEND_URL || 'http://localhost:3000', credentials: true }));
-app.use(express.json({ limit: '10mb' })); // Increase payload limit for images
+app.use(express.json({ limit: '10mb' }));
 app.use(express.urlencoded({ limit: '10mb', extended: true }));
 app.use(session({
   secret: process.env.SESSION_SECRET || 'your-secret-key',
@@ -102,7 +101,6 @@ async function parseQuizFile(buffer, fileType) {
         if (err) {
           reject(err);
         } else {
-          // Convert XML structure to our JSON format
           const quiz = result.quiz;
           const formatted = {
             title: quiz.title[0],
@@ -358,7 +356,6 @@ app.get('/api/history', isAuthenticated, async (req, res) => {
 
 app.get('/api/attempts/:id', isAuthenticated, async (req, res) => {
   try {
-    // Get attempt details
     const { rows: attempts } = await pool.query(
       `SELECT a.*, q.title as quiz_title 
        FROM attempts a 
@@ -373,13 +370,11 @@ app.get('/api/attempts/:id', isAuthenticated, async (req, res) => {
     
     const attempt = attempts[0];
     
-    // Get questions for this quiz
     const { rows: questions } = await pool.query(
       'SELECT * FROM questions WHERE quiz_id = $1 ORDER BY order_index',
       [attempt.quiz_id]
     );
     
-    // Return attempt with questions
     res.json({
       ...attempt,
       questions: questions

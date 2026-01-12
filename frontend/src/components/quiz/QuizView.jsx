@@ -229,7 +229,7 @@ const QuizView = ({ quiz, onComplete }) => {
           <div className="mb-8">
             <div className="flex items-start gap-3 mb-4">
               <span className="px-3 py-1 bg-indigo-100 text-indigo-700 rounded-full text-sm font-medium">
-                {currentQuestion.question_points} pont
+                {currentQuestion.points} pont
               </span>
             </div>
             

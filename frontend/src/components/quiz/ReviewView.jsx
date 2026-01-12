@@ -134,7 +134,7 @@ const ReviewView = ({ attempt, onClose }) => {
                         <span className={`px-2 py-1 rounded text-xs font-medium ml-2 whitespace-nowrap ${
                           isCorrect ? 'bg-green-200 text-green-800' : 'bg-red-200 text-red-800'
                         }`}>
-                          {question.question_points || 1} pont
+                          {question.points || 1} pont
                         </span>
                       </div>
                       <span className="text-xs text-gray-500 mt-1 inline-block">

@@ -51,15 +51,21 @@ function AppContent() {
 
   const handleReviewAttempt = async (attempt) => {
     try {
-      const quizData = await quizAPI.getById(attempt.quiz_id);
-      setReviewAttempt({
-        ...attempt,
-        questions: quizData.questions
+      // Use new endpoint that returns attempt with questions
+      const response = await fetch(`http://localhost:5000/api/attempts/${attempt.id}`, {
+        credentials: 'include'
       });
+      
+      if (!response.ok) {
+        throw new Error('Failed to load attempt');
+      }
+      
+      const attemptData = await response.json();
+      setReviewAttempt(attemptData);
       setView(VIEWS.REVIEW);
     } catch (err) {
-      console.error('Failed to load quiz for review:', err);
-      alert('Hiba történt a teszt betöltése során');
+      console.error('Failed to load attempt for review:', err);
+      alert('Hiba történt az eredmények betöltése során');
     }
   };
 

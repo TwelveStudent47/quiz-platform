@@ -356,6 +356,40 @@ app.get('/api/history', isAuthenticated, async (req, res) => {
   }
 });
 
+app.get('/api/attempts/:id', isAuthenticated, async (req, res) => {
+  try {
+    // Get attempt details
+    const { rows: attempts } = await pool.query(
+      `SELECT a.*, q.title as quiz_title 
+       FROM attempts a 
+       JOIN quizzes q ON a.quiz_id = q.id 
+       WHERE a.id = $1 AND a.user_id = $2`,
+      [req.params.id, req.user.id]
+    );
+    
+    if (attempts.length === 0) {
+      return res.status(404).json({ error: 'Attempt not found' });
+    }
+    
+    const attempt = attempts[0];
+    
+    // Get questions for this quiz
+    const { rows: questions } = await pool.query(
+      'SELECT * FROM questions WHERE quiz_id = $1 ORDER BY order_index',
+      [attempt.quiz_id]
+    );
+    
+    // Return attempt with questions
+    res.json({
+      ...attempt,
+      questions: questions
+    });
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ error: 'Failed to fetch attempt details' });
+  }
+});
+
 app.get('/api/stats/:quizId', isAuthenticated, async (req, res) => {
   try {
     const { rows } = await pool.query(

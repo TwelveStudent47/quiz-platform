@@ -379,14 +379,14 @@ const CreateQuizView = ({ onCreateSuccess }) => {
           <div className="space-y-6">
             <div className="flex items-center justify-between">
               <h3 className="text-lg font-bold text-gray-800">Kérdések ({questions.length})</h3>
-              <Button
+              <button
                 onClick={addQuestion}
-                variant="primary"
-                size="sm"
+                type="button"
+                className="inline-flex items-center gap-2 px-3 py-1.5 bg-indigo-600 text-white text-sm font-medium rounded-lg hover:bg-indigo-700 transition-colors"
               >
-                <Plus className="w-4 h-4 mr-2" />
+                <Plus className="w-4 h-4" />
                 Új Kérdés
-              </Button>
+              </button>
             </div>
 
             {questions.map((question, qIndex) => (

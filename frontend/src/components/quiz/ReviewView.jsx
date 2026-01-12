@@ -184,14 +184,19 @@ const ReviewView = ({ attempt, onClose }) => {
                                 }`}>
                                   {option}
                                 </span>
-                                {isCorrectAnswer && (
+                                {isCorrectAnswer && !isUserAnswer && (
                                   <span className="text-xs bg-green-200 text-green-800 px-2 py-1 rounded-full font-medium">
-                                    Helyes válasz
+                                    ✓ Helyes válasz
                                   </span>
                                 )}
-                                {isUserAnswer && !isCorrectAnswer && (
+                                {isUserAnswer && !isCorrect && (
                                   <span className="text-xs bg-red-200 text-red-800 px-2 py-1 rounded-full font-medium">
-                                    Te válaszod
+                                    ✗ Te választottad
+                                  </span>
+                                )}
+                                {isUserAnswer && isCorrect && (
+                                  <span className="text-xs bg-green-200 text-green-800 px-2 py-1 rounded-full font-medium">
+                                    ✓ Te választottad (Helyes!)
                                   </span>
                                 )}
                               </div>
@@ -229,9 +234,19 @@ const ReviewView = ({ attempt, onClose }) => {
                                 }`}>
                                   {option}
                                 </span>
-                                {isCorrectAnswer && (
+                                {isCorrectAnswer && !isUserAnswer && (
                                   <span className="text-xs bg-green-200 text-green-800 px-2 py-1 rounded-full font-medium">
-                                    Helyes
+                                    ✓ Helyes
+                                  </span>
+                                )}
+                                {isUserAnswer && !isCorrectAnswer && (
+                                  <span className="text-xs bg-red-200 text-red-800 px-2 py-1 rounded-full font-medium">
+                                    ✗ Rosszul választva
+                                  </span>
+                                )}
+                                {isUserAnswer && isCorrectAnswer && (
+                                  <span className="text-xs bg-green-200 text-green-800 px-2 py-1 rounded-full font-medium">
+                                    ✓ Helyesen választva
                                   </span>
                                 )}
                               </div>

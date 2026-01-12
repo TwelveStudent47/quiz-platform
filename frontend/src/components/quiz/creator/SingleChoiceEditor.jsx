@@ -29,24 +29,28 @@ const SingleChoiceEditor = ({ question, qIndex, updateQuestionData, updateOption
       </div>
       <div className="space-y-2">
         {(question.data.options || []).map((option, oIndex) => (
-          <div key={oIndex} className="flex items-center gap-3">
-            <input
-              type="radio"
-              name={`correct-${qIndex}`}
-              checked={question.data.correctIndex === oIndex}
-              onChange={() => updateQuestionData(qIndex, 'correctIndex', oIndex)}
-              className="w-5 h-5 text-indigo-600 cursor-pointer"
-            />
-            <input
-              type="text"
-              value={option}
-              onChange={(e) => updateOption(qIndex, oIndex, e.target.value)}
-              placeholder={`Válasz ${oIndex + 1}`}
-              className="flex-1 px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent"
-            />
-            {question.data.correctIndex === oIndex && (
-              <span className="text-xs text-green-600 font-medium whitespace-nowrap">✓ Helyes</span>
-            )}
+          <div key={oIndex} className="relative">
+            <div className="flex items-center gap-2">
+              <input
+                type="radio"
+                name={`correct-${qIndex}`}
+                checked={question.data.correctIndex === oIndex}
+                onChange={() => updateQuestionData(qIndex, 'correctIndex', oIndex)}
+                className="w-5 h-5 text-indigo-600 cursor-pointer flex-shrink-0"
+              />
+              <input
+                type="text"
+                value={option}
+                onChange={(e) => updateOption(qIndex, oIndex, e.target.value)}
+                placeholder={`Válasz ${oIndex + 1}`}
+                className="flex-1 px-3 py-2 pr-16 text-sm sm:text-base border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent"
+              />
+              {question.data.correctIndex === oIndex && (
+                <span className="absolute right-2 top-1/2 -translate-y-1/2 text-xs text-green-600 font-medium whitespace-nowrap bg-white px-1">
+                  ✓ Helyes
+                </span>
+              )}
+            </div>
           </div>
         ))}
       </div>

@@ -287,24 +287,24 @@ const CreateQuizView = ({ onCreateSuccess }) => {
   };
 
   return (
-    <div className="max-w-7xl mx-auto">
+    <div className="max-w-7xl mx-auto px-2 sm:px-4 lg:px-6">
       <Card>
-        <CardBody className="p-6">
+        <CardBody className="p-3 sm:p-6 lg:p-8">
           {/* Header */}
-          <div className="mb-6">
-            <h2 className="text-2xl font-bold text-gray-800 flex items-center gap-2">
-              <Edit3 className="w-6 h-6" />
+          <div className="mb-4 sm:mb-6">
+            <h2 className="text-xl sm:text-2xl font-bold text-gray-800 flex items-center gap-2">
+              <Edit3 className="w-5 h-5 sm:w-6 sm:h-6 text-indigo-600" />
               Új Teszt Készítése
             </h2>
-            <p className="text-sm text-gray-600 mt-1">
+            <p className="text-xs sm:text-sm text-gray-600 mt-1">
               Hozz létre egyedi tesztet különböző kérdéstípusokkal
             </p>
           </div>
 
-          {/* Quiz Info - Kompakt Grid */}
-          <div className="bg-gray-50 p-4 rounded-lg mb-6">
-            <div className="grid md:grid-cols-3 gap-4 mb-3">
-              <div>
+          {/* Quiz Info - Responsive Grid */}
+          <div className="bg-gray-50 p-3 sm:p-4 lg:p-6 rounded-lg mb-4 sm:mb-6">
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3 sm:gap-4 mb-3">
+              <div className="sm:col-span-2 lg:col-span-1">
                 <label className="block text-xs font-medium text-gray-600 mb-1">
                   Teszt címe *
                 </label>
@@ -313,7 +313,7 @@ const CreateQuizView = ({ onCreateSuccess }) => {
                   value={title}
                   onChange={(e) => setTitle(e.target.value)}
                   placeholder="JavaScript Alapok"
-                  className="w-full px-3 py-2 text-sm border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent"
+                  className="w-full px-3 py-2 text-sm sm:text-base border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent"
                 />
               </div>
 
@@ -326,7 +326,7 @@ const CreateQuizView = ({ onCreateSuccess }) => {
                   value={topic}
                   onChange={(e) => setTopic(e.target.value)}
                   placeholder="Programming"
-                  className="w-full px-3 py-2 text-sm border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent"
+                  className="w-full px-3 py-2 text-sm sm:text-base border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent"
                 />
               </div>
 
@@ -339,13 +339,13 @@ const CreateQuizView = ({ onCreateSuccess }) => {
                   value={description}
                   onChange={(e) => setDescription(e.target.value)}
                   placeholder="Alapvető JS koncepciók"
-                  className="w-full px-3 py-2 text-sm border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent"
+                  className="w-full px-3 py-2 text-sm sm:text-base border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent"
                 />
               </div>
             </div>
 
-            {/* Time Limit - Inline */}
-            <div className="flex items-center gap-4 pt-3 border-t border-gray-200">
+            {/* Time Limit - Responsive */}
+            <div className="flex flex-col sm:flex-row items-start sm:items-center gap-2 sm:gap-4 pt-3 border-t border-gray-200">
               <label className="flex items-center gap-2 cursor-pointer">
                 <input
                   type="checkbox"
@@ -357,7 +357,7 @@ const CreateQuizView = ({ onCreateSuccess }) => {
               </label>
               
               {isTimeLimited && (
-                <div className="flex items-center gap-2">
+                <div className="flex items-center gap-2 ml-6 sm:ml-0">
                   <Clock className="w-4 h-4 text-gray-400" />
                   <input
                     type="number"
@@ -374,28 +374,28 @@ const CreateQuizView = ({ onCreateSuccess }) => {
           </div>
 
           {/* Questions Header */}
-          <div className="flex items-center justify-between mb-4 pb-3 border-b-2 border-gray-200">
-            <h3 className="text-lg font-bold text-gray-800">
+          <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 mb-4 pb-3 border-b-2 border-gray-200">
+            <h3 className="text-base sm:text-lg font-bold text-gray-800">
               Kérdések <span className="text-indigo-600">({questions.length})</span>
             </h3>
             <button
               onClick={addQuestion}
               type="button"
-              className="inline-flex items-center gap-2 px-3 py-1.5 bg-indigo-600 text-white text-sm font-medium rounded-lg hover:bg-indigo-700 transition-colors"
+              className="inline-flex items-center gap-2 px-3 py-1.5 bg-indigo-600 text-white text-sm font-medium rounded-lg hover:bg-indigo-700 transition-colors w-full sm:w-auto justify-center"
             >
               <Plus className="w-4 h-4" />
               Új Kérdés
             </button>
           </div>
 
-          {/* Questions - Compact Layout */}
-          <div className="space-y-4">
+          {/* Questions - Responsive Layout */}
+          <div className="space-y-3 sm:space-y-4">
             {questions.map((question, qIndex) => (
               <div key={qIndex} className="border-2 border-gray-200 rounded-lg overflow-hidden">
-                {/* Question Header - Compact */}
-                <div className="bg-gradient-to-r from-indigo-50 to-purple-50 px-4 py-3 flex items-center justify-between">
-                  <div className="flex items-center gap-3">
-                    <span className="flex items-center justify-center w-8 h-8 bg-indigo-600 text-white rounded-full text-sm font-bold">
+                {/* Question Header - Responsive */}
+                <div className="bg-gradient-to-r from-indigo-50 to-purple-50 px-3 sm:px-4 py-2 sm:py-3 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-2">
+                  <div className="flex items-center gap-2 sm:gap-3">
+                    <span className="flex items-center justify-center w-7 h-7 sm:w-8 sm:h-8 bg-indigo-600 text-white rounded-full text-xs sm:text-sm font-bold">
                       {qIndex + 1}
                     </span>
                     <span className="px-2 py-1 bg-white border border-indigo-200 rounded-full text-xs font-medium text-indigo-700">
@@ -405,7 +405,7 @@ const CreateQuizView = ({ onCreateSuccess }) => {
                   {questions.length > 1 && (
                     <button
                       onClick={() => removeQuestion(qIndex)}
-                      className="p-1.5 text-red-600 hover:bg-red-50 rounded-lg transition"
+                      className="p-1.5 text-red-600 hover:bg-red-50 rounded-lg transition self-end sm:self-auto"
                       title="Kérdés törlése"
                     >
                       <Trash2 className="w-4 h-4" />
@@ -413,8 +413,8 @@ const CreateQuizView = ({ onCreateSuccess }) => {
                   )}
                 </div>
 
-                {/* Question Content - 2 Column Grid */}
-                <div className="p-4 grid md:grid-cols-2 gap-4">
+                {/* Question Content - Responsive Grid */}
+                <div className="p-3 sm:p-4 grid grid-cols-1 lg:grid-cols-2 gap-3 sm:gap-4">
                   {/* LEFT COLUMN */}
                   <div className="space-y-3">
                     {/* Question Text */}
@@ -426,12 +426,12 @@ const CreateQuizView = ({ onCreateSuccess }) => {
                         value={question.text}
                         onChange={(e) => updateQuestion(qIndex, 'text', e.target.value)}
                         placeholder="Írd ide a kérdést..."
-                        rows={2}
-                        className="w-full px-3 py-2 text-sm border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent"
+                        rows={3}
+                        className="w-full px-3 py-2 text-sm sm:text-base border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent"
                       />
                     </div>
 
-                    {/* Type and Points - Inline */}
+                    {/* Type and Points - Responsive */}
                     <div className="grid grid-cols-2 gap-2">
                       <div>
                         <label className="block text-xs font-medium text-gray-600 mb-1">
@@ -440,7 +440,7 @@ const CreateQuizView = ({ onCreateSuccess }) => {
                         <select
                           value={question.type}
                           onChange={(e) => changeQuestionType(qIndex, e.target.value)}
-                          className="w-full px-3 py-2 text-sm border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent"
+                          className="w-full px-2 sm:px-3 py-2 text-xs sm:text-sm border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent"
                         >
                           <option value="single_choice">Egy válaszos</option>
                           <option value="multiple_choice">Több válaszos</option>
@@ -460,20 +460,20 @@ const CreateQuizView = ({ onCreateSuccess }) => {
                           max="100"
                           value={question.points}
                           onChange={(e) => updateQuestion(qIndex, 'points', parseInt(e.target.value) || 1)}
-                          className="w-full px-3 py-2 text-sm border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent"
+                          className="w-full px-2 sm:px-3 py-2 text-sm sm:text-base border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent"
                         />
                       </div>
                     </div>
 
-                    {/* Image Upload - Compact */}
+                    {/* Image Upload - Responsive */}
                     <div>
                       <label className="block text-xs font-medium text-gray-600 mb-1">
                         Kép (opcionális)
                       </label>
                       <div className="flex gap-2">
-                        <label className="flex-1 flex items-center justify-center gap-2 px-3 py-2 border-2 border-dashed border-gray-300 rounded-lg cursor-pointer hover:border-indigo-400 transition text-sm">
+                        <label className="flex-1 flex items-center justify-center gap-2 px-3 py-2 border-2 border-dashed border-gray-300 rounded-lg cursor-pointer hover:border-indigo-400 transition text-xs sm:text-sm">
                           <ImageIcon className="w-4 h-4 text-gray-400" />
-                          <span className="text-gray-600">
+                          <span className="text-gray-600 truncate">
                             {question.image ? 'Kép kiválasztva ✓' : 'Kép feltöltése'}
                           </span>
                           <input
@@ -501,7 +501,7 @@ const CreateQuizView = ({ onCreateSuccess }) => {
                       )}
                     </div>
 
-                    {/* Explanation - Compact */}
+                    {/* Explanation - Responsive */}
                     <div>
                       <label className="block text-xs font-medium text-gray-600 mb-1">
                         Magyarázat (opcionális)
@@ -511,13 +511,13 @@ const CreateQuizView = ({ onCreateSuccess }) => {
                         onChange={(e) => updateQuestion(qIndex, 'explanation', e.target.value)}
                         placeholder="Miért ez a helyes válasz?"
                         rows={2}
-                        className="w-full px-3 py-2 text-sm border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent"
+                        className="w-full px-3 py-2 text-sm sm:text-base border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent"
                       />
                     </div>
                   </div>
 
                   {/* RIGHT COLUMN - Question Type Specific */}
-                  <div className="border-l border-gray-200 pl-4">
+                  <div className="lg:border-l border-t lg:border-t-0 border-gray-200 pt-3 lg:pt-0 lg:pl-4">
                     <label className="block text-xs font-medium text-gray-600 mb-2">
                       Válaszlehetőségek
                     </label>
@@ -576,14 +576,14 @@ const CreateQuizView = ({ onCreateSuccess }) => {
             ))}
           </div>
 
-          {/* Submit Buttons */}
-          <div className="mt-6 pt-4 border-t-2 border-gray-200 flex gap-3">
+          {/* Submit Buttons - Responsive */}
+          <div className="mt-4 sm:mt-6 pt-4 border-t-2 border-gray-200 flex flex-col sm:flex-row gap-2 sm:gap-3">
             <Button
               onClick={handleSave}
               disabled={loading || !title || questions.length === 0}
               variant="primary"
               size="lg"
-              className="flex-1"
+              className="flex-1 w-full"
             >
               {loading ? 'Mentés...' : 'Teszt Mentése'}
             </Button>
@@ -591,6 +591,7 @@ const CreateQuizView = ({ onCreateSuccess }) => {
               onClick={() => window.history.back()}
               variant="secondary"
               size="lg"
+              className="w-full sm:w-auto"
             >
               Mégse
             </Button>

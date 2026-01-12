@@ -18,7 +18,7 @@ const LoginPage = () => {
           size="lg"
           className="w-full"
         >
-          Belépés Google-lal
+          Belépés Google fiókkal
         </Button>
       </div>
     </div>

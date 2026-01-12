@@ -29,26 +29,28 @@ const MultipleChoiceEditor = ({ question, qIndex, updateOption, addOption, remov
       </div>
       <div className="space-y-2">
         {(question.data.options || []).map((option, oIndex) => (
-          <div key={oIndex} className="flex items-center gap-3">
-            <input
-              type="checkbox"
-              checked={question.data.correctIndices?.includes(oIndex)}
-              onChange={() => toggleMultipleChoice(qIndex, oIndex)}
-              className="w-5 h-5 text-indigo-600 rounded cursor-pointer"
-            />
-            <span className="font-medium text-gray-700 w-6">
-              {String.fromCharCode(65 + oIndex)}.
-            </span>
-            <input
-              type="text"
-              value={option}
-              onChange={(e) => updateOption(qIndex, oIndex, e.target.value)}
-              placeholder={`Válasz ${String.fromCharCode(65 + oIndex)}`}
-              className="flex-1 px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent"
-            />
-            {question.data.correctIndices?.includes(oIndex) && (
-              <CheckCircle className="w-5 h-5 text-green-500" />
-            )}
+          <div key={oIndex} className="relative">
+            <div className="flex items-center gap-2">
+              <input
+                type="checkbox"
+                checked={question.data.correctIndices?.includes(oIndex)}
+                onChange={() => toggleMultipleChoice(qIndex, oIndex)}
+                className="w-5 h-5 text-indigo-600 rounded cursor-pointer flex-shrink-0"
+              />
+              <span className="font-medium text-gray-700 w-6 flex-shrink-0">
+                {String.fromCharCode(65 + oIndex)}.
+              </span>
+              <input
+                type="text"
+                value={option}
+                onChange={(e) => updateOption(qIndex, oIndex, e.target.value)}
+                placeholder={`Válasz ${String.fromCharCode(65 + oIndex)}`}
+                className="flex-1 px-3 py-2 pr-10 text-sm sm:text-base border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent"
+              />
+              {question.data.correctIndices?.includes(oIndex) && (
+                <CheckCircle className="absolute right-2 top-1/2 -translate-y-1/2 w-5 h-5 text-green-500 flex-shrink-0" />
+              )}
+            </div>
           </div>
         ))}
       </div>

@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Edit3, Plus, Trash2, Clock, X, Image as ImageIcon } from 'lucide-react';
+import { Edit3, Plus, Trash2, Clock, X, Image as ImageIcon, Download } from 'lucide-react';
 import Card, { CardBody } from '../common/Card';
 import Button from '../common/Button';
 import SingleChoiceEditor from './creator/SingleChoiceEditor';
@@ -9,6 +9,7 @@ import NumericEditor from './creator/NumericEditor';
 import MatchingEditor from './creator/MatchingEditor';
 import { useQuizzes } from '../../hooks/useQuizzes';
 import { API_URL } from '../../utils/constants';
+import { exportToMoodleXML, downloadMoodleXML } from '../../utils/moodleXMLExport';
 
 const CreateQuizView = ({ onCreateSuccess }) => {
   const { createQuiz, loading } = useQuizzes();
@@ -285,6 +286,56 @@ const CreateQuizView = ({ onCreateSuccess }) => {
       alert('Hiba történt a mentés során');
     }
   };
+
+  const handleExportMoodleXML = () => {
+    if (!title.trim()) {
+      alert('Kérlek adj meg egy címet az exportáláshoz!');
+      return;
+    }
+
+    const validQuestions = questions.filter(q => {
+      if (!q.text.trim()) return false;
+      
+      switch(q.type) {
+        case 'single_choice':
+        case 'multiple_choice':
+          return q.data.options && q.data.options.every(o => o.trim());
+        case 'true_false':
+          return q.data.correctAnswer !== undefined;
+        case 'numeric':
+          return q.data.correctAnswer !== undefined && q.data.correctAnswer !== null;
+        case 'matching':
+          return q.data.pairs && q.data.pairs.length >= 2 && 
+                 q.data.pairs.every(p => p.left.trim() && p.right.trim());
+        default:
+          return false;
+      }
+    });
+
+    if (validQuestions.length === 0) {
+      alert('Legalább egy teljes kérdést ki kell tölteni az exportáláshoz!');
+      return;
+    }
+
+    try {
+      const quizData = {
+        title,
+        topic,
+        description,
+        questions: validQuestions
+      };
+      
+      const xml = exportToMoodleXML(quizData);
+      const filename = `${title.replace(/[^a-z0-9]/gi, '_').toLowerCase()}_moodle.xml`;
+      downloadMoodleXML(xml, filename);
+      
+      alert('Moodle XML sikeresen exportálva!');
+    } catch (err) {
+      console.error('Export failed:', err);
+      alert('Hiba történt az exportálás során');
+    }
+  };
+
 
   return (
     <div className="max-w-7xl mx-auto px-2 sm:px-4 lg:px-6">
@@ -577,24 +628,42 @@ const CreateQuizView = ({ onCreateSuccess }) => {
           </div>
 
           {/* Submit Buttons - Responsive */}
-          <div className="mt-4 sm:mt-6 pt-4 border-t-2 border-gray-200 flex flex-col sm:flex-row gap-2 sm:gap-3">
-            <Button
-              onClick={handleSave}
-              disabled={loading || !title || questions.length === 0}
-              variant="primary"
-              size="lg"
-              className="flex-1 w-full"
-            >
-              {loading ? 'Mentés...' : 'Teszt Mentése'}
-            </Button>
-            <Button
-              onClick={() => window.history.back()}
-              variant="secondary"
-              size="lg"
-              className="w-full sm:w-auto"
-            >
-              Mégse
-            </Button>
+           <div className="mt-4 sm:mt-6 pt-4 border-t-2 border-gray-200">
+            <div className="flex flex-col sm:flex-row gap-2 sm:gap-3">
+              <Button
+                onClick={handleSave}
+                disabled={loading || !title || questions.length === 0}
+                variant="primary"
+                size="lg"
+                className="flex-1 w-full"
+              >
+                {loading ? 'Mentés...' : 'Teszt Mentése'}
+              </Button>
+              
+              <Button
+                onClick={handleExportMoodleXML}
+                disabled={!title || questions.length === 0}
+                variant="secondary"
+                size="lg"
+                className="w-full sm:w-auto inline-flex items-center justify-center gap-2"
+              >
+                <Download className="w-4 h-4" />
+                Moodle XML Export
+              </Button>
+              
+              <Button
+                onClick={() => window.history.back()}
+                variant="secondary"
+                size="lg"
+                className="w-full sm:w-auto"
+              >
+                Mégse
+              </Button>
+            </div>
+            
+            <p className="text-xs text-gray-500 mt-2 text-center">
+              💡 A Moodle XML export lehetővé teszi a teszt importálását Moodle-be
+            </p>
           </div>
         </CardBody>
       </Card>

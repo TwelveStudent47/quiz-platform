@@ -101,6 +101,17 @@ const QuizView = ({ quiz, onComplete }) => {
     setAnswers({ ...answers, [questionId]: newAnswers });
   };
 
+  const handleMatchingAnswer = (questionId, leftItem, rightIndex) => {
+    const currentMatching = answers[questionId] || {};
+    setAnswers({
+      ...answers,
+      [questionId]: {
+        ...currentMatching,
+        [leftItem]: rightIndex
+      }
+    });
+  };
+
   const handleSubmit = async () => {
     const timeSpent = Math.floor((Date.now() - startTime) / 1000);
     
@@ -331,6 +342,55 @@ const QuizView = ({ quiz, onComplete }) => {
                       Mértékegység: {currentQuestion.question_data.unit}
                     </p>
                   )}
+                </div>
+              )}
+
+              {currentQuestion.question_type === 'matching' && (
+                <div className="space-y-4">
+                  <p className="text-sm text-gray-600 mb-4">
+                    Válaszd ki minden bal oldali elemhez a megfelelő jobb oldali párt!
+                  </p>
+                  {currentQuestion.question_data.pairs.map((pair, pairIdx) => {
+                    const userMatch = answers[currentQuestion.id]?.[pair.left];
+                    const rightItems = currentQuestion.question_data.shuffledRightItems || 
+                                      currentQuestion.question_data.pairs.map(p => p.right);
+                    
+                    return (
+                      <div key={pairIdx} className="p-4 bg-gray-50 rounded-lg">
+                        <div className="flex items-center gap-4">
+                          {/* Left item */}
+                          <div className="flex-1 font-semibold text-gray-800">
+                            {pair.left}
+                          </div>
+                          
+                          {/* Arrow */}
+                          <div className="text-gray-400">
+                            →
+                          </div>
+                          
+                          {/* Right items dropdown */}
+                          <div className="flex-1">
+                            <select
+                              value={userMatch !== undefined ? userMatch : ''}
+                              onChange={(e) => handleMatchingAnswer(
+                                currentQuestion.id, 
+                                pair.left, 
+                                e.target.value === '' ? undefined : parseInt(e.target.value)
+                              )}
+                              className="w-full px-4 py-2 border-2 border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent"
+                            >
+                              <option value="">-- Válassz --</option>
+                              {rightItems.map((rightItem, rightIdx) => (
+                                <option key={rightIdx} value={rightIdx}>
+                                  {rightItem}
+                                </option>
+                              ))}
+                            </select>
+                          </div>
+                        </div>
+                      </div>
+                    );
+                  })}
                 </div>
               )}
             </div>

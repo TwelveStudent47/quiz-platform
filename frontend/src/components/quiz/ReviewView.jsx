@@ -298,32 +298,88 @@ const ReviewView = ({ attempt, onClose }) => {
                     {question.question_type === 'matching' && (
                       <div className="space-y-2">
                         {data.pairs.map((pair, pairIdx) => {
-                          const userRightIdx = userAnswer?.[pairIdx];
-                          const correctRightIdx = data.correctPairs[pairIdx];
-                          const isPairCorrect = userRightIdx === correctRightIdx;
+                          // userAnswer formátuma lehet:
+                          // 1. {leftText: rightIndex} - QuizView új verziójából
+                          // 2. {pairIndex: rightIndex} - régebbi verzióból
+                          // 3. {0: 1, 1: 2} - index alapú
+                          
+                          let userRightIdx;
+                          
+                          // Próbáljuk meg mindkét formátumot
+                          if (userAnswer) {
+                            // Első próba: leftText kulccsal (pl. "Macska": 0)
+                            if (userAnswer[pair.left] !== undefined) {
+                              userRightIdx = userAnswer[pair.left];
+                            }
+                            // Második próba: pairIndex kulccsal (pl. 0: 1)
+                            else if (userAnswer[pairIdx] !== undefined) {
+                              userRightIdx = userAnswer[pairIdx];
+                            }
+                            // Harmadik próba: stringként
+                            else if (userAnswer[pairIdx.toString()] !== undefined) {
+                              userRightIdx = userAnswer[pairIdx.toString()];
+                            }
+                          }
+                          
+                          const correctRightIdx = data.correctPairs[pairIdx] ?? pairIdx;
+                          const isPairCorrect = userRightIdx !== undefined && userRightIdx === correctRightIdx;
+                          
+                          // User által választott jobb oldali elem
+                          const userRightText = userRightIdx !== undefined && data.pairs[userRightIdx] 
+                            ? data.pairs[userRightIdx].right 
+                            : null;
                           
                           return (
                             <div
                               key={pairIdx}
-                              className={`p-3 rounded-lg ${
+                              className={`p-4 rounded-lg border-2 ${
                                 isPairCorrect 
-                                  ? 'bg-green-100 border-2 border-green-300' 
-                                  : 'bg-red-100 border-2 border-red-300'
+                                  ? 'bg-green-50 border-green-400' 
+                                  : 'bg-red-50 border-red-400'
                               }`}
                             >
-                              <div className="flex items-center gap-3">
-                                <span className="font-medium">{pair.left}</span>
-                                <span>→</span>
-                                <span className={isPairCorrect ? 'text-green-700 font-semibold' : 'text-red-700 font-semibold'}>
-                                  {data.pairs[userRightIdx]?.right || 'Nincs válasz'}
-                                </span>
-                              </div>
-                              {!isPairCorrect && (
-                                <p className="text-sm text-gray-600 mt-1">
-                                  Helyes: <span className="text-green-700 font-semibold">
-                                    {pair.right}
+                              <div className="flex items-center justify-between gap-4">
+                                {/* Bal oldal + user válasz */}
+                                <div className="flex items-center gap-3 flex-1">
+                                  <span className="font-semibold text-gray-900 min-w-[120px]">
+                                    {pair.left}
                                   </span>
-                                </p>
+                                  <span className="text-2xl text-gray-400">→</span>
+                                  <span className={`font-semibold ${
+                                    isPairCorrect ? 'text-green-700' : 'text-red-700'
+                                  }`}>
+                                    {userRightText || 'Nincs válasz'}
+                                  </span>
+                                </div>
+                                
+                                {/* Badge */}
+                                <div>
+                                  {isPairCorrect ? (
+                                    <span className="text-xs bg-green-600 text-white px-2 py-1 rounded-full font-bold">
+                                      ✓ HELYES
+                                    </span>
+                                  ) : userRightText ? (
+                                    <span className="text-xs bg-red-600 text-white px-2 py-1 rounded-full font-bold">
+                                      ✗ ROSSZ
+                                    </span>
+                                  ) : (
+                                    <span className="text-xs bg-gray-400 text-white px-2 py-1 rounded-full font-bold">
+                                      - NINCS VÁLASZ
+                                    </span>
+                                  )}
+                                </div>
+                              </div>
+                              
+                              {/* Helyes válasz ha rossz volt */}
+                              {!isPairCorrect && (
+                                <div className="mt-3 pt-3 border-t border-gray-300">
+                                  <p className="text-sm text-gray-600">
+                                    Helyes válasz: 
+                                    <span className="ml-2 font-bold text-green-700">
+                                      {pair.left} → {pair.right}
+                                    </span>
+                                  </p>
+                                </div>
                               )}
                             </div>
                           );

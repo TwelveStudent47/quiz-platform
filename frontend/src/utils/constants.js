@@ -18,5 +18,6 @@ export const VIEWS = {
   UPLOAD: 'upload',
   CREATE: 'create',
   QUIZ: 'quiz',
-  REVIEW: 'review'
+  REVIEW: 'review',
+  ALL_QUIZZES: 'all-quizzes'
 };

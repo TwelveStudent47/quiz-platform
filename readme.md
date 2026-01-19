@@ -1,263 +1,629 @@
 # 🎓 Quiz Platform
 
-Egy modern, full-stack tanulási platform tesztek feltöltésére, kitöltésére és eredmények nyomon követésére. Tervezd meg saját tanulási utadat, ismételd a témákat és kövesd a fejlődésedet!
+Egy modern, full-stack tanulási platform tesztek létrehozására, feltöltésére, kitöltésére és eredmények nyomon követésére. Tervezd meg saját tanulási utadat, készíts egyedi kérdéseket, ismételd a témákat és kövesd a fejlődésedet!
 
 ## ✨ Főbb Funkciók
 
-- 🔐 *Google OAuth bejelentkezés* - Biztonságos authentikáció
-- 📤 *Fájl feltöltés* - JSON és XML formátum támogatása
-- 🔀 *Random kérdések és válaszok* - Minden kitöltés más sorrendben
-- 📊 *Eredmény követés* - Teljes történet minden kitöltésről
-- 🔍 *Keresés* - Gyors keresés témakör és cím alapján
-- 👁️ *Visszanézés* - Minden kérdés részletes elemzése, elrontott válaszokkal
-- 💾 *Perzisztens adatok* - PostgreSQL adatbázis
-- 🎨 *Modern UI* - Tailwind CSS, responsive design
-- 🎯 *Személyre szabott profil* - Színes avatar kezdőbetűkkel
+### 🔐 Authentikáció & Profil
+- **Google OAuth bejelentkezés** - Biztonságos authentikáció
+- **Személyre szabott profil** - Színes avatar kezdőbetűkkel
+- **Session management** - Biztonságos session tárolás PostgreSQL-ben
 
-## Gyors Kezdés
+### 📝 Teszt Kezelés
+- **Kérdés Készítő** - Interaktív vizuális szerkesztő 5 kérdéstípussal:
+  - ✅ Egyszeres választás
+  - ☑️ Többszörös választás
+  - ✔️ Igaz/Hamis
+  - 🔢 Numerikus válasz (egység támogatással)
+  - 🔗 Párosítás (bal-jobb oldal)
+- **Fájl feltöltés** - JSON és Moodle XML formátum támogatása
+- **Moodle XML Export** - Exportálás LMS-be importáláshoz
+- **Teszt szerkesztés** - Címkép, téma, leírás, pontszámok, magyarázatok
+- **Időkorlát beállítás** - Opcionális timer funkció
+
+### 🎯 Teszt Kitöltés & Eredmények
+- **Random kérdések és válaszok** - Minden kitöltés más sorrendben
+- **Valós idejű timer** - Visszaszámlálás és backend validáció
+- **Részletes kiértékelés** - 5-szintű eredmény rendszer (🏆⭐👍📚💔)
+- **Visszanézés mód** - Minden kérdés színkódolt részletes elemzése
+- **Pontozási rendszer** - Részleges pont többszörös választásnál
+
+### 📊 Dashboard & Statisztikák
+- **Összes Teszt nézet** - Grid layout az összes elérhető teszttel
+- **Összes Eredmény nézet** - Teljes történet statisztikákkal:
+  - 🏆 Legjobb eredmény
+  - 🎯 Átlag eredmény
+  - 📈 Összes próbálkozás
+  - ⏱️ Összesített idő
+- **Nemrég kitöltött tesztek** - 5 legutóbbi teszt gyors elérése
+- **Legutóbbi eredmények** - 5 legfrissebb próbálkozás
+- **Teljesítmény badge-ek** - Vizuális visszajelzés (🏆 Kiváló, ⭐ Jó, 👍 Átlagos, 📚 Gyakorolj még)
+
+### 🔍 Egyéb Funkciók
+- **Keresés** - Gyors keresés cím és témakör alapján
+- **Responsive design** - Mobil, tablet, desktop optimalizálás
+- **Hamburger menü** - Mobilbarát navigáció
+- **Színkódolt UI** - Intuitív vizuális visszajelzések
+- **Perzisztens adatok** - PostgreSQL adatbázis
+- **Modern UI** - Tailwind CSS, clean design
+
+---
+
+## 🚀 Gyors Kezdés
 
 ### Előfeltételek
 
-- Node.js 16+ és npm
-- PostgreSQL 12+
-- Google Cloud Console fiók (OAuth-hoz)
+- **Node.js 16+** és npm
+- **PostgreSQL 12+**
+- **Google Cloud Console** fiók (OAuth-hoz)
 
 ### 1. Repository klónozása
 
-git clone https://github.com/yourusername/quiz-platform.git
+```bash
+git clone https://github.com/TwelveStudent47/quiz-platform.git
 cd quiz-platform
+```
 
 ### 2. Backend Setup
 
+```bash
 cd backend
 npm install
+```
 
-Hozz létre egy .env fájlt:
+Hozz létre egy `.env` fájlt:
 
-```bash
-env
+```env
+# Database
 DATABASE_URL=postgresql://user:password@localhost:5432/quiz_platform
+
+# Google OAuth
 GOOGLE_CLIENT_ID=your-client-id.apps.googleusercontent.com
 GOOGLE_CLIENT_SECRET=your-secret
+
+# Security
 SESSION_SECRET=your-random-secret-key-here
+
+# Frontend
 FRONTEND_URL=http://localhost:3000
+
+# Server
 PORT=5000
 NODE_ENV=development
 ```
 
 ### 3. Adatbázis létrehozása
 
+```bash
 createdb quiz_platform
 psql quiz_platform < schema.sql
+```
 
 ### 4. Google OAuth Setup
 
 1. Menj a [Google Cloud Console](https://console.cloud.google.com)
 2. Hozz létre új projektet
-3. APIs & Services → Credentials → Create Credentials → OAuth 2.0 Client ID
-4. Authorized redirect URIs: http://localhost:5000/auth/google/callback
-5. Másold ki a Client ID-t és Secret-et a .env fájlba
+3. **APIs & Services** → **Credentials** → **Create Credentials** → **OAuth 2.0 Client ID**
+4. **Authorized redirect URIs**: `http://localhost:5000/auth/google/callback`
+5. Másold ki a **Client ID**-t és **Secret**-et a `.env` fájlba
 
 ### 5. Frontend Setup
 
+```bash
 cd ../frontend
 npm install
+```
 
-Módosítsd az src/App.js fájlban az API URL-t (ha szükséges):
+Hozz létre egy `.env` fájlt a frontend mappában:
 
-const API_URL = 'http://localhost:5000';
+```env
+REACT_APP_API_URL=http://localhost:5000
+```
 
 ### 6. Indítás
 
-*Backend (első terminál):*
+**Backend** (első terminál):
+```bash
 cd backend
 npm start
+```
 
-*Frontend (második terminál):*
+**Frontend** (második terminál):
+```bash
 cd frontend
 npm start
+```
 
-Nyisd meg a: http://localhost:3000 
+Nyisd meg a: **http://localhost:3000** 🎉
+
+---
 
 ## 📁 Projekt Struktúra
 
-```bash
+```
 quiz-platform/
 ├── backend/
-│ ├── app.js
-│ ├── schema.sql
-│ ├── package.json
-│ ├── package-lock.json
-│ ├── Dockerfile
-│ ├── test.json
-│ └── .env
+│   ├── app.js                 # Express szerver, API endpoints
+│   ├── schema.sql             # PostgreSQL adatbázis séma
+│   ├── package.json
+│   ├── Dockerfile
+│   └── .env                   # Environment változók
+│
 ├── frontend/
-│ ├── src/
-│ │ ├── App.js
-│ │ ├── index.js
-│ │ ├── logo.svg
-│ │ ├── reportWebVitals.js
-│ │ ├── setupTests.js
-│ │ └── index.css
-│ ├── public/
-│ │ ├── favicon.ico
-│ │ └── index.html
-│ └── package.json
+│   ├── src/
+│   │   ├── components/
+│   │   │   ├── auth/          # LoginPage
+│   │   │   ├── common/        # Button, Card, SearchBar, LoadingSpinner
+│   │   │   ├── dashboard/     # Dashboard, RecentResults
+│   │   │   ├── layout/        # Header, Navbar
+│   │   │   ├── quiz/          # QuizView, ReviewView, CreateQuizView
+│   │   │   │                  # AllQuizzesView, QuizList, QuizCard
+│   │   │   ├── results/       # AllResultsView
+│   │   │   ├── upload/        # UploadView
+│   │   │   └── editors/       # Question type editors (5 típus)
+│   │   │
+│   │   ├── context/
+│   │   │   └── AuthContext.jsx
+│   │   │
+│   │   ├── hooks/
+│   │   │   ├── useQuizzes.js
+│   │   │   └── useHistory.js
+│   │   │
+│   │   ├── services/
+│   │   │   └── api.js         # API kommunikáció
+│   │   │
+│   │   ├── utils/
+│   │   │   ├── constants.js   # VIEWS, AVATAR_COLORS
+│   │   │   ├── scoring.js     # Pontozási logika
+│   │   │   └── moodleXMLExport.js  # Moodle export
+│   │   │
+│   │   ├── App.jsx            # Fő alkalmazás, routing
+│   │   ├── index.js
+│   │   └── index.css
+│   │
+│   ├── public/
+│   │   ├── favicon.ico
+│   │   └── index.html
+│   │
+│   ├── package.json
+│   └── .env                   # Frontend environment változók
+│
 ├── docker-compose.yml
 ├── .gitignore
 └── README.md
 ```
 
+---
 
 ## 🎯 Használat
 
-### Teszt Feltöltése
+### 1️⃣ Teszt Létrehozása (Kérdés Készítő)
 
-1. Kattints a *"Feltöltés"* gombra
-2. Húzd be vagy válassz ki egy JSON/XML fájlt
-3. Kattints a *"Teszt Feltöltése"* gombra
+1. Kattints a **"Kérdés Készítő"** gombra a navbar-on
+2. Add meg a teszt adatait:
+   - Cím (kötelező)
+   - Témakör
+   - Leírás
+   - Időkorlát (perc)
+   - Címkép (opcionális, base64)
+3. Add hozzá a kérdéseket:
+   - **Egyszeres választás** - Egy helyes válasz
+   - **Többszörös választás** - Több helyes válasz
+   - **Igaz/Hamis** - Boolean kérdés
+   - **Numerikus** - Szám válasz (opcionális egység)
+   - **Párosítás** - Bal-jobb oldal párosítása
+4. Állítsd be a pontszámokat és magyarázatokat
+5. Kattints **"Teszt Mentése"** vagy **"Moodle XML Export"**
 
-### JSON Példa
+#### Kérdéstípusok Példái:
 
-```bash
+**Egyszeres választás:**
+```
+Kérdés: Mi a JavaScript fő célja?
+Opciók:
+  • Adatbázis kezelés
+  • Weboldal interaktivitás ✓
+  • Operációs rendszer fejlesztés
+  • 3D grafikák renderelése
+Pontszám: 1
+```
+
+**Többszörös választás:**
+```
+Kérdés: Mely változó deklarációk léteznek JavaScript-ben?
+Opciók:
+  ✓ var
+  ✓ let
+  ✓ const
+  • define
+Pontszám: 3 (részleges pont: 1 pont/helyes válasz)
+```
+
+**Igaz/Hamis:**
+```
+Kérdés: A JavaScript típusos nyelv.
+Válasz: Hamis ✓
+Pontszám: 1
+```
+
+**Numerikus:**
+```
+Kérdés: Hány bájt egy JavaScript number?
+Válasz: 8 ± 0.01
+Egység: byte (opcionális)
+Pontszám: 2
+```
+
+**Párosítás:**
+```
+Kérdés: Párosítsd a típusokat:
+Bal oldal          → Jobb oldal
+"hello"            → string ✓
+42                 → number ✓
+true               → boolean ✓
+Pontszám: 3 (1 pont/helyes pár)
+```
+
+### 2️⃣ Teszt Feltöltése
+
+1. Kattints a **"Feltöltés"** gombra
+2. Húzd be vagy válassz ki egy **JSON** vagy **Moodle XML** fájlt
+3. Kattints a **"Teszt Feltöltése"** gombra
+
+#### JSON Példa:
+
+```json
 {
   "title": "JavaScript Alapok",
   "topic": "Programming",
   "description": "JS koncepciók tesztelése",
+  "timeLimit": 30,
   "questions": [
     {
+      "type": "single_choice",
       "text": "Mi az === operátor?",
       "options": ["Hozzárendelés", "Egyenlőség típus-konverzióval", "Szigorú egyenlőség", "Nem létezik"],
       "correctIndex": 2,
+      "points": 1,
       "explanation": "A === strict equality, típust is ellenőriz."
+    },
+    {
+      "type": "multiple_choice",
+      "text": "Mely típusok primitívek?",
+      "options": ["string", "number", "object", "boolean"],
+      "correctIndices": [0, 1, 3],
+      "points": 3,
+      "explanation": "object nem primitív típus."
+    },
+    {
+      "type": "true_false",
+      "text": "A JavaScript aszinkron nyelv.",
+      "correctAnswer": true,
+      "points": 1,
+      "explanation": "JS támogatja az aszinkron programozást."
+    },
+    {
+      "type": "numeric",
+      "text": "Mennyi 2^10?",
+      "correctAnswer": 1024,
+      "tolerance": 0,
+      "unit": "",
+      "points": 2,
+      "explanation": "2 a 10. hatványon = 1024"
+    },
+    {
+      "type": "matching",
+      "text": "Párosítsd a metódusokat:",
+      "pairs": [
+        { "left": "map()", "right": "Transzformáció" },
+        { "left": "filter()", "right": "Szűrés" },
+        { "left": "reduce()", "right": "Aggregáció" }
+      ],
+      "points": 3,
+      "explanation": "Array metódusok és céljaik."
     }
   ]
 }
 ```
-### XML Példa
 
-```bash
+#### Moodle XML Példa:
+
+```xml
 <?xml version="1.0" encoding="UTF-8"?>
 <quiz>
-  <title>JavaScript Alapok</title>
-  <topic>Programming</topic>
-  <description>JS koncepciók tesztelése</description>
-  <questions>
-    <question>
-      <text>Mi az === operátor?</text>
-      <options>
-        <option>Hozzárendelés</option>
-        <option>Egyenlőség típus-konverzióval</option>
-        <option>Szigorú egyenlőség</option>
-        <option>Nem létezik</option>
-      </options>
-      <correctIndex>2</correctIndex>
-      <explanation>A === strict equality, típust is ellenőriz.</explanation>
-    </question>
-  </questions>
+  <question type="multichoice">
+    <name>
+      <text>JavaScript Operátor</text>
+    </name>
+    <questiontext format="html">
+      <text><![CDATA[<p>Mi az === operátor?</p>]]></text>
+    </questiontext>
+    <single>true</single>
+    <shuffleanswers>true</shuffleanswers>
+    <answernumbering>abc</answernumbering>
+    <answer fraction="0" format="html">
+      <text><![CDATA[<p>Hozzárendelés</p>]]></text>
+    </answer>
+    <answer fraction="100" format="html">
+      <text><![CDATA[<p>Szigorú egyenlőség</p>]]></text>
+    </answer>
+  </question>
 </quiz>
 ```
 
-### Teszt Kitöltése
+### 3️⃣ Tesztek Megtekintése
 
-1. A Dashboard-on kattints egy tesztre
-2. Válaszolj a kérdésekre (random sorrendben)
-3. Kattints a *"Beküldés"* gombra
-4. Nézd meg az eredményt és az elrontott válaszokat
+#### Dashboard:
+- **Nemrég Kitöltött Tesztek** - 5 legutóbb kitöltött teszt
+- **Legutóbbi Eredmények** - 5 legfrissebb eredmény
 
-### Eredmények Visszanézése
+#### Összes Teszt:
+1. Kattints az **"Összes Teszt"** gombra
+2. Látod az összes elérhető tesztet grid layout-ban
+3. Minden teszt kártyán:
+   - Cím, témakör, leírás
+   - Kérdések száma
+   - Időkorlát
+   - Létrehozás dátuma
+   - Készítő neve (ha nem saját)
+   - "Saját" badge (ha saját teszt)
+   - Próbálkozások száma
+   - Átlag eredmény %
+4. Kattints **"Teszt Indítása"** gombra
 
-1. A Dashboard "Legutóbbi Eredmények" részénél
-2. Kattints a *"Visszanézés"* gombra
-3. Látod minden kérdést: helyes és rossz válaszokat színkóddal
+### 4️⃣ Teszt Kitöltése
+
+1. Válassz egy tesztet a Dashboard-ról vagy az Összes Teszt oldalról
+2. A kérdések és válaszok **random sorrendben** jelennek meg
+3. Válaszolj minden kérdésre:
+   - **Egyszeres választás** - Egy opció
+   - **Többszörös választás** - Több opció
+   - **Igaz/Hamis** - IGAZ vagy HAMIS gomb
+   - **Numerikus** - Szám beírása
+   - **Párosítás** - Dropdown-ok minden párhoz
+4. Ha van időkorlát, a timer visszaszámol
+5. Kattints a **"Beküldés"** gombra
+6. Látod az eredményt:
+   - **🏆 Kiváló** (90-100%)
+   - **⭐ Jó** (70-89%)
+   - **👍 Átlagos** (50-69%)
+   - **📚 Gyakorolj még** (30-49%)
+   - **💔 Próbáld újra** (<30%)
+
+### 5️⃣ Eredmények Visszanézése
+
+#### Egyedi Visszanézés:
+1. Dashboard **"Legutóbbi Eredmények"** → **"Visszanézés"** gomb
+2. Látod minden kérdést:
+   - ✅ **Helyes válasz** - Zöld háttér
+   - ❌ **Rossz válasz** - Piros háttér
+   - **A te válaszod** - Kiemelt kerettel
+   - **Helyes válasz(ok)** - Zöld checkmark
+   - **Magyarázat** - Ha van
+   - **Pontszám** - Szerzett/maximum pont
+
+#### Összes Eredmény:
+1. Dashboard **"Összes Eredmény"** gomb
+2. Látod a statisztikákat:
+   - 🏆 **Legjobb eredmény** %
+   - 🎯 **Átlag eredmény** %
+   - 📈 **Összes próbálkozás**
+   - ⏱️ **Össz idő** percben
+3. Minden eredmény kártyán:
+   - Teszt címe
+   - Dátum + idő
+   - Eredmény % (színkódolt)
+   - Pontszám
+   - Teljesítmény badge
+   - Eltöltött idő
+   - **"Visszanézés"** gomb
+
+### 6️⃣ Moodle XML Export
+
+1. **Kérdés Készítő**-ben hozz létre egy tesztet
+2. Kattints a **"Moodle XML Export"** gombra
+3. Letöltődik egy `.xml` fájl
+4. Moodle LMS-ben:
+   - **Question Bank** → **Import**
+   - Válaszd a **Moodle XML format**-ot
+   - Töltsd fel a fájlt
+5. A kérdések importálódnak a Question Bank-be
+
+---
 
 ## 🛠️ Technológiák
 
 ### Backend
-- *Express.js* - Web framework
-- *PostgreSQL* - Adatbázis
-- *Passport.js* - OAuth authentikáció
-- *Multer* - Fájl feltöltés
-- *xml2js* - XML parsing
+- **Express.js 4.18** - Web framework
+- **PostgreSQL 14** - Relációs adatbázis
+- **Passport.js** - OAuth authentikáció (Google Strategy)
+- **express-session** - Session management
+- **connect-pg-simple** - PostgreSQL session store
+- **Multer** - Fájl feltöltés kezelés
+- **xml2js** - XML parsing (Moodle import)
+- **bcrypt** - Password hashing (ha később local auth)
+- **helmet** - Security headers
+- **cors** - Cross-Origin Resource Sharing
 
 ### Frontend
-- *React 19* - UI framework
-- *Tailwind CSS* - Styling
-- *Lucide React* - Ikonok
+- **React 19** - UI framework
+- **Tailwind CSS 3.4** - Utility-first CSS
+- **Lucide React** - Modern icon library
+- **Context API** - State management
+- **Custom Hooks** - useQuizzes, useHistory
+- **Responsive Design** - Mobile-first approach
+
+### Adatbázis Séma
+```sql
+users (id, google_id, email, name, created_at)
+quizzes (id, user_id, title, description, topic, time_limit, questions, created_at)
+attempts (id, user_id, quiz_id, score, total_points, percentage, answers, time_spent, completed_at)
+sessions (sid, sess, expire)
+```
+
+---
 
 ## 📊 API Endpoints
 
+### Authentikáció
 | Method | Endpoint | Leírás |
 |--------|----------|---------|
-| GET | /auth/google | Google OAuth bejelentkezés |
-| GET | /auth/google/callback | OAuth callback |
-| GET | /auth/logout | Kijelentkezés |
-| GET | /auth/user | Jelenlegi user lekérése |
-| POST | /api/upload | Teszt feltöltése (JSON/XML) |
-| GET | /api/quizzes | Összes teszt listázása |
-| GET | /api/quizzes/:id | Egy teszt lekérése |
-| POST | /api/submit | Teszt beküldése |
-| GET | /api/history | Eredmény történet |
-| GET | /api/stats/:quizId | Teszt statisztikák |
+| GET | `/auth/google` | Google OAuth bejelentkezés |
+| GET | `/auth/google/callback` | OAuth callback |
+| GET | `/auth/logout` | Kijelentkezés |
+| GET | `/auth/user` | Jelenlegi user adatai |
 
-## 🚢 Production Deployment
+### Tesztek
+| Method | Endpoint | Leírás |
+|--------|----------|---------|
+| POST | `/api/upload` | Teszt feltöltése (JSON/XML) |
+| POST | `/api/create` | Teszt létrehozása (Kérdés Készítő) |
+| GET | `/api/quizzes` | Összes teszt listázása |
+| GET | `/api/quizzes?search=term` | Tesztek keresése |
+| GET | `/api/quizzes/:id` | Egy teszt lekérése |
+| DELETE | `/api/quizzes/:id` | Teszt törlése |
+| POST | `/api/submit` | Teszt beküldése |
 
-### Backend (Railway/Render)
+### Eredmények
+| Method | Endpoint | Leírás |
+|--------|----------|---------|
+| GET | `/api/history` | Összes eredmény (50 legutóbbi) |
+| GET | `/api/attempts/:id` | Egy eredmény részletei |
+| GET | `/api/stats/:quizId` | Teszt statisztikák |
 
-1. Push a GitHub-ra
-2. Csatlakoztasd a repository-t
-3. Add hozzá a PostgreSQL addon-t
-4. Állítsd be az environment változókat
-5. Deploy
+---
 
-### Frontend
+## 🐛 Bug Report
 
-1. Build: npm run build
-2. Deploy a build mappát
-3. Environment variable: REACT_APP_API_URL=your-backend-url
+Ha hibát találsz, nyiss egy issue-t a [GitHub-on](https://github.com/TwelveStudent47/quiz-platform/issues) a következő információkkal:
 
-### Google OAuth Production Setup
+- **Hiba leírása** - Mi történt?
+- **Lépések a reprodukáláshoz** - Hogyan lehet előidézni?
+- **Elvárt viselkedés** - Mi kellett volna történjen?
+- **Képernyőképek** - Ha releváns
+- **Környezet**:
+  - OS (Windows/Mac/Linux)
+  - Browser (Chrome/Firefox/Safari)
+  - Node verzió
+  - npm verzió
 
-A Google Cloud Console-ban add hozzá a production URL-eket:
-- Authorized JavaScript origins: https://yourdomain.com
-- Authorized redirect URIs: https://api.yourdomain.com/auth/google/callback
+---
+
+## 🎯 Roadmap / Jövőbeli Fejlesztések
+
+### Kész ✅
+- [x] Google OAuth authentikáció
+- [x] Teszt feltöltés (JSON, Moodle XML)
+- [x] **Kérdés Készítő (5 kérdéstípus)**
+- [x] **Moodle XML export**
+- [x] Random kérdés/válasz sorrend
+- [x] Timer funkció
+- [x] Részletes visszanézés
+- [x] **Összes Teszt nézet**
+- [x] **Összes Eredmény nézet statisztikákkal**
+- [x] Pontozási rendszer (részleges pont)
+- [x] Responsive design
+- [x] **Hamburger menü**
+- [x] Színkódolt eredmények
+- [x] **Képfeltöltés kérdésekhez** (base64 mellett URL)
+
+### Folyamatban 🚧
+- [ ] Essay típusú kérdések (hosszú szöveges válasz)
+- [ ] Cloze/Fill-in-the-blank kérdések
+
+### Tervezve 📋
+- [ ] **AI-powered kérdésgenerálás** Claude API-val
+- [ ] **Markdown támogatás** kérdésekben és magyarázatokban
+- [ ] **Témaköri statisztikák** (témakör szerinti teljesítmény)
+- [ ] **Spaced repetition algoritmus** (intelligens ismétlés)
+- [ ] **Export eredmények PDF-be**
+- [ ] **Social sharing** (eredmények megosztása)
+- [ ] **Nehézségi szintek** (easy/medium/hard)
+- [ ] **Quiz szerkesztés** (meglévő tesztek módosítása)
+- [ ] **Többnyelvűség** (i18n)
+- [ ] **Dark mode**
+- [ ] **Notifications** (email értesítések)
+- [ ] **Leader board** (top eredmények)
+- [ ] **Tanár/Diák nézet** (role-based access)
+- [ ] **Quiz megosztás** (public/private/collaborative)
+- [ ] **Offline mode** (PWA)
+- [ ] **Mobile app** (React Native)
+
+---
 
 ## 🤝 Közreműködés
 
 A közreműködéseket szívesen fogadjuk! Kérlek:
 
-1. Forkold a projektet
-2. Hozz létre egy feature branch-et (git checkout -b feature/AmazingFeature)
-3. Commitold a változásokat (git commit -m 'Add some AmazingFeature')
-4. Push-old a branch-re (git push origin feature/AmazingFeature)
-5. Nyiss egy Pull Request-et
+1. **Fork-old** a projektet
+2. Hozz létre egy **feature branch**-et:
+   ```bash
+   git checkout -b feature/AmazingFeature
+   ```
+3. **Commitold** a változásokat:
+   ```bash
+   git commit -m 'Add some AmazingFeature'
+   ```
+4. **Push-old** a branch-re:
+   ```bash
+   git push origin feature/AmazingFeature
+   ```
+5. Nyiss egy **Pull Request**-et
 
-## 🐛 Bug Report
+---
 
-Ha hibát találsz, nyiss egy issue-t a következő információkkal:
-- Hiba leírása
-- Lépések a reprodukáláshoz
-- Elvárt viselkedés
-- Képernyőképek (ha van)
-- Környezet (OS, Node verzió, stb.)
+## 📄 Licenc
 
+Ez a projekt **nyílt forráskódú** és szabadon használható tanulási célokra.
 
-## 🎯 Roadmap / Jövőbeli Fejlesztések
-
-- [ ] AI-powered kérdésgenerálás Claude API-val
-- [ ] Témaköri statisztikák és analytics
-- [ ] Social sharing
-- [ ] Spaced repetition algoritmus
-- [ ] Mobile app (React Native)
-- [ ] Offline mode
-- [ ] Markdown támogatás kérdésekben
-- [ ] Kép feltöltés kérdésekhez
-- [ ] Időzített tesztek
-- [ ] Nehézségi szintek
-- [ ] Export eredmények PDF-be
-- [ ] Tanár/Diák nézet
-- [ ] Question Machine
+---
 
 ## 👨‍💻 Szerző
 
-Készítette: **Kevin Laczko**
+**Készítette: Kevin Laczko**
+
+- GitHub: [@TwelveStudent47](https://github.com/TwelveStudent47)
+- Repository: [quiz-platform](https://github.com/TwelveStudent47/quiz-platform)
+
+---
+
+## 📞 Kapcsolat / Support
+
+Ha kérdésed van vagy segítségre van szükséged:
+
+1. **GitHub Issues**: [github.com/TwelveStudent47/quiz-platform/issues](https://github.com/TwelveStudent47/quiz-platform/issues)
+2. **Email**: laczkokevin60@gmail.com
+
+---
+
+## 🎓 Oktatási Célok
+
+Ez a projekt kiváló példa a következő technológiákra és koncepciókra:
+
+- **Full-stack JavaScript** (Node.js + React)
+- **RESTful API** tervezés
+- **OAuth 2.0** authentikáció
+- **PostgreSQL** adatbázis design
+- **Session management**
+- **File upload** kezelés
+- **XML parsing**
+- **Responsive web design**
+- **State management** (Context API)
+- **Custom hooks**
+- **Component architecture**
+- **Production deployment**
+- **Environment variables**
+- **Security best practices**
+
+---
+
+## 📚 Tanulási Források
+
+Ha szeretnéd jobban megérteni a projektet:
+
+- [React Documentation](https://react.dev/)
+- [Express.js Guide](https://expressjs.com/)
+- [PostgreSQL Tutorial](https://www.postgresql.org/docs/)
+- [Tailwind CSS Docs](https://tailwindcss.com/docs)
+- [Passport.js Documentation](http://www.passportjs.org/)
+- [Moodle XML Format](https://docs.moodle.org/en/Moodle_XML_format)

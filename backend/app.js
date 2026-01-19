@@ -19,7 +19,8 @@ const pool = new Pool({
 });
 
 app.use(cors({ origin: process.env.FRONTEND_URL || 'http://localhost:3000', credentials: true }));
-app.use(express.json());
+app.use(express.json({ limit: '10mb' }));
+app.use(express.urlencoded({ limit: '10mb', extended: true }));
 app.use(session({
   secret: process.env.SESSION_SECRET || 'your-secret-key',
   resave: false,
@@ -107,12 +108,53 @@ async function parseQuizFile(buffer, fileType) {
             title: quiz.title[0],
             topic: quiz.topic ? quiz.topic[0] : '',
             description: quiz.description ? quiz.description[0] : '',
-            questions: quiz.questions[0].question.map(q => ({
-              text: q.text[0],
-              options: q.options[0].option,
-              correctIndex: parseInt(q.correctIndex[0]),
-              explanation: q.explanation ? q.explanation[0] : null
-            }))
+            timeLimit: quiz.timeLimit ? parseInt(quiz.timeLimit[0]) : null,
+            questions: quiz.questions[0].question.map(q => {
+              const type = q.type ? q.type[0] : 'single_choice';
+              let data = {};
+
+              if (type === 'single_choice') {
+                data = {
+                  options: q.data[0].options[0].option,
+                  correctIndex: parseInt(q.data[0].correctIndex[0])
+                };
+              } else if (type === 'multiple_choice') {
+                data = {
+                  options: q.data[0].options[0].option,
+                  correctIndices: q.data[0].correctIndices[0].index.map(i => parseInt(i))
+                };
+              } else if (type === 'true_false') {
+                data = {
+                  correctAnswer: q.data[0].correctAnswer[0] === 'true'
+                };
+              } else if (type === 'numeric') {
+                data = {
+                  correctAnswer: parseFloat(q.data[0].correctAnswer[0]),
+                  unit: q.data[0].unit ? q.data[0].unit[0] : ''
+                };
+              } else if (type === 'matching') {
+                const pairs = q.data[0].pairs[0].pair.map(p => ({
+                  left: p.left[0],
+                  right: p.right[0]
+                }));
+                const correctPairs = {};
+                if (q.data[0].correctPairs) {
+                  q.data[0].correctPairs[0].entry.forEach(e => {
+                    correctPairs[e.key[0]] = parseInt(e.value[0]);
+                  });
+                }
+                data = { pairs, correctPairs };
+              }
+              
+              return {
+                type,
+                text: q.text[0],
+                image: q.image ? q.image[0] : null,
+                data,
+                points: q.points ? parseInt(q.points[0]) : 1,
+                explanation: q.explanation ? q.explanation[0] : null
+              };
+            })
           };
           resolve(formatted);
         }
@@ -128,19 +170,19 @@ app.post('/api/upload', isAuthenticated, upload.single('file'), async (req, res)
     const fileType = file.originalname.endsWith('.json') ? 'json' : 'xml';
     
     const quizData = await parseQuizFile(file.buffer, fileType);
-    
+
     const quizResult = await pool.query(
-      'INSERT INTO quizzes (user_id, title, description, topic) VALUES ($1, $2, $3, $4) RETURNING id',
-      [req.user.id, quizData.title, quizData.description || '', quizData.topic || '']
+      'INSERT INTO quizzes (user_id, title, description, topic, time_limit) VALUES ($1, $2, $3, $4, $5) RETURNING id',
+      [req.user.id, quizData.title, quizData.description || '', quizData.topic || '', quizData.timeLimit || null]
     );
     
     const quizId = quizResult.rows[0].id;
-    
+
     for (let i = 0; i < quizData.questions.length; i++) {
       const q = quizData.questions[i];
       await pool.query(
-        'INSERT INTO questions (quiz_id, question_text, options, correct_index, explanation, order_index) VALUES ($1, $2, $3, $4, $5, $6)',
-        [quizId, q.text, JSON.stringify(q.options), q.correctIndex, q.explanation || null, i]
+        'INSERT INTO questions (quiz_id, question_type, question_text, question_image, question_data, points, explanation, order_index) VALUES ($1, $2, $3, $4, $5, $6, $7, $8)',
+        [quizId, q.type || 'single_choice', q.text, q.image || null, JSON.stringify(q.data), q.points || 1, q.explanation || null, i]
       );
     }
     
@@ -148,6 +190,36 @@ app.post('/api/upload', isAuthenticated, upload.single('file'), async (req, res)
   } catch (err) {
     console.error(err);
     res.status(400).json({ error: 'Failed to parse or save quiz' });
+  }
+});
+
+app.post('/api/create-quiz', isAuthenticated, async (req, res) => {
+  try {
+    const { title, description, topic, timeLimit, questions } = req.body;
+
+    if (!title || !questions || questions.length === 0) {
+      return res.status(400).json({ error: 'Title and questions are required' });
+    }
+
+    const quizResult = await pool.query(
+      'INSERT INTO quizzes (user_id, title, description, topic, time_limit) VALUES ($1, $2, $3, $4, $5) RETURNING id',
+      [req.user.id, title, description || '', topic || '', timeLimit]
+    );
+    
+    const quizId = quizResult.rows[0].id;
+
+    for (let i = 0; i < questions.length; i++) {
+      const q = questions[i];
+      await pool.query(
+        'INSERT INTO questions (quiz_id, question_type, question_text, question_image, question_data, points, explanation, order_index) VALUES ($1, $2, $3, $4, $5, $6, $7, $8)',
+        [quizId, q.type || 'single_choice', q.text, q.image || null, JSON.stringify(q.data), q.points || 1, q.explanation || null, i]
+      );
+    }
+    
+    res.json({ success: true, quizId });
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ error: 'Failed to create quiz' });
   }
 });
 
@@ -203,18 +275,60 @@ app.post('/api/submit', isAuthenticated, async (req, res) => {
     const { quizId, answers, timeSpent } = req.body;
     
     const { rows: questions } = await pool.query(
-      'SELECT id, correct_index FROM questions WHERE quiz_id = $1',
+      'SELECT id, question_type, question_data, points FROM questions WHERE quiz_id = $1',
       [quizId]
     );
     
     let score = 0;
-    questions.forEach(q => {
-      if (answers[q.id] === q.correct_index) score++;
-    });
+    let totalPoints = 0;
     
+    questions.forEach(q => {
+      totalPoints += q.points || 1;
+      const userAnswer = answers[q.id];
+
+      const data = typeof q.question_data === 'string' 
+        ? JSON.parse(q.question_data) 
+        : q.question_data;
+      
+      let isCorrect = false;
+      
+      switch(q.question_type) {
+        case 'single_choice':
+          isCorrect = userAnswer !== undefined && userAnswer === data.correctIndex;
+          break;
+        case 'multiple_choice':
+          if (userAnswer && Array.isArray(userAnswer) && Array.isArray(data.correctIndices)) {
+            const sortedUser = [...userAnswer].sort((a, b) => a - b);
+            const sortedCorrect = [...data.correctIndices].sort((a, b) => a - b);
+            isCorrect = JSON.stringify(sortedUser) === JSON.stringify(sortedCorrect);
+          }
+          break;
+        case 'true_false':
+          isCorrect = userAnswer !== undefined && userAnswer === data.correctAnswer;
+          break;
+        case 'numeric':
+          if (userAnswer !== undefined && userAnswer !== null && userAnswer !== '') {
+            const userNum = parseFloat(userAnswer);
+            const correctNum = parseFloat(data.correctAnswer);
+            isCorrect = !isNaN(userNum) && !isNaN(correctNum) && Math.abs(userNum - correctNum) < 0.01;
+          }
+          break;
+        case 'matching':
+          if (userAnswer && typeof userAnswer === 'object') {
+            isCorrect = JSON.stringify(userAnswer) === JSON.stringify(data.correctPairs);
+          }
+          break;
+        default:
+          isCorrect = false;
+      }
+      
+      if (isCorrect) {
+        score += q.points || 1;
+      }
+    });
     const result = await pool.query(
-      'INSERT INTO attempts (user_id, quiz_id, score, total_questions, answers, time_spent) VALUES ($1, $2, $3, $4, $5, $6) RETURNING *',
-      [req.user.id, quizId, score, questions.length, JSON.stringify(answers), timeSpent]
+      'INSERT INTO attempts (user_id, quiz_id, score, total_points, total_questions, answers, time_spent) VALUES ($1, $2, $3, $4, $5, $6, $7) RETURNING *',
+      [req.user.id, quizId, score, totalPoints, questions.length, JSON.stringify(answers), timeSpent]
     );
     
     res.json(result.rows[0]);
@@ -242,6 +356,37 @@ app.get('/api/history', isAuthenticated, async (req, res) => {
   }
 });
 
+app.get('/api/attempts/:id', isAuthenticated, async (req, res) => {
+  try {
+    const { rows: attempts } = await pool.query(
+      `SELECT a.*, q.title as quiz_title 
+       FROM attempts a 
+       JOIN quizzes q ON a.quiz_id = q.id 
+       WHERE a.id = $1 AND a.user_id = $2`,
+      [req.params.id, req.user.id]
+    );
+    
+    if (attempts.length === 0) {
+      return res.status(404).json({ error: 'Attempt not found' });
+    }
+    
+    const attempt = attempts[0];
+    
+    const { rows: questions } = await pool.query(
+      'SELECT * FROM questions WHERE quiz_id = $1 ORDER BY order_index',
+      [attempt.quiz_id]
+    );
+    
+    res.json({
+      ...attempt,
+      questions: questions
+    });
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ error: 'Failed to fetch attempt details' });
+  }
+});
+
 app.get('/api/stats/:quizId', isAuthenticated, async (req, res) => {
   try {
     const { rows } = await pool.query(
@@ -258,6 +403,25 @@ app.get('/api/stats/:quizId', isAuthenticated, async (req, res) => {
   } catch (err) {
     console.error(err);
     res.status(500).json({ error: 'Failed to fetch stats' });
+  }
+});
+
+app.delete('/api/quizzes/:id', isAuthenticated, async (req, res) => {
+  try {
+    const { rows } = await pool.query(
+      'SELECT * FROM quizzes WHERE id = $1 AND user_id = $2',
+      [req.params.id, req.user.id]
+    );
+    
+    if (rows.length === 0) {
+      return res.status(404).json({ error: 'Quiz not found or unauthorized' });
+    }
+    await pool.query('DELETE FROM quizzes WHERE id = $1', [req.params.id]);
+    
+    res.json({ success: true, message: 'Quiz deleted successfully' });
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ error: 'Failed to delete quiz' });
   }
 });
 

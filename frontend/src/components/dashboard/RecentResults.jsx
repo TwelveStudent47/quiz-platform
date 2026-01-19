@@ -1,9 +1,9 @@
 import React from 'react';
-import { TrendingUp, Eye } from 'lucide-react';
+import { TrendingUp, Eye, List } from 'lucide-react';
 import Card, { CardBody } from '../common/Card';
 import Button from '../common/Button';
 
-const RecentResults = ({ history, onReviewAttempt }) => {
+const RecentResults = ({ history, onReviewAttempt, onViewAllResults }) => {
   const formatDate = (dateString) => {
     return new Date(dateString).toLocaleDateString('hu-HU');
   };
@@ -11,10 +11,23 @@ const RecentResults = ({ history, onReviewAttempt }) => {
   return (
     <Card>
       <CardBody>
-        <h2 className="text-xl font-bold text-gray-800 mb-4 flex items-center gap-2">
-          <TrendingUp className="w-5 h-5" />
-          Legutóbbi Eredmények
-        </h2>
+        <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 mb-4">
+          <h2 className="text-xl font-bold text-gray-800 flex items-center gap-2">
+            <TrendingUp className="w-5 h-5" />
+            Legutóbbi Eredmények
+          </h2>
+          {history.length > 0 && (
+            <Button
+              onClick={onViewAllResults}
+              variant="secondary"
+              size="sm"
+              className="w-full sm:w-auto inline-flex items-center justify-center gap-2"
+            >
+              <List className="w-4 h-4" />
+              Összes Eredmény
+            </Button>
+          )}
+        </div>
         <div className="space-y-3">
           {history.length === 0 ? (
             <p className="text-gray-500 text-center py-8">Még nincs kitöltött teszt</p>

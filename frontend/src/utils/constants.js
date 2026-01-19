@@ -19,5 +19,6 @@ export const VIEWS = {
   CREATE: 'create',
   QUIZ: 'quiz',
   REVIEW: 'review',
-  ALL_QUIZZES: 'all-quizzes'
+  ALL_QUIZZES: 'all-quizzes',
+  ALL_RESULTS: 'all-results'
 };

@@ -13,6 +13,7 @@ import QuizView from './components/quiz/QuizView';
 import ReviewView from './components/quiz/ReviewView';
 import LoadingSpinner from './components/common/LoadingSpinner';
 import AllQuizzesView from './components/quiz/AllQuizzesView';
+import AllResultsView from './components/results/AllResultsView';
 
 import { VIEWS } from './utils/constants';
 
@@ -82,6 +83,10 @@ function AppContent() {
     setView(VIEWS.ALL_QUIZZES);
   };
 
+  const handleViewAllResults = () => {
+    setView(VIEWS.ALL_RESULTS);
+  };
+
   const handleUploadSuccess = () => {
     loadQuizzes();
     setView(VIEWS.DASHBOARD);
@@ -118,7 +123,8 @@ function AppContent() {
             onStartQuiz={handleStartQuiz}
             onReviewAttempt={handleReviewAttempt}
             onDeleteQuiz={handleDeleteQuiz}
-            onViewAllQuizzes={handleViewAllQuizzes}  // ← ÚJ!
+            onViewAllQuizzes={handleViewAllQuizzes}
+            onViewAllResults={handleViewAllResults}
           />
         )}
 
@@ -148,6 +154,13 @@ function AppContent() {
           <AllQuizzesView
             onBack={() => setView(VIEWS.DASHBOARD)}
             onStartQuiz={handleStartQuiz}
+          />
+        )}
+
+        {view === VIEWS.ALL_RESULTS && (
+          <AllResultsView
+            onBack={() => setView(VIEWS.DASHBOARD)}
+            onReviewAttempt={handleReviewAttempt}
           />
         )}
       </div>

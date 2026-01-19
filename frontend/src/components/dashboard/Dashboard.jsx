@@ -14,7 +14,8 @@ const Dashboard = ({
   onStartQuiz, 
   onReviewAttempt, 
   onDeleteQuiz,
-  onViewAllQuizzes  // ← ÚJ PROP!
+  onViewAllQuizzes,
+  onViewAllResults
 }) => {
   return (
     <div className="space-y-6">
@@ -50,7 +51,7 @@ const Dashboard = ({
       <div className="grid md:grid-cols-2 gap-6">
         <QuizList
           quizzes={quizzes}
-          history={history}  // ← ÚJ PROP!
+          history={history}
           onStartQuiz={onStartQuiz}
           onDeleteQuiz={onDeleteQuiz}
         />
@@ -58,6 +59,7 @@ const Dashboard = ({
         <RecentResults
           history={history}
           onReviewAttempt={onReviewAttempt}
+          onViewAllResults={onViewAllResults}
         />
       </div>
     </div>

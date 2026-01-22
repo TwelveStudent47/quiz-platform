@@ -13,12 +13,18 @@ const upload = multer({ storage: multer.memoryStorage() });
 
 const pool = new Pool({
   connectionString: process.env.DATABASE_URL,
-  ssl: {
-    rejectUnauthorized: false
-  }
+  ssl: false
 });
 
-app.use(cors({ origin: process.env.FRONTEND_URL || 'http://localhost:3000', credentials: true }));
+app.use(cors({
+  origin: process.env.FRONTEND_URL || 'http://localhost:3000',
+  credentials: true,
+  methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],  // ← PUT!
+  allowedHeaders: ['Content-Type', 'Authorization']
+}));
+
+// Preflight requests (add hozzá rögtön utána)
+app.options('*', cors());
 app.use(express.json({ limit: '10mb' }));
 app.use(express.urlencoded({ limit: '10mb', extended: true }));
 app.use(session({
@@ -269,6 +275,75 @@ app.get('/api/quizzes/:id', isAuthenticated, async (req, res) => {
     res.status(500).json({ error: 'Failed to fetch quiz' });
   }
 });
+
+app.put('/api/quizzes/:id', isAuthenticated, async (req, res) => {
+  try {
+    // KRITIKUS! parseInt!
+    const quizId = parseInt(req.params.id, 10);
+    
+    if (isNaN(quizId)) {
+      return res.status(400).json({ error: 'Invalid quiz ID' });
+    }
+    
+    const { title, topic, description, time_limit, questions } = req.body;
+    
+    console.log('📝 Updating quiz:', quizId);
+    
+    // Check owner
+    const quizCheck = await pool.query(
+      'SELECT user_id FROM quizzes WHERE id = $1',
+      [quizId]  // ← Integer!
+    );
+    
+    if (quizCheck.rows.length === 0) {
+      return res.status(404).json({ error: 'Quiz not found' });
+    }
+    
+    if (quizCheck.rows[0].user_id !== req.user.id) {
+      return res.status(403).json({ error: 'Not authorized' });
+    }
+    
+    // Update quiz
+    await pool.query(
+      `UPDATE quizzes 
+       SET title = $1, topic = $2, description = $3, time_limit = $4, updated_at = NOW()
+       WHERE id = $5`,
+      [title, topic, description, time_limit, quizId]
+    );
+    
+    // Delete old questions
+    await pool.query('DELETE FROM questions WHERE quiz_id = $1', [quizId]);
+    
+    // Insert new questions
+    for (let i = 0; i < questions.length; i++) {
+      const q = questions[i];
+      await pool.query(
+        `INSERT INTO questions 
+         (quiz_id, question_type, question_text, question_image, question_data, points, explanation, order_index) 
+         VALUES ($1, $2, $3, $4, $5, $6, $7, $8)`,
+        [quizId, q.type, q.text, q.image, JSON.stringify(q.data), q.points, q.explanation, i]
+      );
+    }
+    
+    console.log('✅ Quiz updated');
+    
+    // Return updated quiz
+    const quizResult = await pool.query('SELECT * FROM quizzes WHERE id = $1', [quizId]);
+    const questionsResult = await pool.query(
+      'SELECT * FROM questions WHERE quiz_id = $1 ORDER BY order_index',
+      [quizId]
+    );
+    
+    res.json({
+      quiz: quizResult.rows[0],
+      questions: questionsResult.rows
+    });
+  } catch (err) {
+    console.error('❌ Update error:', err);
+    res.status(500).json({ error: 'Failed to update quiz' });
+  }
+});
+
 
 app.post('/api/submit', isAuthenticated, async (req, res) => {
   try {

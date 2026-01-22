@@ -3,7 +3,7 @@ import { Clock } from 'lucide-react';
 import Card, { CardBody } from '../common/Card';
 import QuizCard from './QuizCard';
 
-const QuizList = ({ quizzes, history, onStartQuiz, onDeleteQuiz }) => {
+const QuizList = ({ quizzes, history, onStartQuiz, onDeleteQuiz, onEditQuiz }) => {
   // Get unique quiz IDs from recent history (last 5)
   const recentQuizIds = new Set(
     history
@@ -29,12 +29,13 @@ const QuizList = ({ quizzes, history, onStartQuiz, onDeleteQuiz }) => {
               Még nem töltöttél ki tesztet
             </p>
           ) : (
-            recentQuizzes.map((quiz) => (
+            quizzes.map((quiz) => (
               <QuizCard
                 key={quiz.id}
                 quiz={quiz}
                 onStart={onStartQuiz}
                 onDelete={onDeleteQuiz}
+                onEdit={onEditQuiz}
               />
             ))
           )}

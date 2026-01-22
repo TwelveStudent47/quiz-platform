@@ -1,10 +1,10 @@
 import React, { useState, useEffect } from 'react';
-import { BookOpen, Clock, Calendar, User, ArrowLeft } from 'lucide-react';
+import { BookOpen, Clock, Calendar, User, ArrowLeft, Edit } from 'lucide-react';
 import Card, { CardBody } from '../common/Card';
 import Button from '../common/Button';
 import { quizAPI } from '../../services/api';
 
-const AllQuizzesView = ({ onBack, onStartQuiz }) => {
+const AllQuizzesView = ({ onBack, onStartQuiz, onEditQuiz }) => {
   const [allQuizzes, setAllQuizzes] = useState([]);
   const [loading, setLoading] = useState(true);
 
@@ -149,14 +149,31 @@ const AllQuizzesView = ({ onBack, onStartQuiz }) => {
                   )}
 
                   {/* Action button */}
-                  <Button
-                    onClick={() => onStartQuiz(quiz)}
-                    variant="primary"
-                    size="md"
-                    className="w-full"
-                  >
-                    Teszt Indítása
-                  </Button>
+                  {/* Action buttons */}
+                  <div className="space-y-2">
+                    {/* Edit button - csak saját teszteknél */}
+                    {quiz.is_mine && (
+                      <Button
+                        onClick={() => onEditQuiz(quiz)}
+                        variant="secondary"
+                        size="md"
+                        className="w-full inline-flex items-center justify-center gap-2"
+                      >
+                        <Edit className="w-4 h-4" />
+                        Szerkesztés
+                      </Button>
+                    )}
+                    
+                    {/* Start button - mindig látszik */}
+                    <Button
+                      onClick={() => onStartQuiz(quiz)}
+                      variant="primary"
+                      size="md"
+                      className="w-full"
+                    >
+                      Teszt Indítása
+                    </Button>
+                  </div>
                 </div>
               </CardBody>
             </Card>

@@ -6,6 +6,7 @@ const multer = require('multer');
 const { Pool } = require('pg');
 const xml2js = require('xml2js');
 const cors = require('cors');
+const { parseMoodleXML } = require('./moodleXMLParser')
 require('dotenv').config()
 
 const app = express();
@@ -497,6 +498,37 @@ app.delete('/api/quizzes/:id', isAuthenticated, async (req, res) => {
   } catch (err) {
     console.error(err);
     res.status(500).json({ error: 'Failed to delete quiz' });
+  }
+});
+
+app.post('/api/parse-xml', isAuthenticated, upload.single('file'), async (req, res) => {
+  try {
+    const file = req.file;
+    
+    if (!file) {
+      return res.status(400).json({ error: 'No file uploaded' });
+    }
+
+    // Check file type
+    if (!file.originalname.endsWith('.xml')) {
+      return res.status(400).json({ error: 'Only XML files are supported' });
+    }
+
+    console.log('📄 Parsing XML file:', file.originalname);
+
+    // Parse XML to quiz format
+    const quizData = await parseMoodleXML(file.buffer);
+
+    console.log('✅ XML parsed successfully:', {
+      title: quizData.title,
+      questionsCount: quizData.questions.length
+    });
+
+    // Return parsed data (NO DATABASE SAVE!)
+    res.json(quizData);
+  } catch (err) {
+    console.error('❌ Parse XML error:', err);
+    res.status(500).json({ error: 'Failed to parse XML: ' + err.message });
   }
 });
 

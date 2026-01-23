@@ -12,7 +12,7 @@ import { API_URL } from '../../utils/constants';
 import { exportToMoodleXML, downloadMoodleXML } from '../../utils/moodleXMLExport';
 
 const CreateQuizView = ({ onCreateSuccess, editQuiz = null }) => {
-  const { createQuiz, loading } = useQuizzes();
+  const { loading } = useQuizzes();
   const [title, setTitle] = useState('');
   const [topic, setTopic] = useState('');
   const [description, setDescription] = useState('');
@@ -274,13 +274,7 @@ const CreateQuizView = ({ onCreateSuccess, editQuiz = null }) => {
     reader.readAsDataURL(file);
   };
 
-  const removeImage = (qIndex) => {
-    const newQuestions = [...questions];
-    newQuestions[qIndex].image = null;
-    setQuestions(newQuestions);
-  };
-
-const handleSave = async () => {
+  const handleSave = async () => {
     if (!title.trim()) {
       alert('Kérlek adj meg egy címet!');
       return;
@@ -320,8 +314,18 @@ const handleSave = async () => {
     };
 
     try {
-      if (editQuiz) {
-        // UPDATE
+      // ═══════════════════════════════════════════════════════════
+      // KRITIKUS FIX: Check if this is truly an UPDATE or CREATE
+      // ═══════════════════════════════════════════════════════════
+      
+      // If editQuiz exists BUT has isNew flag → CREATE (XML import)
+      // If editQuiz exists AND has ID → UPDATE (edit existing)
+      // If no editQuiz → CREATE (new quiz)
+      
+      const isUpdate = editQuiz && !editQuiz.isNew && (editQuiz.quiz?.id || editQuiz.id);
+      
+      if (isUpdate) {
+        // ═══ UPDATE EXISTING QUIZ ═══
         const quizId = editQuiz.quiz?.id || editQuiz.id;
         
         if (!quizId) {
@@ -346,8 +350,8 @@ const handleSave = async () => {
 
         alert('Teszt sikeresen frissítve! 🎉');
       } else {
-        // CREATE
-        console.log('💾 Creating new quiz');
+        // ═══ CREATE NEW QUIZ ═══
+        console.log('💾 Creating new quiz' + (editQuiz?.isNew ? ' (from XML import)' : ''));
         
         const response = await fetch(`${API_URL}/api/create-quiz`, {
           method: 'POST',
@@ -367,7 +371,7 @@ const handleSave = async () => {
       onCreateSuccess();
     } catch (err) {
       console.error('❌ Save failed:', err);
-      alert(`Hiba történt a teszt ${editQuiz ? 'frissítése' : 'mentése'} során: ${err.message}`);
+      alert(`Hiba történt a teszt ${isUpdate ? 'frissítése' : 'mentése'} során: ${err.message}`);
     }
   };
 

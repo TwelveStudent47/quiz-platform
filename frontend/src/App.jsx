@@ -104,9 +104,22 @@ function AppContent() {
     setView(VIEWS.DASHBOARD);
   };
 
-  const handleCreateSuccess = () => {
-    loadQuizzes();
-    setView(VIEWS.DASHBOARD);
+  const handleLoadToEditor = (quizData) => {
+    console.log('📝 Loading to editor from XML:', quizData);
+    
+    // KRITIKUS: isNew flag az első szinten kell legyen!
+    setEditQuiz({
+      isNew: true,  // ← Itt az első szinten!
+      quiz: {
+        title: quizData.title,
+        topic: quizData.topic,
+        description: quizData.description,
+        time_limit: quizData.timeLimit
+      },
+      questions: quizData.questions
+    });
+    
+    setView(VIEWS.CREATE);
   };
 
   if (authLoading) {
@@ -142,11 +155,21 @@ function AppContent() {
         )}
 
         {view === VIEWS.UPLOAD && (
-          <UploadView onUploadSuccess={handleUploadSuccess} />
+          <UploadView
+            onUploadSuccess={handleUploadSuccess}
+            onLoadToEditor={handleLoadToEditor}
+          />
         )}
 
         {view === VIEWS.CREATE && (
-          <CreateQuizView onCreateSuccess={handleCreateSuccess} />
+          <CreateQuizView
+            editQuiz={editQuiz}
+            onCreateSuccess={() => {
+              loadQuizzes();
+              setView(VIEWS.DASHBOARD);
+              setEditQuiz(null);
+            }}
+          />
         )}
 
         {view === VIEWS.EDIT && editQuiz && (

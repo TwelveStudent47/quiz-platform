@@ -1,0 +1,254 @@
+// ═══════════════════════════════════════════════════════════
+// MOODLE XML PARSER - ENHANCED WITH IMAGE HANDLING
+// Handles HTML tags, images, CDATA
+// ═══════════════════════════════════════════════════════════
+
+const xml2js = require('xml2js');
+
+/**
+ * Strip HTML tags from text, extract image sources
+ * @param {string} html - HTML string
+ * @returns {object} - { text, imageUrl }
+ */
+function stripHTMLAndExtractImage(html) {
+  if (!html) return { text: '', imageUrl: null };
+
+  // Extract image src
+  const imgRegex = /<img[^>]+src="([^">]+)"/i;
+  const imgMatch = html.match(imgRegex);
+  const imageUrl = imgMatch ? imgMatch[1] : null;
+
+  // Remove all HTML tags
+  let text = html.replace(/<[^>]*>/g, '');
+  
+  // Decode HTML entities
+  text = text
+    .replace(/&lt;/g, '<')
+    .replace(/&gt;/g, '>')
+    .replace(/&amp;/g, '&')
+    .replace(/&quot;/g, '"')
+    .replace(/&#39;/g, "'")
+    .replace(/&nbsp;/g, ' ');
+
+  // Trim whitespace
+  text = text.trim();
+
+  return { text, imageUrl };
+}
+
+/**
+ * Parse Moodle XML to quiz format compatible with CreateQuizView
+ * @param {Buffer} xmlBuffer - XML file buffer
+ * @returns {Promise<Object>} - Parsed quiz data
+ */
+async function parseMoodleXML(xmlBuffer) {
+  return new Promise((resolve, reject) => {
+    const parser = new xml2js.Parser();
+    
+    parser.parseString(xmlBuffer.toString(), (err, result) => {
+      if (err) {
+        return reject(new Error('Failed to parse XML'));
+      }
+
+      try {
+        const quiz = result.quiz || {};
+        const questions = [];
+
+        // Parse each question
+        if (quiz.question && Array.isArray(quiz.question)) {
+          for (const q of quiz.question) {
+            const questionType = q.$.type;
+            
+            // Skip category and cloze questions
+            if (questionType === 'category' || questionType === 'cloze') {
+              console.log(`Skipping ${questionType} question`);
+              continue;
+            }
+
+            // Extract question text with HTML stripping
+            const questionHTML = q.questiontext?.[0]?.text?.[0] || '';
+            const { text: questionText, imageUrl } = stripHTMLAndExtractImage(questionHTML);
+            
+            // Extract feedback
+            const generalFeedbackHTML = q.generalfeedback?.[0]?.text?.[0] || '';
+            const { text: generalFeedback } = stripHTMLAndExtractImage(generalFeedbackHTML);
+            
+            const defaultGrade = parseFloat(q.defaultgrade?.[0] || '1');
+
+            let parsedQuestion = null;
+
+            switch (questionType) {
+              case 'multichoice': {
+                const single = q.single?.[0] === 'true';
+                const answers = q.answer || [];
+                
+                const options = answers.map(a => {
+                  const answerHTML = a.text?.[0] || '';
+                  const { text } = stripHTMLAndExtractImage(answerHTML);
+                  return text;
+                });
+                
+                if (single) {
+                  // Single choice
+                  const correctIndex = answers.findIndex(a => 
+                    parseFloat(a.$.fraction || '0') > 0
+                  );
+                  
+                  parsedQuestion = {
+                    type: 'single_choice',
+                    text: questionText,
+                    image: imageUrl,  // May be null or @@PLUGINFILE@@ URL
+                    data: {
+                      options,
+                      correctIndex: correctIndex >= 0 ? correctIndex : 0
+                    },
+                    points: Math.round(defaultGrade),
+                    explanation: generalFeedback
+                  };
+                } else {
+                  // Multiple choice
+                  const correctIndices = [];
+                  answers.forEach((a, idx) => {
+                    if (parseFloat(a.$.fraction || '0') > 0) {
+                      correctIndices.push(idx);
+                    }
+                  });
+                  
+                  parsedQuestion = {
+                    type: 'multiple_choice',
+                    text: questionText,
+                    image: imageUrl,
+                    data: {
+                      options,
+                      correctIndices
+                    },
+                    points: Math.round(defaultGrade),
+                    explanation: generalFeedback
+                  };
+                }
+                break;
+              }
+
+              case 'truefalse': {
+                const answers = q.answer || [];
+                const trueAnswer = answers.find(a => a.text?.[0]?.toLowerCase() === 'true');
+                const correctAnswer = trueAnswer && parseFloat(trueAnswer.$.fraction || '0') > 0;
+                
+                parsedQuestion = {
+                  type: 'true_false',
+                  text: questionText,
+                  image: imageUrl,
+                  data: {
+                    correctAnswer: correctAnswer
+                  },
+                  points: Math.round(defaultGrade),
+                  explanation: generalFeedback
+                };
+                break;
+              }
+
+              case 'numerical': {
+                const answers = q.answer || [];
+                const correctAnswer = parseFloat(answers[0]?.text?.[0] || '0');
+                const tolerance = parseFloat(answers[0]?.tolerance?.[0] || '0');
+                
+                // Extract unit if present
+                const units = q.units?.[0]?.unit || [];
+                const unit = units[0]?.unit_name?.[0] || '';
+                
+                parsedQuestion = {
+                  type: 'numeric',
+                  text: questionText,
+                  image: imageUrl,
+                  data: {
+                    correctAnswer,
+                    tolerance,
+                    unit
+                  },
+                  points: Math.round(defaultGrade),
+                  explanation: generalFeedback
+                };
+                break;
+              }
+
+              case 'matching': {
+                const subquestions = q.subquestion || [];
+                const pairs = [];
+                const correctPairs = {};
+                
+                subquestions.forEach((sq, idx) => {
+                  const leftHTML = sq.text?.[0] || '';
+                  const rightHTML = sq.answer?.[0]?.text?.[0] || '';
+                  
+                  const { text: left } = stripHTMLAndExtractImage(leftHTML);
+                  const { text: right } = stripHTMLAndExtractImage(rightHTML);
+                  
+                  if (left && right) {
+                    pairs.push({ left, right });
+                    correctPairs[idx] = idx;
+                  }
+                });
+                
+                parsedQuestion = {
+                  type: 'matching',
+                  text: questionText,
+                  image: imageUrl,
+                  data: {
+                    pairs,
+                    correctPairs
+                  },
+                  points: Math.round(defaultGrade),
+                  explanation: generalFeedback
+                };
+                break;
+              }
+
+              case 'shortanswer':
+              case 'essay':
+              case 'description':
+                // Skip unsupported types
+                console.log(`Skipping unsupported question type: ${questionType}`);
+                break;
+
+              default:
+                console.log(`Unknown question type: ${questionType}`);
+            }
+
+            if (parsedQuestion) {
+              questions.push(parsedQuestion);
+            }
+          }
+        }
+
+        // Extract quiz metadata
+        const categoryQuestion = quiz.question?.find(q => q.$.type === 'category');
+        const categoryText = categoryQuestion?.category?.[0]?.text?.[0] || '';
+        const categoryParts = categoryText.split('/');
+        const topic = categoryParts[categoryParts.length - 1] || '';
+
+        const title = quiz.$?.title || 'Imported Quiz';
+        const description = quiz.$?.intro || '';
+
+        const quizData = {
+          title,
+          topic,
+          description,
+          timeLimit: null,
+          questions
+        };
+
+        console.log(`✅ Parsed: ${questions.length} questions`);
+        questions.forEach((q, idx) => {
+          console.log(`  ${idx + 1}. ${q.type}: "${q.text.substring(0, 50)}..." ${q.image ? '(has image)' : ''}`);
+        });
+
+        resolve(quizData);
+      } catch (error) {
+        console.error('Parse error:', error);
+        reject(new Error('Failed to process XML structure: ' + error.message));
+      }
+    });
+  });
+}
+
+module.exports = { parseMoodleXML };

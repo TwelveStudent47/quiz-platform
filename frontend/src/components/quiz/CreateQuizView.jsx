@@ -10,6 +10,7 @@ import MatchingEditor from './creator/MatchingEditor';
 import { useQuizzes } from '../../hooks/useQuizzes';
 import { API_URL } from '../../utils/constants';
 import { exportToMoodleXML, downloadMoodleXML } from '../../utils/moodleXMLExport';
+import ClozeEditor from './creator/ClozeEditor';
 
 const CreateQuizView = ({ onCreateSuccess, editQuiz = null }) => {
   const { loading } = useQuizzes();
@@ -424,6 +425,7 @@ const CreateQuizView = ({ onCreateSuccess, editQuiz = null }) => {
     }
   };
 
+  const isUpdate = editQuiz && !editQuiz.isNew && (editQuiz.quiz?.id || editQuiz.id);
 
   return (
     <div className="max-w-7xl mx-auto px-2 sm:px-4 lg:px-6">
@@ -433,7 +435,7 @@ const CreateQuizView = ({ onCreateSuccess, editQuiz = null }) => {
           <div className="mb-4 sm:mb-6">
             <h2 className="text-xl sm:text-2xl font-bold text-gray-800 flex items-center gap-2">
               <Edit3 className="w-5 h-5 sm:w-6 sm:h-6 text-indigo-600" />
-              {editQuiz ? 'Teszt Szerkesztése' : 'Új Teszt Létrehozása'}
+              {isUpdate ? 'Teszt Szerkesztése' : 'Új Teszt Létrehozása'}
             </h2>
             <p className="text-xs sm:text-sm text-gray-600 mt-1">
               Hozz létre egyedi tesztet különböző kérdéstípusokkal

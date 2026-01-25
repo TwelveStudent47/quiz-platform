@@ -7,6 +7,7 @@ import MultipleChoiceEditor from './creator/MultipleChoiceEditor';
 import TrueFalseEditor from './creator/TrueFalseEditor';
 import NumericEditor from './creator/NumericEditor';
 import MatchingEditor from './creator/MatchingEditor';
+import ClozeEditor from './creator/ClozeEditor';
 import { useQuizzes } from '../../hooks/useQuizzes';
 import { API_URL } from '../../utils/constants';
 import { exportToMoodleXML, downloadMoodleXML } from '../../utils/moodleXMLExport';
@@ -110,6 +111,12 @@ const CreateQuizView = ({ onCreateSuccess, editQuiz = null }) => {
         newQuestions[qIndex].data = { 
           pairs: [{ left: '', right: '' }, { left: '', right: '' }], 
           correctPairs: {} 
+        };
+        break;
+      case 'cloze':
+        newQuestions[qIndex].data = {
+          text: '',
+          blanks: []
         };
         break;
       default:
@@ -587,6 +594,7 @@ const CreateQuizView = ({ onCreateSuccess, editQuiz = null }) => {
                           <option value="true_false">Igaz/Hamis</option>
                           <option value="numeric">Számos</option>
                           <option value="matching">Illesztéses</option>
+                          <option value="cloze">Kitöltendő</option>
                         </select>
                       </div>
 
@@ -708,6 +716,14 @@ const CreateQuizView = ({ onCreateSuccess, editQuiz = null }) => {
                         addMatchingPair={addMatchingPair}
                         removeMatchingPair={removeMatchingPair}
                         updateMatchingPair={updateMatchingPair}
+                      />
+                    )}
+
+                    {question.type === 'cloze' && (
+                      <ClozeEditor
+                        question={question}
+                        onUpdate={(field, value) => updateQuestion(qIndex, field, value)}
+                        onUpdateData={(field, value) => updateQuestionData(qIndex, field, value)}
                       />
                     )}
                   </div>

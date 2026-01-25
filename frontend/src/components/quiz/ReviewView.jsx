@@ -39,6 +39,37 @@ const ReviewView = ({ attempt, onClose }) => {
         return Math.abs(parseFloat(userAnswer) - parseFloat(data.correctAnswer)) < 0.01;
       case 'matching':
         return JSON.stringify(userAnswer) === JSON.stringify(data.correctPairs);
+      case 'cloze': {
+        if (!userAnswer || !data.blanks) return false;
+        
+        let correctCount = 0;
+        const totalBlanks = data.blanks.length;
+        
+        data.blanks.forEach((blank, idx) => {
+          const userBlankAnswer = userAnswer[idx];
+          
+          if (blank.type === 'dropdown') {
+            if (userBlankAnswer === blank.correctIndex) {
+              correctCount++;
+            }
+          } else if (blank.type === 'text') {
+            const correctAnswer = blank.correctAnswer || '';
+            const userTextAnswer = String(userBlankAnswer || '');
+            
+            if (blank.caseSensitive) {
+              if (userTextAnswer === correctAnswer) {
+                correctCount++;
+              }
+            } else {
+              if (userTextAnswer.toLowerCase() === correctAnswer.toLowerCase()) {
+                correctCount++;
+              }
+            }
+          }
+        });
+        
+        return correctCount === totalBlanks;
+      }
       default:
         return false;
     }
@@ -50,7 +81,8 @@ const ReviewView = ({ attempt, onClose }) => {
       'multiple_choice': 'Több válaszos',
       'true_false': 'Igaz/Hamis',
       'numeric': 'Számos',
-      'matching': 'Illesztéses'
+      'matching': 'Illesztéses',
+      'cloze': 'Kitöltendő'
     };
     return labels[type] || type;
   };
@@ -129,7 +161,7 @@ const ReviewView = ({ attempt, onClose }) => {
                     <div className="flex-1">
                       <div className="flex items-start justify-between">
                         <p className="font-semibold text-gray-800 text-lg">
-                          {idx + 1}. {question.question_text}
+                          {idx + 1}. {question.question_type === 'cloze' ? '' : question.question_text}
                         </p>
                         <span className={`px-2 py-1 rounded text-xs font-medium ml-2 whitespace-nowrap ${
                           isCorrect ? 'bg-green-200 text-green-800' : 'bg-red-200 text-red-800'
@@ -384,6 +416,87 @@ const ReviewView = ({ attempt, onClose }) => {
                             </div>
                           );
                         })}
+                      </div>
+                    )}
+
+                    {question.question_type === 'cloze' && (
+                      <div className="space-y-3">
+                        <div className="text-base leading-relaxed mb-4">
+                          {data.text.split(/(\{\d+\})/g).map((part, partIdx) => {
+                            const match = part.match(/\{(\d+)\}/);
+                            
+                            if (match) {
+                              const blankIdx = parseInt(match[1]);
+                              const blank = data.blanks[blankIdx];
+                              
+                              if (!blank) return null;
+                              
+                              const userBlankAnswer = userAnswer?.[blankIdx];
+                              const isBlankCorrect = (() => {
+                                if (blank.type === 'dropdown') {
+                                  return userBlankAnswer === blank.correctIndex;
+                                } else if (blank.type === 'text') {
+                                  const correctAnswer = blank.correctAnswer || '';
+                                  const userText = String(userBlankAnswer || '');
+                                  if (blank.caseSensitive) {
+                                    return userText === correctAnswer;
+                                  } else {
+                                    return userText.toLowerCase() === correctAnswer.toLowerCase();
+                                  }
+                                }
+                                return false;
+                              })();
+                              
+                              if (blank.type === 'dropdown') {
+                                const userOptionText = userBlankAnswer !== undefined && blank.options[userBlankAnswer]
+                                  ? blank.options[userBlankAnswer]
+                                  : '(nincs válasz)';
+                                const correctOptionText = blank.options[blank.correctIndex] || '';
+                                
+                                return (
+                                  <span
+                                    key={partIdx}
+                                    className={`inline-block mx-1 px-3 py-1 rounded-lg border-2 font-semibold ${
+                                      isBlankCorrect
+                                        ? 'bg-green-100 border-green-400 text-green-800'
+                                        : 'bg-red-100 border-red-400 text-red-800'
+                                    }`}
+                                  >
+                                    {userOptionText}
+                                    {!isBlankCorrect && (
+                                      <span className="ml-2 text-green-700">
+                                        (helyes: {correctOptionText})
+                                      </span>
+                                    )}
+                                  </span>
+                                );
+                              } else if (blank.type === 'text') {
+                                const userText = userBlankAnswer || '(üres)';
+                                const correctText = blank.correctAnswer || '';
+                                
+                                return (
+                                  <span
+                                    key={partIdx}
+                                    className={`inline-block mx-1 px-3 py-1 rounded-lg border-2 font-semibold ${
+                                      isBlankCorrect
+                                        ? 'bg-green-100 border-green-400 text-green-800'
+                                        : 'bg-red-100 border-red-400 text-red-800'
+                                    }`}
+                                  >
+                                    {userText}
+                                    {!isBlankCorrect && (
+                                      <span className="ml-2 text-green-700">
+                                        (helyes: {correctText})
+                                      </span>
+                                    )}
+                                  </span>
+                                );
+                              }
+                            }
+                            
+                            return <span key={partIdx}>{part}</span>;
+                          })}
+                        </div>
                       </div>
                     )}
                   </div>

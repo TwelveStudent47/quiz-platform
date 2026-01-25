@@ -10,6 +10,75 @@ const xml2js = require('xml2js');
  * @param {string} html - HTML string
  * @returns {object} - { text, imageUrl }
  */
+
+function parseClozeQuestion(questionText) {
+  const blanks = [];
+  let plainText = questionText;
+  
+  // Find all {N:TYPE:...} patterns
+  const clozeRegex = /\{(\d+):(MULTICHOICE|SHORTANSWER|NUMERICAL):([^}]+)\}/g;
+  let match;
+  let index = 0;
+  
+  while ((match = clozeRegex.exec(questionText)) !== null) {
+    const [fullMatch, blankNum, type, content] = match;
+    
+    // Replace with {0}, {1}, etc. for our format
+    plainText = plainText.replace(fullMatch, `{${index}}`);
+    
+    if (type === 'MULTICHOICE') {
+      // Parse: ~=Paris#Correct~London#Incorrect~Berlin#Incorrect
+      const options = [];
+      let correctIndex = 0;
+      
+      const optionParts = content.split('~').filter(p => p.trim());
+      optionParts.forEach((part, idx) => {
+        const isCorrect = part.startsWith('=');
+        const text = part.replace(/^=/, '').split('#')[0].trim();
+        
+        if (text) {
+          options.push(text);
+          if (isCorrect) {
+            correctIndex = options.length - 1;
+          }
+        }
+      });
+      
+      blanks.push({
+        type: 'dropdown',
+        options: options.length > 0 ? options : ['', '', ''],
+        correctIndex: correctIndex
+      });
+    } else if (type === 'SHORTANSWER') {
+      // Parse: =Paris or =Paris#Feedback
+      const answer = content.replace(/^=/, '').split('#')[0].trim();
+      
+      blanks.push({
+        type: 'text',
+        correctAnswer: answer,
+        caseSensitive: false
+      });
+    } else if (type === 'NUMERICAL') {
+      // Parse: =330:1 (answer:tolerance)
+      const parts = content.replace(/^=/, '').split(':');
+      const answer = parts[0].trim();
+      
+      blanks.push({
+        type: 'text',
+        correctAnswer: answer,
+        caseSensitive: false
+      });
+    }
+    
+    index++;
+  }
+  
+  return {
+    text: plainText,
+    blanks: blanks
+  };
+}
+
 function stripHTMLAndExtractImage(html) {
   if (!html) return { text: '', imageUrl: null };
 
@@ -60,7 +129,7 @@ async function parseMoodleXML(xmlBuffer) {
             const questionType = q.$.type;
             
             // Skip category and cloze questions
-            if (questionType === 'category' || questionType === 'cloze') {
+            if (questionType === 'category') {
               console.log(`Skipping ${questionType} question`);
               continue;
             }
@@ -203,6 +272,22 @@ async function parseMoodleXML(xmlBuffer) {
                 break;
               }
 
+              case 'cloze':
+                console.log('📝 Parsing Cloze question');
+        
+                const clozeData = parseClozeQuestion(questionHTML);
+                
+                parsedQuestion = {
+                  type: 'cloze',
+                  text: questionText,
+                  image: imageUrl,
+                  data: clozeData,
+                  points: Math.round(defaultGrade),
+                  explanation: generalFeedback
+                };
+                
+                console.log(`  ✅ Cloze parsed: ${clozeData.blanks.length} blanks`);
+                break;
               case 'shortanswer':
               case 'essay':
               case 'description':

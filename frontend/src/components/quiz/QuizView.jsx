@@ -302,7 +302,10 @@ const QuizView = ({ quiz, onComplete }) => {
             </div>
             
             <h3 className="text-xl font-semibold text-gray-800 mb-4">
-              {currentQuestion.question_text}
+              {currentQuestion.question_type === 'cloze' 
+                ? ''
+                : currentQuestion.question_text
+              }
             </h3>
 
             {currentQuestion.question_image && (
@@ -448,6 +451,64 @@ const QuizView = ({ quiz, onComplete }) => {
                       </div>
                     );
                   })}
+                </div>
+              )}
+
+              {currentQuestion.question_type === 'cloze' && (
+                <div className="space-y-4">
+                  <div className="text-base leading-relaxed">
+                    {currentQuestion.question_data.text.split(/(\{\d+\})/g).map((part, idx) => {
+                      const match = part.match(/\{(\d+)\}/);
+                      
+                      if (match) {
+                        const blankIdx = parseInt(match[1]);
+                        const blank = currentQuestion.question_data.blanks[blankIdx];
+                        
+                        if (!blank) return null;
+                        
+                        const currentAnswer = answers[currentQuestion.id]?.[blankIdx];
+                        
+                        if (blank.type === 'dropdown') {
+                          return (
+                            <select
+                              key={idx}
+                              value={currentAnswer !== undefined ? currentAnswer : ''}
+                              onChange={(e) => {
+                                const newAnswers = { ...(answers[currentQuestion.id] || {}) };
+                                newAnswers[blankIdx] = e.target.value === '' ? undefined : parseInt(e.target.value);
+                                handleAnswer(currentQuestion.id, newAnswers);
+                              }}
+                              className="inline-block mx-1 px-3 py-1 border-2 border-indigo-300 rounded-lg bg-white focus:ring-2 focus:ring-indigo-500 focus:border-transparent"
+                            >
+                              <option value="">--</option>
+                              {blank.options.map((opt, optIdx) => (
+                                <option key={optIdx} value={optIdx}>
+                                  {opt}
+                                </option>
+                              ))}
+                            </select>
+                          );
+                        } else if (blank.type === 'text') {
+                          return (
+                            <input
+                              key={idx}
+                              type="text"
+                              value={currentAnswer || ''}
+                              onChange={(e) => {
+                                const newAnswers = { ...(answers[currentQuestion.id] || {}) };
+                                newAnswers[blankIdx] = e.target.value;
+                                handleAnswer(currentQuestion.id, newAnswers);
+                              }}
+                              placeholder="..."
+                              className="inline-block mx-1 px-3 py-1 w-32 border-2 border-indigo-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent"
+                            />
+                          );
+                        }
+                      }
+                      
+                      return <span key={idx}>{part}</span>;
+                    })}
+                  </div>
                 </div>
               )}
             </div>

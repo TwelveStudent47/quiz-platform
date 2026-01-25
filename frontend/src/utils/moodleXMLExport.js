@@ -1,6 +1,47 @@
 // Moodle XML Export Utility
 // This utility converts quiz questions to Moodle XML format
 
+const convertClozeToMoodle = (question, escapeXML) => {
+  let moodleText = question.data.text || '';
+  
+  (question.data.blanks || []).forEach((blank, idx) => {
+    const placeholder = `{${idx}}`;
+    let moodleBlank = '';
+    
+    if (blank.type === 'dropdown') {
+      // MULTICHOICE format: {1:MULTICHOICE:~=correct~wrong1~wrong2}
+      const options = blank.options.map((opt, optIdx) => {
+        const isCorrect = optIdx === blank.correctIndex;
+        return `${isCorrect ? '=' : ''}${escapeXML(opt)}`;
+      }).join('~');
+      
+      moodleBlank = `{${idx + 1}:MULTICHOICE:~${options}}`;
+    } else if (blank.type === 'text') {
+      // SHORTANSWER format: {1:SHORTANSWER:=answer}
+      moodleBlank = `{${idx + 1}:SHORTANSWER:=${escapeXML(blank.correctAnswer)}}`;
+    }
+    
+    moodleText = moodleText.replace(placeholder, moodleBlank);
+  });
+  
+  let xml = '  <question type="cloze">\n';
+  xml += '    <n>\n';
+  xml += `      <text>${escapeXML(question.text || 'Cloze Question')}</text>\n`;
+  xml += '    </n>\n';
+  xml += '    <questiontext format="html">\n';
+  xml += `      <text><![CDATA[${moodleText}]]></text>\n`;
+  xml += '    </questiontext>\n';
+  xml += '    <generalfeedback format="html">\n';
+  xml += `      <text>${escapeXML(question.explanation || '')}</text>\n`;
+  xml += '    </generalfeedback>\n';
+  xml += `    <defaultgrade>${question.points || 1}</defaultgrade>\n`;
+  xml += '    <penalty>0.1</penalty>\n';
+  xml += '    <hidden>0</hidden>\n';
+  xml += '  </question>\n\n';
+  
+  return xml;
+};
+
 export const exportToMoodleXML = (quiz) => {
   const { title, topic, description, questions } = quiz;
   
@@ -57,6 +98,9 @@ export const exportToMoodleXML = (quiz) => {
         break;
       case 'matching':
         xml += generateMatching(question);
+        break;
+      case 'cloze':
+        xml += convertClozeToMoodle(question, escapeXML);
         break;
       default:
         console.warn(`Unknown question type: ${question.type}`);

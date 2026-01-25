@@ -103,70 +103,87 @@ app.get('/auth/user', (req, res) => {
 
 async function parseQuizFile(buffer, fileType) {
   if (fileType === 'json') {
+    // JSON format (régi formátum)
     return JSON.parse(buffer.toString());
   } else if (fileType === 'xml') {
-    return new Promise((resolve, reject) => {
-      xml2js.parseString(buffer.toString(), (err, result) => {
-        if (err) {
-          reject(err);
-        } else {
-          const quiz = result.quiz;
-          const formatted = {
-            title: quiz.title[0],
-            topic: quiz.topic ? quiz.topic[0] : '',
-            description: quiz.description ? quiz.description[0] : '',
-            timeLimit: quiz.timeLimit ? parseInt(quiz.timeLimit[0]) : null,
-            questions: quiz.questions[0].question.map(q => {
-              const type = q.type ? q.type[0] : 'single_choice';
-              let data = {};
+    // ═══════════════════════════════════════════════════════════
+    // XML FORMAT DETECTION: Moodle XML vs Custom XML
+    // ═══════════════════════════════════════════════════════════
+    
+    const xmlString = buffer.toString();
+    
+    // Check if it's Moodle XML format
+    if (xmlString.includes('<quiz>') && xmlString.includes('<question type=')) {
+      // ═══ MOODLE XML FORMAT ═══
+      console.log('📄 Detected Moodle XML format - using parseMoodleXML');
+      return await parseMoodleXML(buffer);
+    } else {
+      // ═══ CUSTOM XML FORMAT (OLD) ═══
+      console.log('📄 Detected custom XML format - using legacy parser');
+      
+      return new Promise((resolve, reject) => {
+        xml2js.parseString(buffer.toString(), (err, result) => {
+          if (err) {
+            reject(err);
+          } else {
+            const quiz = result.quiz;
+            const formatted = {
+              title: quiz.title[0],
+              topic: quiz.topic ? quiz.topic[0] : '',
+              description: quiz.description ? quiz.description[0] : '',
+              timeLimit: quiz.timeLimit ? parseInt(quiz.timeLimit[0]) : null,
+              questions: quiz.questions[0].question.map(q => {
+                const type = q.type ? q.type[0] : 'single_choice';
+                let data = {};
 
-              if (type === 'single_choice') {
-                data = {
-                  options: q.data[0].options[0].option,
-                  correctIndex: parseInt(q.data[0].correctIndex[0])
-                };
-              } else if (type === 'multiple_choice') {
-                data = {
-                  options: q.data[0].options[0].option,
-                  correctIndices: q.data[0].correctIndices[0].index.map(i => parseInt(i))
-                };
-              } else if (type === 'true_false') {
-                data = {
-                  correctAnswer: q.data[0].correctAnswer[0] === 'true'
-                };
-              } else if (type === 'numeric') {
-                data = {
-                  correctAnswer: parseFloat(q.data[0].correctAnswer[0]),
-                  unit: q.data[0].unit ? q.data[0].unit[0] : ''
-                };
-              } else if (type === 'matching') {
-                const pairs = q.data[0].pairs[0].pair.map(p => ({
-                  left: p.left[0],
-                  right: p.right[0]
-                }));
-                const correctPairs = {};
-                if (q.data[0].correctPairs) {
-                  q.data[0].correctPairs[0].entry.forEach(e => {
-                    correctPairs[e.key[0]] = parseInt(e.value[0]);
-                  });
+                if (type === 'single_choice') {
+                  data = {
+                    options: q.data[0].options[0].option,
+                    correctIndex: parseInt(q.data[0].correctIndex[0])
+                  };
+                } else if (type === 'multiple_choice') {
+                  data = {
+                    options: q.data[0].options[0].option,
+                    correctIndices: q.data[0].correctIndices[0].index.map(i => parseInt(i))
+                  };
+                } else if (type === 'true_false') {
+                  data = {
+                    correctAnswer: q.data[0].correctAnswer[0] === 'true'
+                  };
+                } else if (type === 'numeric') {
+                  data = {
+                    correctAnswer: parseFloat(q.data[0].correctAnswer[0]),
+                    unit: q.data[0].unit ? q.data[0].unit[0] : ''
+                  };
+                } else if (type === 'matching') {
+                  const pairs = q.data[0].pairs[0].pair.map(p => ({
+                    left: p.left[0],
+                    right: p.right[0]
+                  }));
+                  const correctPairs = {};
+                  if (q.data[0].correctPairs) {
+                    q.data[0].correctPairs[0].entry.forEach(e => {
+                      correctPairs[e.key[0]] = parseInt(e.value[0]);
+                    });
+                  }
+                  data = { pairs, correctPairs };
                 }
-                data = { pairs, correctPairs };
-              }
-              
-              return {
-                type,
-                text: q.text[0],
-                image: q.image ? q.image[0] : null,
-                data,
-                points: q.points ? parseInt(q.points[0]) : 1,
-                explanation: q.explanation ? q.explanation[0] : null
-              };
-            })
-          };
-          resolve(formatted);
-        }
+                
+                return {
+                  type,
+                  text: q.text[0],
+                  image: q.image ? q.image[0] : null,
+                  data,
+                  points: q.points ? parseInt(q.points[0]) : 1,
+                  explanation: q.explanation ? q.explanation[0] : null
+                };
+              })
+            };
+            resolve(formatted);
+          }
+        });
       });
-    });
+    }
   }
   throw new Error('Unsupported file type');
 }
@@ -392,6 +409,49 @@ app.post('/api/submit', isAuthenticated, async (req, res) => {
         case 'matching':
           if (userAnswer && typeof userAnswer === 'object') {
             isCorrect = JSON.stringify(userAnswer) === JSON.stringify(data.correctPairs);
+          }
+          break;
+        case 'cloze':
+          case 'cloze':  // ← ÚJ!
+          if (userAnswer && typeof userAnswer === 'object') {
+            let correctCount = 0;
+            let totalBlanks = data.blanks ? data.blanks.length : 0;
+            
+            if (totalBlanks > 0) {
+              data.blanks.forEach((blank, idx) => {
+                const userBlankAnswer = userAnswer[idx];
+                
+                if (blank.type === 'dropdown') {
+                  // Dropdown scoring
+                  if (userBlankAnswer === blank.correctIndex) {
+                    correctCount++;
+                  }
+                } else if (blank.type === 'text') {
+                  // Text input scoring
+                  const correctAnswer = blank.correctAnswer || '';
+                  const userTextAnswer = String(userBlankAnswer || '');
+                  
+                  if (blank.caseSensitive) {
+                    // Case sensitive
+                    if (userTextAnswer === correctAnswer) {
+                      correctCount++;
+                    }
+                  } else {
+                    // Case insensitive
+                    if (userTextAnswer.toLowerCase() === correctAnswer.toLowerCase()) {
+                      correctCount++;
+                    }
+                  }
+                }
+              });
+              
+              // Partial scoring: proportional to correct blanks
+              isCorrect = (correctCount === totalBlanks);
+              
+              // If you want partial credit:
+              // score += (q.points || 1) * (correctCount / totalBlanks);
+              // return; // Skip the isCorrect block below
+            }
           }
           break;
         default:

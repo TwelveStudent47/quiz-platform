@@ -10,7 +10,6 @@ import MatchingEditor from './creator/MatchingEditor';
 import { useQuizzes } from '../../hooks/useQuizzes';
 import { API_URL } from '../../utils/constants';
 import { exportToMoodleXML, downloadMoodleXML } from '../../utils/moodleXMLExport';
-import ClozeEditor from './creator/ClozeEditor';
 
 const CreateQuizView = ({ onCreateSuccess, editQuiz = null }) => {
   const { loading } = useQuizzes();
@@ -742,7 +741,7 @@ const CreateQuizView = ({ onCreateSuccess, editQuiz = null }) => {
               </Button>
               
               <Button
-                onClick={() => window.history.back()}
+                onClick={onCreateSuccess}
                 variant="secondary"
                 size="lg"
                 className="w-full sm:w-auto"

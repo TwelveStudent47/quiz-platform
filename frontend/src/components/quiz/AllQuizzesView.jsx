@@ -88,11 +88,6 @@ const AllQuizzesView = ({ onBack, onStartQuiz, onEditQuiz }) => {
                       <h3 className="font-bold text-base sm:text-lg text-gray-800 line-clamp-2">
                         {quiz.title}
                       </h3>
-                      {quiz.is_mine && (
-                        <span className="px-2 py-1 bg-indigo-100 text-indigo-700 text-xs font-medium rounded-full whitespace-nowrap">
-                          Saját
-                        </span>
-                      )}
                     </div>
                     {quiz.topic && (
                       <p className="text-xs sm:text-sm text-gray-600 line-clamp-1">
@@ -151,18 +146,15 @@ const AllQuizzesView = ({ onBack, onStartQuiz, onEditQuiz }) => {
                   {/* Action button */}
                   {/* Action buttons */}
                   <div className="space-y-2">
-                    {/* Edit button - csak saját teszteknél */}
-                    {quiz.is_mine && (
-                      <Button
-                        onClick={() => onEditQuiz(quiz)}
-                        variant="secondary"
-                        size="md"
-                        className="w-full inline-flex items-center justify-center gap-2"
-                      >
-                        <Edit className="w-4 h-4" />
-                        Szerkesztés
-                      </Button>
-                    )}
+                    <Button
+                      onClick={() => onEditQuiz(quiz)}
+                      variant="secondary"
+                      size="md"
+                      className="w-full inline-flex items-center justify-center gap-2"
+                    >
+                      <Edit className="w-4 h-4" />
+                      Szerkesztés
+                    </Button>
                     
                     {/* Start button - mindig látszik */}
                     <Button

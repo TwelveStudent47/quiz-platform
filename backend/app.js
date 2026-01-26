@@ -47,7 +47,8 @@ app.use(session({
     httpOnly: true,
     sameSite: process.env.NODE_ENV === 'production' ? 'none' : 'lax',
     maxAge: 24 * 60 * 60 * 1000
-  }
+  },
+  proxy: true
 }));
 app.use(passport.initialize());
 app.use(passport.session());
@@ -96,9 +97,20 @@ const isAuthenticated = (req, res, next) => {
 app.get('/auth/google', passport.authenticate('google', { scope: ['profile', 'email'] }));
 
 app.get('/auth/google/callback',
-  passport.authenticate('google', { failureRedirect: '/login' }),
-  (req, res) => {
-    res.redirect(process.env.FRONTEND_URL || 'http://localhost:3000');
+  passport.authenticate('google', { 
+    failureRedirect: process.env.FRONTEND_URL + '/login',
+    session: true
+  }),
+  (req, res, next) => {
+    // Explicitly save session before redirect
+    req.session.save((err) => {
+      if (err) {
+        console.error('❌ Session save error:', err);
+        return next(err);
+      }
+      console.log('✅ Session saved for user:', req.user.email);
+      res.redirect(process.env.FRONTEND_URL || 'http://localhost:3000');
+    });
   }
 );
 

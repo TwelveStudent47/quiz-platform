@@ -526,10 +526,10 @@ Ha hibát találsz, nyiss egy issue-t a [GitHub-on](https://github.com/TwelveStu
 - [x] **Hamburger menü**
 - [x] Színkódolt eredmények
 - [x] **Képfeltöltés kérdésekhez** (base64 mellett URL)
+- [x] Cloze/Fill-in-the-blank kérdések
 
 ### Folyamatban 🚧
 - [ ] Essay típusú kérdések (hosszú szöveges válasz)
-- [ ] Cloze/Fill-in-the-blank kérdések
 
 ### Tervezve 📋
 - [ ] **AI-powered kérdésgenerálás** Claude API-val

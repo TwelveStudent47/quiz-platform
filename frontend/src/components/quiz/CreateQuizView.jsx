@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Edit3, Plus, Trash2, Clock, X, Image as ImageIcon, Download } from 'lucide-react';
 import Card, { CardBody } from '../common/Card';
 import Button from '../common/Button';
@@ -7,12 +7,14 @@ import MultipleChoiceEditor from './creator/MultipleChoiceEditor';
 import TrueFalseEditor from './creator/TrueFalseEditor';
 import NumericEditor from './creator/NumericEditor';
 import MatchingEditor from './creator/MatchingEditor';
+import ClozeEditor from './creator/ClozeEditor';
+import EssayEditor from './creator/EssayEditor';
 import { useQuizzes } from '../../hooks/useQuizzes';
 import { API_URL } from '../../utils/constants';
 import { exportToMoodleXML, downloadMoodleXML } from '../../utils/moodleXMLExport';
 
-const CreateQuizView = ({ onCreateSuccess }) => {
-  const { createQuiz, loading } = useQuizzes();
+const CreateQuizView = ({ onCreateSuccess, editQuiz = null }) => {
+  const { loading } = useQuizzes();
   const [title, setTitle] = useState('');
   const [topic, setTopic] = useState('');
   const [description, setDescription] = useState('');
@@ -29,6 +31,47 @@ const CreateQuizView = ({ onCreateSuccess }) => {
     points: 1,
     explanation: ''
   }]);
+  const [coverImage, setCoverImage] = useState(null);
+
+  useEffect(() => {
+    if (editQuiz) {
+      console.log('🔍 Edit quiz data:', editQuiz);
+
+      const quizData = editQuiz.quiz || editQuiz;
+      const questionsData = editQuiz.questions || [];
+      
+      console.log('📦 Quiz metadata:', quizData);
+      console.log('📝 Questions array:', questionsData);
+      
+      setTitle(quizData.title || '');
+      setTopic(quizData.topic || '');
+      setDescription(quizData.description || '');
+      setCoverImage(quizData.cover_image || null);
+      
+      if (quizData.time_limit) {
+        setIsTimeLimited(true);
+        setTimeLimit(quizData.time_limit);
+      }
+      
+      if (questionsData.length > 0) {
+        const loadedQuestions = questionsData.map(q => {
+          console.log('🔄 Processing question:', q);
+          
+          return {
+            type: q.question_type || q.type || 'single_choice',
+            text: q.question_text || q.text || '',
+            image: q.question_image || q.image || null,
+            data: q.question_data || q.data || {},
+            points: q.points || 1,
+            explanation: q.explanation || ''
+          };
+        });
+        
+        console.log('✅ Loaded questions:', loadedQuestions);
+        setQuestions(loadedQuestions);
+      }
+    }
+  }, [editQuiz]);
 
   const addQuestion = () => {
     setQuestions([...questions, {
@@ -65,6 +108,23 @@ const CreateQuizView = ({ onCreateSuccess }) => {
         newQuestions[qIndex].data = { 
           pairs: [{ left: '', right: '' }, { left: '', right: '' }], 
           correctPairs: {} 
+        };
+        break;
+      case 'cloze':
+        newQuestions[qIndex].data = {
+          text: '',
+          blanks: []
+        };
+        break;
+      case 'essay':
+        newQuestions[qIndex].data = {
+          responseFormat: 'editor',
+          responseRequired: true,
+          responseFieldLines: 15,
+          minWordLimit: null,
+          maxWordLimit: null,
+          attachmentsAllowed: 0,
+          maxBytes: 0
         };
         break;
       default:
@@ -229,12 +289,6 @@ const CreateQuizView = ({ onCreateSuccess }) => {
     reader.readAsDataURL(file);
   };
 
-  const removeImage = (qIndex) => {
-    const newQuestions = [...questions];
-    newQuestions[qIndex].image = null;
-    setQuestions(newQuestions);
-  };
-
   const handleSave = async () => {
     if (!title.trim()) {
       alert('Kérlek adj meg egy címet!');
@@ -255,6 +309,8 @@ const CreateQuizView = ({ onCreateSuccess }) => {
         case 'matching':
           return q.data.pairs && q.data.pairs.length >= 2 && 
                  q.data.pairs.every(p => p.left.trim() && p.right.trim());
+        case 'essay':
+          return true;
         default:
           return false;
       }
@@ -265,25 +321,64 @@ const CreateQuizView = ({ onCreateSuccess }) => {
       return;
     }
 
-    try {
-      await fetch(`${API_URL}/api/create-quiz`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        credentials: 'include',
-        body: JSON.stringify({
-          title,
-          topic,
-          description,
-          timeLimit: isTimeLimited ? timeLimit : null,
-          questions: validQuestions
-        })
-      });
+    const quizData = {
+      title: title.trim(),
+      topic: topic.trim(),
+      description: description.trim(),
+      cover_image: coverImage,
+      time_limit: isTimeLimited ? timeLimit : null,
+      questions: validQuestions
+    };
 
-      alert('Teszt sikeresen létrehozva!');
+    try {      
+      const isUpdate = editQuiz && !editQuiz.isNew && (editQuiz.quiz?.id || editQuiz.id);
+      
+      if (isUpdate) {
+        const quizId = editQuiz.quiz?.id || editQuiz.id;
+        
+        if (!quizId) {
+          console.error('❌ Quiz ID not found!', editQuiz);
+          alert('Hiba: Quiz ID hiányzik!');
+          return;
+        }
+        
+        console.log('💾 Updating quiz:', quizId);
+        
+        const response = await fetch(`${API_URL}/api/quizzes/${quizId}`, {
+          method: 'PUT',
+          headers: { 'Content-Type': 'application/json' },
+          credentials: 'include',
+          body: JSON.stringify(quizData)
+        });
+
+        if (!response.ok) {
+          const errorData = await response.json();
+          throw new Error(errorData.error || 'Failed to update quiz');
+        }
+
+        alert('Teszt sikeresen frissítve! 🎉');
+      } else {
+        console.log('💾 Creating new quiz' + (editQuiz?.isNew ? ' (from XML import)' : ''));
+        
+        const response = await fetch(`${API_URL}/api/create-quiz`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          credentials: 'include',
+          body: JSON.stringify(quizData)
+        });
+
+        if (!response.ok) {
+          const errorData = await response.json();
+          throw new Error(errorData.error || 'Failed to create quiz');
+        }
+
+        alert('Teszt sikeresen létrehozva! 🎉');
+      }
+      
       onCreateSuccess();
     } catch (err) {
-      console.error('Save failed:', err);
-      alert('Hiba történt a mentés során');
+      console.error('❌ Save failed:', err);
+      alert(`Hiba történt a teszt ${isUpdate ? 'frissítése' : 'mentése'} során: ${err.message}`);
     }
   };
 
@@ -336,6 +431,7 @@ const CreateQuizView = ({ onCreateSuccess }) => {
     }
   };
 
+  const isUpdate = editQuiz && !editQuiz.isNew && (editQuiz.quiz?.id || editQuiz.id);
 
   return (
     <div className="max-w-7xl mx-auto px-2 sm:px-4 lg:px-6">
@@ -345,7 +441,7 @@ const CreateQuizView = ({ onCreateSuccess }) => {
           <div className="mb-4 sm:mb-6">
             <h2 className="text-xl sm:text-2xl font-bold text-gray-800 flex items-center gap-2">
               <Edit3 className="w-5 h-5 sm:w-6 sm:h-6 text-indigo-600" />
-              Új Teszt Készítése
+              {isUpdate ? 'Teszt Szerkesztése' : 'Új Teszt Létrehozása'}
             </h2>
             <p className="text-xs sm:text-sm text-gray-600 mt-1">
               Hozz létre egyedi tesztet különböző kérdéstípusokkal
@@ -498,6 +594,8 @@ const CreateQuizView = ({ onCreateSuccess }) => {
                           <option value="true_false">Igaz/Hamis</option>
                           <option value="numeric">Számos</option>
                           <option value="matching">Illesztéses</option>
+                          <option value="cloze">Kitöltendő</option>
+                          <option value="essay">Esszé</option>
                         </select>
                       </div>
 
@@ -621,6 +719,22 @@ const CreateQuizView = ({ onCreateSuccess }) => {
                         updateMatchingPair={updateMatchingPair}
                       />
                     )}
+
+                    {question.type === 'cloze' && (
+                      <ClozeEditor
+                        question={question}
+                        onUpdate={(field, value) => updateQuestion(qIndex, field, value)}
+                        onUpdateData={(field, value) => updateQuestionData(qIndex, field, value)}
+                      />
+                    )}
+
+                    {question.type === 'essay' && (
+                      <EssayEditor
+                        question={question}
+                        qIndex={qIndex}
+                        updateQuestionData={updateQuestionData}
+                      />
+                    )}
                   </div>
                 </div>
               </div>
@@ -637,7 +751,7 @@ const CreateQuizView = ({ onCreateSuccess }) => {
                 size="lg"
                 className="flex-1 w-full"
               >
-                {loading ? 'Mentés...' : 'Teszt Mentése'}
+                {editQuiz ? 'Teszt Frissítése' : 'Teszt Mentése'}
               </Button>
               
               <Button
@@ -652,7 +766,7 @@ const CreateQuizView = ({ onCreateSuccess }) => {
               </Button>
               
               <Button
-                onClick={() => window.history.back()}
+                onClick={onCreateSuccess}
                 variant="secondary"
                 size="lg"
                 className="w-full sm:w-auto"

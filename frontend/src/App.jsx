@@ -25,6 +25,7 @@ function AppContent() {
   const [view, setView] = useState(VIEWS.DASHBOARD);
   const [currentQuiz, setCurrentQuiz] = useState(null);
   const [reviewAttempt, setReviewAttempt] = useState(null);
+  const [editQuiz, setEditQuiz] = useState(null);
   const [searchTerm, setSearchTerm] = useState('');
 
   useEffect(() => {
@@ -87,14 +88,37 @@ function AppContent() {
     setView(VIEWS.ALL_RESULTS);
   };
 
+  const handleEditQuiz = async (quiz) => {
+    try {
+      const quizData = await quizAPI.getById(quiz.id);
+      setEditQuiz(quizData);
+      setView(VIEWS.EDIT);
+    } catch (err) {
+      console.error('Failed to load quiz for editing:', err);
+      alert('Hiba történt a teszt betöltése során');
+    }
+  };
+
   const handleUploadSuccess = () => {
     loadQuizzes();
     setView(VIEWS.DASHBOARD);
   };
 
-  const handleCreateSuccess = () => {
-    loadQuizzes();
-    setView(VIEWS.DASHBOARD);
+  const handleLoadToEditor = (quizData) => {
+    console.log('📝 Loading to editor from XML:', quizData);
+    
+    setEditQuiz({
+      isNew: true,
+      quiz: {
+        title: quizData.title,
+        topic: quizData.topic,
+        description: quizData.description,
+        time_limit: quizData.timeLimit
+      },
+      questions: quizData.questions
+    });
+    
+    setView(VIEWS.CREATE);
   };
 
   if (authLoading) {
@@ -125,15 +149,37 @@ function AppContent() {
             onDeleteQuiz={handleDeleteQuiz}
             onViewAllQuizzes={handleViewAllQuizzes}
             onViewAllResults={handleViewAllResults}
+            onEditQuiz={handleEditQuiz}
           />
         )}
 
         {view === VIEWS.UPLOAD && (
-          <UploadView onUploadSuccess={handleUploadSuccess} />
+          <UploadView
+            onUploadSuccess={handleUploadSuccess}
+            onLoadToEditor={handleLoadToEditor}
+          />
         )}
 
         {view === VIEWS.CREATE && (
-          <CreateQuizView onCreateSuccess={handleCreateSuccess} />
+          <CreateQuizView
+            editQuiz={editQuiz}
+            onCreateSuccess={() => {
+              loadQuizzes();
+              setView(VIEWS.DASHBOARD);
+              setEditQuiz(null);
+            }}
+          />
+        )}
+
+        {view === VIEWS.EDIT && editQuiz && (
+          <CreateQuizView 
+            editQuiz={editQuiz} 
+            onCreateSuccess={() => {
+              loadQuizzes();
+              setView(VIEWS.DASHBOARD);
+              setEditQuiz(null);
+            }}
+          />
         )}
 
         {view === VIEWS.QUIZ && currentQuiz && (
@@ -154,6 +200,7 @@ function AppContent() {
           <AllQuizzesView
             onBack={() => setView(VIEWS.DASHBOARD)}
             onStartQuiz={handleStartQuiz}
+            onEditQuiz={handleEditQuiz}
           />
         )}
 

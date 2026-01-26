@@ -37,8 +37,55 @@ const ReviewView = ({ attempt, onClose }) => {
         return userAnswer === data.correctAnswer;
       case 'numeric':
         return Math.abs(parseFloat(userAnswer) - parseFloat(data.correctAnswer)) < 0.01;
-      case 'matching':
-        return JSON.stringify(userAnswer) === JSON.stringify(data.correctPairs);
+      case 'matching': {
+        if (!userAnswer || !data.pairs || !data.correctPairs) return false;
+        
+        let allCorrect = true;
+        
+        data.pairs.forEach((pair, pairIdx) => {
+          const userRightIdx = userAnswer[pair.left];
+          const correctRightIdx = data.correctPairs[pairIdx];
+          
+          if (userRightIdx === undefined || userRightIdx !== correctRightIdx) {
+            allCorrect = false;
+          }
+        });
+        
+        return allCorrect;
+      }
+      case 'cloze': {
+        if (!userAnswer || !data.blanks) return false;
+        
+        let correctCount = 0;
+        const totalBlanks = data.blanks.length;
+        
+        data.blanks.forEach((blank, idx) => {
+          const userBlankAnswer = userAnswer[idx];
+          
+          if (blank.type === 'dropdown') {
+            if (userBlankAnswer === blank.correctIndex) {
+              correctCount++;
+            }
+          } else if (blank.type === 'text') {
+            const correctAnswer = blank.correctAnswer || '';
+            const userTextAnswer = String(userBlankAnswer || '');
+            
+            if (blank.caseSensitive) {
+              if (userTextAnswer === correctAnswer) {
+                correctCount++;
+              }
+            } else {
+              if (userTextAnswer.toLowerCase() === correctAnswer.toLowerCase()) {
+                correctCount++;
+              }
+            }
+          }
+        });
+        
+        return correctCount === totalBlanks;
+      }
+      case 'essay':
+        return false;
       default:
         return false;
     }
@@ -50,7 +97,9 @@ const ReviewView = ({ attempt, onClose }) => {
       'multiple_choice': 'Több válaszos',
       'true_false': 'Igaz/Hamis',
       'numeric': 'Számos',
-      'matching': 'Illesztéses'
+      'matching': 'Illesztéses',
+      'cloze': 'Kitöltendő',
+      'essay' : 'Esszé'
     };
     return labels[type] || type;
   };
@@ -129,7 +178,7 @@ const ReviewView = ({ attempt, onClose }) => {
                     <div className="flex-1">
                       <div className="flex items-start justify-between">
                         <p className="font-semibold text-gray-800 text-lg">
-                          {idx + 1}. {question.question_text}
+                          {idx + 1}. {question.question_type === 'cloze' ? '' : question.question_text}
                         </p>
                         <span className={`px-2 py-1 rounded text-xs font-medium ml-2 whitespace-nowrap ${
                           isCorrect ? 'bg-green-200 text-green-800' : 'bg-red-200 text-red-800'
@@ -298,24 +347,15 @@ const ReviewView = ({ attempt, onClose }) => {
                     {question.question_type === 'matching' && (
                       <div className="space-y-2">
                         {data.pairs.map((pair, pairIdx) => {
-                          // userAnswer formátuma lehet:
-                          // 1. {leftText: rightIndex} - QuizView új verziójából
-                          // 2. {pairIndex: rightIndex} - régebbi verzióból
-                          // 3. {0: 1, 1: 2} - index alapú
-                          
                           let userRightIdx;
-                          
-                          // Próbáljuk meg mindkét formátumot
+
                           if (userAnswer) {
-                            // Első próba: leftText kulccsal (pl. "Macska": 0)
                             if (userAnswer[pair.left] !== undefined) {
                               userRightIdx = userAnswer[pair.left];
                             }
-                            // Második próba: pairIndex kulccsal (pl. 0: 1)
                             else if (userAnswer[pairIdx] !== undefined) {
                               userRightIdx = userAnswer[pairIdx];
                             }
-                            // Harmadik próba: stringként
                             else if (userAnswer[pairIdx.toString()] !== undefined) {
                               userRightIdx = userAnswer[pairIdx.toString()];
                             }
@@ -323,8 +363,7 @@ const ReviewView = ({ attempt, onClose }) => {
                           
                           const correctRightIdx = data.correctPairs[pairIdx] ?? pairIdx;
                           const isPairCorrect = userRightIdx !== undefined && userRightIdx === correctRightIdx;
-                          
-                          // User által választott jobb oldali elem
+
                           const userRightText = userRightIdx !== undefined && data.pairs[userRightIdx] 
                             ? data.pairs[userRightIdx].right 
                             : null;
@@ -384,6 +423,118 @@ const ReviewView = ({ attempt, onClose }) => {
                             </div>
                           );
                         })}
+                      </div>
+                    )}
+
+                    {question.question_type === 'cloze' && (
+                      <div className="space-y-3">
+                        <div className="text-base leading-relaxed mb-4">
+                          {data.text.split(/(\{\d+\})/g).map((part, partIdx) => {
+                            const match = part.match(/\{(\d+)\}/);
+                            
+                            if (match) {
+                              const blankIdx = parseInt(match[1]);
+                              const blank = data.blanks[blankIdx];
+                              
+                              if (!blank) return null;
+                              
+                              const userBlankAnswer = userAnswer?.[blankIdx];
+                              const isBlankCorrect = (() => {
+                                if (blank.type === 'dropdown') {
+                                  return userBlankAnswer === blank.correctIndex;
+                                } else if (blank.type === 'text') {
+                                  const correctAnswer = blank.correctAnswer || '';
+                                  const userText = String(userBlankAnswer || '');
+                                  if (blank.caseSensitive) {
+                                    return userText === correctAnswer;
+                                  } else {
+                                    return userText.toLowerCase() === correctAnswer.toLowerCase();
+                                  }
+                                }
+                                return false;
+                              })();
+                              
+                              if (blank.type === 'dropdown') {
+                                const userOptionText = userBlankAnswer !== undefined && blank.options[userBlankAnswer]
+                                  ? blank.options[userBlankAnswer]
+                                  : '(nincs válasz)';
+                                const correctOptionText = blank.options[blank.correctIndex] || '';
+                                
+                                return (
+                                  <span
+                                    key={partIdx}
+                                    className={`inline-block mx-1 px-3 py-1 rounded-lg border-2 font-semibold ${
+                                      isBlankCorrect
+                                        ? 'bg-green-100 border-green-400 text-green-800'
+                                        : 'bg-red-100 border-red-400 text-red-800'
+                                    }`}
+                                  >
+                                    {userOptionText}
+                                    {!isBlankCorrect && (
+                                      <span className="ml-2 text-green-700">
+                                        (helyes: {correctOptionText})
+                                      </span>
+                                    )}
+                                  </span>
+                                );
+                              } else if (blank.type === 'text') {
+                                const userText = userBlankAnswer || '(üres)';
+                                const correctText = blank.correctAnswer || '';
+                                
+                                return (
+                                  <span
+                                    key={partIdx}
+                                    className={`inline-block mx-1 px-3 py-1 rounded-lg border-2 font-semibold ${
+                                      isBlankCorrect
+                                        ? 'bg-green-100 border-green-400 text-green-800'
+                                        : 'bg-red-100 border-red-400 text-red-800'
+                                    }`}
+                                  >
+                                    {userText}
+                                    {!isBlankCorrect && (
+                                      <span className="ml-2 text-green-700">
+                                        (helyes: {correctText})
+                                      </span>
+                                    )}
+                                  </span>
+                                );
+                              }
+                            }
+                            
+                            return <span key={partIdx}>{part}</span>;
+                          })}
+                        </div>
+                      </div>
+                    )}
+
+                    {/* Essay Question */}
+                    {question.question_type === 'essay' && (
+                      <div className="space-y-3">
+                        {/* User's answer */}
+                        <div className="bg-gray-50 p-4 rounded-lg border border-gray-300">
+                          <p className="text-sm font-semibold text-gray-700 mb-2">📝 Te válaszod:</p>
+                          <div className="prose prose-sm max-w-none">
+                            <p className="whitespace-pre-wrap text-gray-800">
+                              {userAnswer?.text || '(Nincs válasz)'}
+                            </p>
+                          </div>
+                          
+                          {userAnswer?.wordCount && (
+                            <p className="text-sm text-gray-600 mt-3">
+                              Szavak száma: <span className="font-semibold">{userAnswer.wordCount}</span>
+                            </p>
+                          )}
+                        </div>
+                        
+                        {/* Manual grading notice */}
+                        <div className="bg-yellow-50 p-4 rounded-lg border border-yellow-300">
+                          <p className="text-sm font-semibold text-yellow-800 mb-1">
+                            ⏳ Manuális értékelésre vár
+                          </p>
+                          <p className="text-sm text-yellow-700">
+                            Ez a kérdés tanári értékelést igényel. A pontszám később kerül megadásra.
+                          </p>
+                        </div>
                       </div>
                     )}
                   </div>

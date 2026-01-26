@@ -6,6 +6,7 @@ const multer = require('multer');
 const { Pool } = require('pg');
 const xml2js = require('xml2js');
 const cors = require('cors');
+const { parseMoodleXML } = require('./moodleXMLParser')
 require('dotenv').config()
 
 const app = express();
@@ -16,7 +17,14 @@ const pool = new Pool({
   ssl: false
 });
 
-app.use(cors({ origin: process.env.FRONTEND_URL || 'http://localhost:3000', credentials: true }));
+app.use(cors({
+  origin: process.env.FRONTEND_URL || 'http://localhost:3000',
+  credentials: true,
+  methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
+  allowedHeaders: ['Content-Type', 'Authorization']
+}));
+
+app.options('*', cors());
 app.use(express.json({ limit: '10mb' }));
 app.use(express.urlencoded({ limit: '10mb', extended: true }));
 app.use(session({
@@ -96,68 +104,77 @@ async function parseQuizFile(buffer, fileType) {
   if (fileType === 'json') {
     return JSON.parse(buffer.toString());
   } else if (fileType === 'xml') {
-    return new Promise((resolve, reject) => {
-      xml2js.parseString(buffer.toString(), (err, result) => {
-        if (err) {
-          reject(err);
-        } else {
-          const quiz = result.quiz;
-          const formatted = {
-            title: quiz.title[0],
-            topic: quiz.topic ? quiz.topic[0] : '',
-            description: quiz.description ? quiz.description[0] : '',
-            timeLimit: quiz.timeLimit ? parseInt(quiz.timeLimit[0]) : null,
-            questions: quiz.questions[0].question.map(q => {
-              const type = q.type ? q.type[0] : 'single_choice';
-              let data = {};
+    const xmlString = buffer.toString();
 
-              if (type === 'single_choice') {
-                data = {
-                  options: q.data[0].options[0].option,
-                  correctIndex: parseInt(q.data[0].correctIndex[0])
-                };
-              } else if (type === 'multiple_choice') {
-                data = {
-                  options: q.data[0].options[0].option,
-                  correctIndices: q.data[0].correctIndices[0].index.map(i => parseInt(i))
-                };
-              } else if (type === 'true_false') {
-                data = {
-                  correctAnswer: q.data[0].correctAnswer[0] === 'true'
-                };
-              } else if (type === 'numeric') {
-                data = {
-                  correctAnswer: parseFloat(q.data[0].correctAnswer[0]),
-                  unit: q.data[0].unit ? q.data[0].unit[0] : ''
-                };
-              } else if (type === 'matching') {
-                const pairs = q.data[0].pairs[0].pair.map(p => ({
-                  left: p.left[0],
-                  right: p.right[0]
-                }));
-                const correctPairs = {};
-                if (q.data[0].correctPairs) {
-                  q.data[0].correctPairs[0].entry.forEach(e => {
-                    correctPairs[e.key[0]] = parseInt(e.value[0]);
-                  });
+    if (xmlString.includes('<quiz>') && xmlString.includes('<question type=')) {
+      console.log('📄 Detected Moodle XML format - using parseMoodleXML');
+      return await parseMoodleXML(buffer);
+    } else {
+      console.log('📄 Detected custom XML format - using legacy parser');
+      
+      return new Promise((resolve, reject) => {
+        xml2js.parseString(buffer.toString(), (err, result) => {
+          if (err) {
+            reject(err);
+          } else {
+            const quiz = result.quiz;
+            const formatted = {
+              title: quiz.title[0],
+              topic: quiz.topic ? quiz.topic[0] : '',
+              description: quiz.description ? quiz.description[0] : '',
+              timeLimit: quiz.timeLimit ? parseInt(quiz.timeLimit[0]) : null,
+              questions: quiz.questions[0].question.map(q => {
+                const type = q.type ? q.type[0] : 'single_choice';
+                let data = {};
+
+                if (type === 'single_choice') {
+                  data = {
+                    options: q.data[0].options[0].option,
+                    correctIndex: parseInt(q.data[0].correctIndex[0])
+                  };
+                } else if (type === 'multiple_choice') {
+                  data = {
+                    options: q.data[0].options[0].option,
+                    correctIndices: q.data[0].correctIndices[0].index.map(i => parseInt(i))
+                  };
+                } else if (type === 'true_false') {
+                  data = {
+                    correctAnswer: q.data[0].correctAnswer[0] === 'true'
+                  };
+                } else if (type === 'numeric') {
+                  data = {
+                    correctAnswer: parseFloat(q.data[0].correctAnswer[0]),
+                    unit: q.data[0].unit ? q.data[0].unit[0] : ''
+                  };
+                } else if (type === 'matching') {
+                  const pairs = q.data[0].pairs[0].pair.map(p => ({
+                    left: p.left[0],
+                    right: p.right[0]
+                  }));
+                  const correctPairs = {};
+                  if (q.data[0].correctPairs) {
+                    q.data[0].correctPairs[0].entry.forEach(e => {
+                      correctPairs[e.key[0]] = parseInt(e.value[0]);
+                    });
+                  }
+                  data = { pairs, correctPairs };
                 }
-                data = { pairs, correctPairs };
-              }
-              
-              return {
-                type,
-                text: q.text[0],
-                image: q.image ? q.image[0] : null,
-                data,
-                points: q.points ? parseInt(q.points[0]) : 1,
-                explanation: q.explanation ? q.explanation[0] : null
-              };
-            })
-          };
-          resolve(formatted);
-        }
+                
+                return {
+                  type,
+                  text: q.text[0],
+                  image: q.image ? q.image[0] : null,
+                  data,
+                  points: q.points ? parseInt(q.points[0]) : 1,
+                  explanation: q.explanation ? q.explanation[0] : null
+                };
+              })
+            };
+            resolve(formatted);
+          }
+        });
       });
-    });
+    }
   }
   throw new Error('Unsupported file type');
 }
@@ -268,6 +285,69 @@ app.get('/api/quizzes/:id', isAuthenticated, async (req, res) => {
   }
 });
 
+app.put('/api/quizzes/:id', isAuthenticated, async (req, res) => {
+  try {
+    const quizId = parseInt(req.params.id, 10);
+    
+    if (isNaN(quizId)) {
+      return res.status(400).json({ error: 'Invalid quiz ID' });
+    }
+    
+    const { title, topic, description, time_limit, questions } = req.body;
+    
+    console.log('📝 Updating quiz:', quizId);
+
+    const quizCheck = await pool.query(
+      'SELECT user_id FROM quizzes WHERE id = $1',
+      [quizId]
+    );
+    
+    if (quizCheck.rows.length === 0) {
+      return res.status(404).json({ error: 'Quiz not found' });
+    }
+    
+    if (quizCheck.rows[0].user_id !== req.user.id) {
+      return res.status(403).json({ error: 'Not authorized' });
+    }
+
+    await pool.query(
+      `UPDATE quizzes 
+       SET title = $1, topic = $2, description = $3, time_limit = $4, updated_at = NOW()
+       WHERE id = $5`,
+      [title, topic, description, time_limit, quizId]
+    );
+
+    await pool.query('DELETE FROM questions WHERE quiz_id = $1', [quizId]);
+
+    for (let i = 0; i < questions.length; i++) {
+      const q = questions[i];
+      await pool.query(
+        `INSERT INTO questions 
+         (quiz_id, question_type, question_text, question_image, question_data, points, explanation, order_index) 
+         VALUES ($1, $2, $3, $4, $5, $6, $7, $8)`,
+        [quizId, q.type, q.text, q.image, JSON.stringify(q.data), q.points, q.explanation, i]
+      );
+    }
+    
+    console.log('✅ Quiz updated');
+
+    const quizResult = await pool.query('SELECT * FROM quizzes WHERE id = $1', [quizId]);
+    const questionsResult = await pool.query(
+      'SELECT * FROM questions WHERE quiz_id = $1 ORDER BY order_index',
+      [quizId]
+    );
+    
+    res.json({
+      quiz: quizResult.rows[0],
+      questions: questionsResult.rows
+    });
+  } catch (err) {
+    console.error('❌ Update error:', err);
+    res.status(500).json({ error: 'Failed to update quiz' });
+  }
+});
+
+
 app.post('/api/submit', isAuthenticated, async (req, res) => {
   try {
     const { quizId, answers, timeSpent } = req.body;
@@ -311,11 +391,71 @@ app.post('/api/submit', isAuthenticated, async (req, res) => {
             isCorrect = !isNaN(userNum) && !isNaN(correctNum) && Math.abs(userNum - correctNum) < 0.01;
           }
           break;
-        case 'matching':
-          if (userAnswer && typeof userAnswer === 'object') {
-            isCorrect = JSON.stringify(userAnswer) === JSON.stringify(data.correctPairs);
+        case 'matching': {
+          if (userAnswer && typeof userAnswer === 'object' && data.pairs && data.correctPairs) {
+            // User answer: {"JavaScript": 0, "SQL": 1, "Java": 2}
+            // Correct pairs: {0: 0, 1: 1, 2: 2}
+            // We need to check if userAnswer[pair.left] === correctPairs[pairIdx]
+            
+            let allCorrect = true;
+            
+            data.pairs.forEach((pair, pairIdx) => {
+              const userRightIdx = userAnswer[pair.left];
+              const correctRightIdx = data.correctPairs[pairIdx];
+              
+              if (userRightIdx === undefined || userRightIdx !== correctRightIdx) {
+                allCorrect = false;
+              }
+            });
+            
+            isCorrect = allCorrect;
           }
           break;
+        }
+        case 'cloze':
+          case 'cloze':
+          if (userAnswer && typeof userAnswer === 'object') {
+            let correctCount = 0;
+            let totalBlanks = data.blanks ? data.blanks.length : 0;
+            
+            if (totalBlanks > 0) {
+              data.blanks.forEach((blank, idx) => {
+                const userBlankAnswer = userAnswer[idx];
+                
+                if (blank.type === 'dropdown') {
+                  if (userBlankAnswer === blank.correctIndex) {
+                    correctCount++;
+                  }
+                } else if (blank.type === 'text') {
+                  const correctAnswer = blank.correctAnswer || '';
+                  const userTextAnswer = String(userBlankAnswer || '');
+                  
+                  if (blank.caseSensitive) {
+                    if (userTextAnswer === correctAnswer) {
+                      correctCount++;
+                    }
+                  } else {
+                    if (userTextAnswer.toLowerCase() === correctAnswer.toLowerCase()) {
+                      correctCount++;
+                    }
+                  }
+                }
+              });
+
+              isCorrect = (correctCount === totalBlanks);
+            }
+          }
+          break;
+        case 'essay': {
+          // Essay questions are manually graded
+          // For now, we check if answer exists and award participation points
+          if (userAnswer && userAnswer.text && userAnswer.text.trim().length > 0) {
+            // Participation credit: 0 points until manual grading
+            // Teachers will grade manually later
+            isCorrect = false;  // 0 points initially
+          }
+          break;
+        }
         default:
           isCorrect = false;
       }
@@ -420,6 +560,35 @@ app.delete('/api/quizzes/:id', isAuthenticated, async (req, res) => {
   } catch (err) {
     console.error(err);
     res.status(500).json({ error: 'Failed to delete quiz' });
+  }
+});
+
+app.post('/api/parse-xml', isAuthenticated, upload.single('file'), async (req, res) => {
+  try {
+    const file = req.file;
+    
+    if (!file) {
+      return res.status(400).json({ error: 'No file uploaded' });
+    }
+
+    // Check file type
+    if (!file.originalname.endsWith('.xml')) {
+      return res.status(400).json({ error: 'Only XML files are supported' });
+    }
+
+    console.log('📄 Parsing XML file:', file.originalname);
+
+    const quizData = await parseMoodleXML(file.buffer);
+
+    console.log('✅ XML parsed successfully:', {
+      title: quizData.title,
+      questionsCount: quizData.questions.length
+    });
+
+    res.json(quizData);
+  } catch (err) {
+    console.error('❌ Parse XML error:', err);
+    res.status(500).json({ error: 'Failed to parse XML: ' + err.message });
   }
 });
 

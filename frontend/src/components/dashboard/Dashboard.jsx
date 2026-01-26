@@ -15,7 +15,8 @@ const Dashboard = ({
   onReviewAttempt, 
   onDeleteQuiz,
   onViewAllQuizzes,
-  onViewAllResults
+  onViewAllResults,
+  onEditQuiz
 }) => {
   return (
     <div className="space-y-6">
@@ -54,6 +55,7 @@ const Dashboard = ({
           history={history}
           onStartQuiz={onStartQuiz}
           onDeleteQuiz={onDeleteQuiz}
+          onEditQuiz={onEditQuiz}
         />
         
         <RecentResults

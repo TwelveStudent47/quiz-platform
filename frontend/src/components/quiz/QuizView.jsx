@@ -46,8 +46,7 @@ const QuizView = ({ quiz, onComplete }) => {
     try {
       const data = await quizAPI.getById(quiz.id);
       setQuizData(data.quiz);
-      
-      // Shuffle questions and options
+
       const shuffledQuestions = shuffleArray(data.questions).map(q => {
         if (q.question_type === 'single_choice' || q.question_type === 'multiple_choice') {
           const optionsWithIndex = q.question_data.options.map((opt, idx) => ({ 
@@ -64,17 +63,6 @@ const QuizView = ({ quiz, onComplete }) => {
               shuffledOptions: shuffledOptions
             },
             originalOptions: q.question_data.options
-          };
-        }
-        
-        if (q.question_type === 'matching') {
-          const rightItems = shuffleArray(q.question_data.pairs.map(p => p.right));
-          return {
-            ...q,
-            question_data: {
-              ...q.question_data,
-              shuffledRightItems: rightItems
-            }
           };
         }
         
@@ -114,8 +102,7 @@ const QuizView = ({ quiz, onComplete }) => {
 
   const handleSubmit = async () => {
     const timeSpent = Math.floor((Date.now() - startTime) / 1000);
-    
-    // Process answers to match original indices
+
     const processedAnswers = {};
     questions.forEach(q => {
       if (answers[q.id] !== undefined) {
@@ -170,8 +157,7 @@ const QuizView = ({ quiz, onComplete }) => {
 
   if (result) {
     const percentage = Math.round(result.percentage);
-    
-    // Dinamikus ikon és szín választás
+
     const getResultIcon = () => {
       if (percentage >= 90) {
         return {
@@ -302,7 +288,10 @@ const QuizView = ({ quiz, onComplete }) => {
             </div>
             
             <h3 className="text-xl font-semibold text-gray-800 mb-4">
-              {currentQuestion.question_text}
+              {currentQuestion.question_type === 'cloze' 
+                ? ''
+                : currentQuestion.question_text
+              }
             </h3>
 
             {currentQuestion.question_image && (
@@ -448,6 +437,124 @@ const QuizView = ({ quiz, onComplete }) => {
                       </div>
                     );
                   })}
+                </div>
+              )}
+
+              {currentQuestion.question_type === 'cloze' && (
+                <div className="space-y-4">
+                  <div className="text-base leading-relaxed">
+                    {currentQuestion.question_data.text.split(/(\{\d+\})/g).map((part, idx) => {
+                      const match = part.match(/\{(\d+)\}/);
+                      
+                      if (match) {
+                        const blankIdx = parseInt(match[1]);
+                        const blank = currentQuestion.question_data.blanks[blankIdx];
+                        
+                        if (!blank) return null;
+                        
+                        const currentAnswer = answers[currentQuestion.id]?.[blankIdx];
+                        
+                        if (blank.type === 'dropdown') {
+                          return (
+                            <select
+                              key={idx}
+                              value={currentAnswer !== undefined ? currentAnswer : ''}
+                              onChange={(e) => {
+                                const newAnswers = { ...(answers[currentQuestion.id] || {}) };
+                                newAnswers[blankIdx] = e.target.value === '' ? undefined : parseInt(e.target.value);
+                                handleAnswer(currentQuestion.id, newAnswers);
+                              }}
+                              className="inline-block mx-1 px-3 py-1 border-2 border-indigo-300 rounded-lg bg-white focus:ring-2 focus:ring-indigo-500 focus:border-transparent"
+                            >
+                              <option value="">--</option>
+                              {blank.options.map((opt, optIdx) => (
+                                <option key={optIdx} value={optIdx}>
+                                  {opt}
+                                </option>
+                              ))}
+                            </select>
+                          );
+                        } else if (blank.type === 'text') {
+                          return (
+                            <input
+                              key={idx}
+                              type="text"
+                              value={currentAnswer || ''}
+                              onChange={(e) => {
+                                const newAnswers = { ...(answers[currentQuestion.id] || {}) };
+                                newAnswers[blankIdx] = e.target.value;
+                                handleAnswer(currentQuestion.id, newAnswers);
+                              }}
+                              placeholder="..."
+                              className="inline-block mx-1 px-3 py-1 w-32 border-2 border-indigo-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent"
+                            />
+                          );
+                        }
+                      }
+                      
+                      return <span key={idx}>{part}</span>;
+                    })}
+                  </div>
+                </div>
+              )}
+
+              {currentQuestion.question_type === 'essay' && (
+                <div className="space-y-4">
+                  {/* Instructions */}
+                  {(currentQuestion.question_data.minWordLimit || currentQuestion.question_data.maxWordLimit) && (
+                    <div className="text-sm text-gray-600 bg-blue-50 p-3 rounded-lg border border-blue-200">
+                      <p className="font-semibold text-blue-800 mb-1">📝 Követelmények:</p>
+                      {currentQuestion.question_data.minWordLimit && (
+                        <p>• Minimum {currentQuestion.question_data.minWordLimit} szó</p>
+                      )}
+                      {currentQuestion.question_data.maxWordLimit && (
+                        <p>• Maximum {currentQuestion.question_data.maxWordLimit} szó</p>
+                      )}
+                    </div>
+                  )}
+
+                  {/* Textarea */}
+                  <div>
+                    <textarea
+                      value={answers[currentQuestion.id]?.text || ''}
+                      onChange={(e) => {
+                        const text = e.target.value;
+                        const wordCount = text.trim().split(/\s+/).filter(w => w.length > 0).length;
+                        
+                        handleAnswer(currentQuestion.id, {
+                          text: text,
+                          wordCount: wordCount
+                        });
+                      }}
+                      placeholder="Írd ide a válaszod..."
+                      rows={currentQuestion.question_data.responseFieldLines || 15}
+                      className="w-full px-4 py-3 border-2 border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent resize-y font-sans"
+                    />
+                    
+                    {/* Word count */}
+                    <div className="flex justify-between items-center mt-2 text-sm">
+                      <p className="text-gray-600">
+                        Szavak száma: <span className="font-semibold">
+                          {answers[currentQuestion.id]?.wordCount || 0}
+                        </span>
+                      </p>
+                      
+                      {/* Warning for limits */}
+                      {currentQuestion.question_data.minWordLimit && 
+                       (answers[currentQuestion.id]?.wordCount || 0) < currentQuestion.question_data.minWordLimit && (
+                        <p className="text-orange-600 font-medium">
+                          ⚠️ Minimum {currentQuestion.question_data.minWordLimit} szó szükséges
+                        </p>
+                      )}
+                      
+                      {currentQuestion.question_data.maxWordLimit && 
+                       (answers[currentQuestion.id]?.wordCount || 0) > currentQuestion.question_data.maxWordLimit && (
+                        <p className="text-red-600 font-medium">
+                          ❌ Maximum {currentQuestion.question_data.maxWordLimit} szó engedélyezett
+                        </p>
+                      )}
+                    </div>
+                  </div>
                 </div>
               )}
             </div>

@@ -40,7 +40,7 @@ export const useQuizzes = () => {
     setError(null);
     try {
       const result = await quizAPI.upload(formData);
-      await loadQuizzes(); // Refresh the list
+      await loadQuizzes();
       return result;
     } catch (err) {
       console.error('Failed to upload quiz:', err);
@@ -56,7 +56,7 @@ export const useQuizzes = () => {
     setError(null);
     try {
       const result = await quizAPI.create(quizData);
-      await loadQuizzes(); // Refresh the list
+      await loadQuizzes();
       return result;
     } catch (err) {
       console.error('Failed to create quiz:', err);

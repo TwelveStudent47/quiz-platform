@@ -391,11 +391,27 @@ app.post('/api/submit', isAuthenticated, async (req, res) => {
             isCorrect = !isNaN(userNum) && !isNaN(correctNum) && Math.abs(userNum - correctNum) < 0.01;
           }
           break;
-        case 'matching':
-          if (userAnswer && typeof userAnswer === 'object') {
-            isCorrect = JSON.stringify(userAnswer) === JSON.stringify(data.correctPairs);
+        case 'matching': {
+          if (userAnswer && typeof userAnswer === 'object' && data.pairs && data.correctPairs) {
+            // User answer: {"JavaScript": 0, "SQL": 1, "Java": 2}
+            // Correct pairs: {0: 0, 1: 1, 2: 2}
+            // We need to check if userAnswer[pair.left] === correctPairs[pairIdx]
+            
+            let allCorrect = true;
+            
+            data.pairs.forEach((pair, pairIdx) => {
+              const userRightIdx = userAnswer[pair.left];
+              const correctRightIdx = data.correctPairs[pairIdx];
+              
+              if (userRightIdx === undefined || userRightIdx !== correctRightIdx) {
+                allCorrect = false;
+              }
+            });
+            
+            isCorrect = allCorrect;
           }
           break;
+        }
         case 'cloze':
           case 'cloze':
           if (userAnswer && typeof userAnswer === 'object') {

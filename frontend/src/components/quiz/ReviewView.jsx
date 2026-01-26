@@ -37,8 +37,22 @@ const ReviewView = ({ attempt, onClose }) => {
         return userAnswer === data.correctAnswer;
       case 'numeric':
         return Math.abs(parseFloat(userAnswer) - parseFloat(data.correctAnswer)) < 0.01;
-      case 'matching':
-        return JSON.stringify(userAnswer) === JSON.stringify(data.correctPairs);
+      case 'matching': {
+        if (!userAnswer || !data.pairs || !data.correctPairs) return false;
+        
+        let allCorrect = true;
+        
+        data.pairs.forEach((pair, pairIdx) => {
+          const userRightIdx = userAnswer[pair.left];
+          const correctRightIdx = data.correctPairs[pairIdx];
+          
+          if (userRightIdx === undefined || userRightIdx !== correctRightIdx) {
+            allCorrect = false;
+          }
+        });
+        
+        return allCorrect;
+      }
       case 'cloze': {
         if (!userAnswer || !data.blanks) return false;
         

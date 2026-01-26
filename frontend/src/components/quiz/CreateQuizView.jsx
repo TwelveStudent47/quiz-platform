@@ -8,6 +8,7 @@ import TrueFalseEditor from './creator/TrueFalseEditor';
 import NumericEditor from './creator/NumericEditor';
 import MatchingEditor from './creator/MatchingEditor';
 import ClozeEditor from './creator/ClozeEditor';
+import EssayEditor from './creator/EssayEditor';
 import { useQuizzes } from '../../hooks/useQuizzes';
 import { API_URL } from '../../utils/constants';
 import { exportToMoodleXML, downloadMoodleXML } from '../../utils/moodleXMLExport';
@@ -113,6 +114,17 @@ const CreateQuizView = ({ onCreateSuccess, editQuiz = null }) => {
         newQuestions[qIndex].data = {
           text: '',
           blanks: []
+        };
+        break;
+      case 'essay':
+        newQuestions[qIndex].data = {
+          responseFormat: 'editor',
+          responseRequired: true,
+          responseFieldLines: 15,
+          minWordLimit: null,
+          maxWordLimit: null,
+          attachmentsAllowed: 0,
+          maxBytes: 0
         };
         break;
       default:
@@ -297,6 +309,8 @@ const CreateQuizView = ({ onCreateSuccess, editQuiz = null }) => {
         case 'matching':
           return q.data.pairs && q.data.pairs.length >= 2 && 
                  q.data.pairs.every(p => p.left.trim() && p.right.trim());
+        case 'essay':
+          return true;
         default:
           return false;
       }
@@ -581,6 +595,7 @@ const CreateQuizView = ({ onCreateSuccess, editQuiz = null }) => {
                           <option value="numeric">Számos</option>
                           <option value="matching">Illesztéses</option>
                           <option value="cloze">Kitöltendő</option>
+                          <option value="essay">Esszé</option>
                         </select>
                       </div>
 
@@ -710,6 +725,14 @@ const CreateQuizView = ({ onCreateSuccess, editQuiz = null }) => {
                         question={question}
                         onUpdate={(field, value) => updateQuestion(qIndex, field, value)}
                         onUpdateData={(field, value) => updateQuestionData(qIndex, field, value)}
+                      />
+                    )}
+
+                    {question.type === 'essay' && (
+                      <EssayEditor
+                        question={question}
+                        qIndex={qIndex}
+                        updateQuestionData={updateQuestionData}
                       />
                     )}
                   </div>

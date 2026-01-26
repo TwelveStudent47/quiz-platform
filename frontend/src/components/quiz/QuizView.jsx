@@ -66,17 +66,6 @@ const QuizView = ({ quiz, onComplete }) => {
           };
         }
         
-        if (q.question_type === 'matching') {
-          const rightItems = shuffleArray(q.question_data.pairs.map(p => p.right));
-          return {
-            ...q,
-            question_data: {
-              ...q.question_data,
-              shuffledRightItems: rightItems
-            }
-          };
-        }
-        
         return q;
       });
       

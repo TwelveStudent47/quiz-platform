@@ -1,8 +1,3 @@
-// ═══════════════════════════════════════════════════════════
-// MOODLE XML PARSER - ENHANCED WITH IMAGE HANDLING
-// Handles HTML tags, images, CDATA
-// ═══════════════════════════════════════════════════════════
-
 const xml2js = require('xml2js');
 
 /**
@@ -14,20 +9,17 @@ const xml2js = require('xml2js');
 function parseClozeQuestion(questionText) {
   const blanks = [];
   let plainText = questionText;
-  
-  // Find all {N:TYPE:...} patterns
+
   const clozeRegex = /\{(\d+):(MULTICHOICE|SHORTANSWER|NUMERICAL):([^}]+)\}/g;
   let match;
   let index = 0;
   
   while ((match = clozeRegex.exec(questionText)) !== null) {
     const [fullMatch, blankNum, type, content] = match;
-    
-    // Replace with {0}, {1}, etc. for our format
+
     plainText = plainText.replace(fullMatch, `{${index}}`);
     
     if (type === 'MULTICHOICE') {
-      // Parse: ~=Paris#Correct~London#Incorrect~Berlin#Incorrect
       const options = [];
       let correctIndex = 0;
       
@@ -50,7 +42,6 @@ function parseClozeQuestion(questionText) {
         correctIndex: correctIndex
       });
     } else if (type === 'SHORTANSWER') {
-      // Parse: =Paris or =Paris#Feedback
       const answer = content.replace(/^=/, '').split('#')[0].trim();
       
       blanks.push({
@@ -59,7 +50,6 @@ function parseClozeQuestion(questionText) {
         caseSensitive: false
       });
     } else if (type === 'NUMERICAL') {
-      // Parse: =330:1 (answer:tolerance)
       const parts = content.replace(/^=/, '').split(':');
       const answer = parts[0].trim();
       
@@ -82,15 +72,12 @@ function parseClozeQuestion(questionText) {
 function stripHTMLAndExtractImage(html) {
   if (!html) return { text: '', imageUrl: null };
 
-  // Extract image src
   const imgRegex = /<img[^>]+src="([^">]+)"/i;
   const imgMatch = html.match(imgRegex);
   const imageUrl = imgMatch ? imgMatch[1] : null;
 
-  // Remove all HTML tags
   let text = html.replace(/<[^>]*>/g, '');
-  
-  // Decode HTML entities
+
   text = text
     .replace(/&lt;/g, '<')
     .replace(/&gt;/g, '>')
@@ -99,7 +86,6 @@ function stripHTMLAndExtractImage(html) {
     .replace(/&#39;/g, "'")
     .replace(/&nbsp;/g, ' ');
 
-  // Trim whitespace
   text = text.trim();
 
   return { text, imageUrl };
@@ -123,22 +109,18 @@ async function parseMoodleXML(xmlBuffer) {
         const quiz = result.quiz || {};
         const questions = [];
 
-        // Parse each question
         if (quiz.question && Array.isArray(quiz.question)) {
           for (const q of quiz.question) {
             const questionType = q.$.type;
-            
-            // Skip category and cloze questions
+
             if (questionType === 'category') {
               console.log(`Skipping ${questionType} question`);
               continue;
             }
 
-            // Extract question text with HTML stripping
             const questionHTML = q.questiontext?.[0]?.text?.[0] || '';
             const { text: questionText, imageUrl } = stripHTMLAndExtractImage(questionHTML);
-            
-            // Extract feedback
+
             const generalFeedbackHTML = q.generalfeedback?.[0]?.text?.[0] || '';
             const { text: generalFeedback } = stripHTMLAndExtractImage(generalFeedbackHTML);
             
@@ -158,7 +140,6 @@ async function parseMoodleXML(xmlBuffer) {
                 });
                 
                 if (single) {
-                  // Single choice
                   const correctIndex = answers.findIndex(a => 
                     parseFloat(a.$.fraction || '0') > 0
                   );
@@ -166,7 +147,7 @@ async function parseMoodleXML(xmlBuffer) {
                   parsedQuestion = {
                     type: 'single_choice',
                     text: questionText,
-                    image: imageUrl,  // May be null or @@PLUGINFILE@@ URL
+                    image: imageUrl,
                     data: {
                       options,
                       correctIndex: correctIndex >= 0 ? correctIndex : 0
@@ -175,7 +156,6 @@ async function parseMoodleXML(xmlBuffer) {
                     explanation: generalFeedback
                   };
                 } else {
-                  // Multiple choice
                   const correctIndices = [];
                   answers.forEach((a, idx) => {
                     if (parseFloat(a.$.fraction || '0') > 0) {
@@ -220,8 +200,7 @@ async function parseMoodleXML(xmlBuffer) {
                 const answers = q.answer || [];
                 const correctAnswer = parseFloat(answers[0]?.text?.[0] || '0');
                 const tolerance = parseFloat(answers[0]?.tolerance?.[0] || '0');
-                
-                // Extract unit if present
+
                 const units = q.units?.[0]?.unit || [];
                 const unit = units[0]?.unit_name?.[0] || '';
                 
@@ -291,7 +270,6 @@ async function parseMoodleXML(xmlBuffer) {
               case 'shortanswer':
               case 'essay':
               case 'description':
-                // Skip unsupported types
                 console.log(`Skipping unsupported question type: ${questionType}`);
                 break;
 
@@ -305,7 +283,6 @@ async function parseMoodleXML(xmlBuffer) {
           }
         }
 
-        // Extract quiz metadata
         const categoryQuestion = quiz.question?.find(q => q.$.type === 'category');
         const categoryText = categoryQuestion?.category?.[0]?.text?.[0] || '';
         const categoryParts = categoryText.split('/');

@@ -13,7 +13,6 @@ const fetchWithCredentials = async (url, options = {}) => {
   return response;
 };
 
-// Auth API
 export const authAPI = {
   checkAuth: async () => {
     const response = await fetchWithCredentials(`${API_URL}/auth/user`);
@@ -32,7 +31,6 @@ export const authAPI = {
   }
 };
 
-// Quiz API
 export const quizAPI = {
   getAll: async (search = '') => {
     const url = search 
@@ -90,7 +88,6 @@ export const quizAPI = {
   }
 };
 
-// History API
 export const historyAPI = {
   getAll: async () => {
     const response = await fetchWithCredentials(`${API_URL}/api/history`);

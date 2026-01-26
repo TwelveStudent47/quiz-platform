@@ -1,17 +1,10 @@
-// ═══════════════════════════════════════════════════════════
-// FRONTEND - UPLOAD VIEW MÓDOSÍTÁS
-// Moodle XML feltöltés → Edit View-ba
-// ═══════════════════════════════════════════════════════════
-
-// File: frontend/src/components/quiz/UploadView.jsx
-
 import React, { useState } from 'react';
 import { Upload, FileText, FileCode } from 'lucide-react';
 import Card, { CardBody } from '../common/Card';
 import Button from '../common/Button';
 import { API_URL } from '../../utils/constants';
 
-const UploadView = ({ onUploadSuccess, onLoadToEditor }) => {  // ← onLoadToEditor prop!
+const UploadView = ({ onUploadSuccess, onLoadToEditor }) => {
   const [file, setFile] = useState(null);
   const [uploading, setUploading] = useState(false);
 
@@ -53,10 +46,6 @@ const UploadView = ({ onUploadSuccess, onLoadToEditor }) => {  // ← onLoadToEd
       setUploading(false);
     }
   };
-
-  // ═══════════════════════════════════════════════════════════
-  // ÚJ FUNKCIÓ: Load to Editor (Moodle XML → Edit View)
-  // ═══════════════════════════════════════════════════════════
   
   const handleLoadToEditor = async () => {
     if (!file) {
@@ -64,7 +53,6 @@ const UploadView = ({ onUploadSuccess, onLoadToEditor }) => {  // ← onLoadToEd
       return;
     }
 
-    // Csak XML fájlokat engedélyez
     if (!file.name.endsWith('.xml')) {
       alert('Csak Moodle XML fájlokat lehet betölteni a szerkesztőbe!');
       return;
@@ -90,7 +78,6 @@ const UploadView = ({ onUploadSuccess, onLoadToEditor }) => {  // ← onLoadToEd
       
       console.log('📦 Parsed quiz data:', quizData);
       
-      // Redirect to Edit View with parsed data
       onLoadToEditor(quizData);
     } catch (err) {
       console.error('Parse error:', err);

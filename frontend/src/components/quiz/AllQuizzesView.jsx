@@ -143,7 +143,6 @@ const AllQuizzesView = ({ onBack, onStartQuiz, onEditQuiz }) => {
                     </div>
                   )}
 
-                  {/* Action button */}
                   {/* Action buttons */}
                   <div className="space-y-2">
                     <Button

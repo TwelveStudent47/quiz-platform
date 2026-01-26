@@ -20,11 +20,10 @@ const pool = new Pool({
 app.use(cors({
   origin: process.env.FRONTEND_URL || 'http://localhost:3000',
   credentials: true,
-  methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],  // ← PUT!
+  methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
   allowedHeaders: ['Content-Type', 'Authorization']
 }));
 
-// Preflight requests (add hozzá rögtön utána)
 app.options('*', cors());
 app.use(express.json({ limit: '10mb' }));
 app.use(express.urlencoded({ limit: '10mb', extended: true }));
@@ -103,22 +102,14 @@ app.get('/auth/user', (req, res) => {
 
 async function parseQuizFile(buffer, fileType) {
   if (fileType === 'json') {
-    // JSON format (régi formátum)
     return JSON.parse(buffer.toString());
   } else if (fileType === 'xml') {
-    // ═══════════════════════════════════════════════════════════
-    // XML FORMAT DETECTION: Moodle XML vs Custom XML
-    // ═══════════════════════════════════════════════════════════
-    
     const xmlString = buffer.toString();
-    
-    // Check if it's Moodle XML format
+
     if (xmlString.includes('<quiz>') && xmlString.includes('<question type=')) {
-      // ═══ MOODLE XML FORMAT ═══
       console.log('📄 Detected Moodle XML format - using parseMoodleXML');
       return await parseMoodleXML(buffer);
     } else {
-      // ═══ CUSTOM XML FORMAT (OLD) ═══
       console.log('📄 Detected custom XML format - using legacy parser');
       
       return new Promise((resolve, reject) => {
@@ -296,7 +287,6 @@ app.get('/api/quizzes/:id', isAuthenticated, async (req, res) => {
 
 app.put('/api/quizzes/:id', isAuthenticated, async (req, res) => {
   try {
-    // KRITIKUS! parseInt!
     const quizId = parseInt(req.params.id, 10);
     
     if (isNaN(quizId)) {
@@ -306,11 +296,10 @@ app.put('/api/quizzes/:id', isAuthenticated, async (req, res) => {
     const { title, topic, description, time_limit, questions } = req.body;
     
     console.log('📝 Updating quiz:', quizId);
-    
-    // Check owner
+
     const quizCheck = await pool.query(
       'SELECT user_id FROM quizzes WHERE id = $1',
-      [quizId]  // ← Integer!
+      [quizId]
     );
     
     if (quizCheck.rows.length === 0) {
@@ -320,19 +309,16 @@ app.put('/api/quizzes/:id', isAuthenticated, async (req, res) => {
     if (quizCheck.rows[0].user_id !== req.user.id) {
       return res.status(403).json({ error: 'Not authorized' });
     }
-    
-    // Update quiz
+
     await pool.query(
       `UPDATE quizzes 
        SET title = $1, topic = $2, description = $3, time_limit = $4, updated_at = NOW()
        WHERE id = $5`,
       [title, topic, description, time_limit, quizId]
     );
-    
-    // Delete old questions
+
     await pool.query('DELETE FROM questions WHERE quiz_id = $1', [quizId]);
-    
-    // Insert new questions
+
     for (let i = 0; i < questions.length; i++) {
       const q = questions[i];
       await pool.query(
@@ -344,8 +330,7 @@ app.put('/api/quizzes/:id', isAuthenticated, async (req, res) => {
     }
     
     console.log('✅ Quiz updated');
-    
-    // Return updated quiz
+
     const quizResult = await pool.query('SELECT * FROM quizzes WHERE id = $1', [quizId]);
     const questionsResult = await pool.query(
       'SELECT * FROM questions WHERE quiz_id = $1 ORDER BY order_index',
@@ -412,7 +397,7 @@ app.post('/api/submit', isAuthenticated, async (req, res) => {
           }
           break;
         case 'cloze':
-          case 'cloze':  // ← ÚJ!
+          case 'cloze':
           if (userAnswer && typeof userAnswer === 'object') {
             let correctCount = 0;
             let totalBlanks = data.blanks ? data.blanks.length : 0;
@@ -422,35 +407,26 @@ app.post('/api/submit', isAuthenticated, async (req, res) => {
                 const userBlankAnswer = userAnswer[idx];
                 
                 if (blank.type === 'dropdown') {
-                  // Dropdown scoring
                   if (userBlankAnswer === blank.correctIndex) {
                     correctCount++;
                   }
                 } else if (blank.type === 'text') {
-                  // Text input scoring
                   const correctAnswer = blank.correctAnswer || '';
                   const userTextAnswer = String(userBlankAnswer || '');
                   
                   if (blank.caseSensitive) {
-                    // Case sensitive
                     if (userTextAnswer === correctAnswer) {
                       correctCount++;
                     }
                   } else {
-                    // Case insensitive
                     if (userTextAnswer.toLowerCase() === correctAnswer.toLowerCase()) {
                       correctCount++;
                     }
                   }
                 }
               });
-              
-              // Partial scoring: proportional to correct blanks
+
               isCorrect = (correctCount === totalBlanks);
-              
-              // If you want partial credit:
-              // score += (q.points || 1) * (correctCount / totalBlanks);
-              // return; // Skip the isCorrect block below
             }
           }
           break;
@@ -576,7 +552,6 @@ app.post('/api/parse-xml', isAuthenticated, upload.single('file'), async (req, r
 
     console.log('📄 Parsing XML file:', file.originalname);
 
-    // Parse XML to quiz format
     const quizData = await parseMoodleXML(file.buffer);
 
     console.log('✅ XML parsed successfully:', {
@@ -584,7 +559,6 @@ app.post('/api/parse-xml', isAuthenticated, upload.single('file'), async (req, r
       questionsCount: quizData.questions.length
     });
 
-    // Return parsed data (NO DATABASE SAVE!)
     res.json(quizData);
   } catch (err) {
     console.error('❌ Parse XML error:', err);

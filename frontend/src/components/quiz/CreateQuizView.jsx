@@ -30,41 +30,37 @@ const CreateQuizView = ({ onCreateSuccess, editQuiz = null }) => {
     points: 1,
     explanation: ''
   }]);
-  const [coverImage, setCoverImage] = useState(null);  // ← ÚJ!
+  const [coverImage, setCoverImage] = useState(null);
 
   useEffect(() => {
     if (editQuiz) {
       console.log('🔍 Edit quiz data:', editQuiz);
-      
-      // A backend így adja: { quiz: {...}, questions: [...] }
+
       const quizData = editQuiz.quiz || editQuiz;
       const questionsData = editQuiz.questions || [];
       
       console.log('📦 Quiz metadata:', quizData);
       console.log('📝 Questions array:', questionsData);
       
-      // Load basic quiz info
       setTitle(quizData.title || '');
       setTopic(quizData.topic || '');
       setDescription(quizData.description || '');
       setCoverImage(quizData.cover_image || null);
       
-      // Load time limit
       if (quizData.time_limit) {
         setIsTimeLimited(true);
         setTimeLimit(quizData.time_limit);
       }
       
-      // Load questions - FIELD NAME MAPPING!
       if (questionsData.length > 0) {
         const loadedQuestions = questionsData.map(q => {
           console.log('🔄 Processing question:', q);
           
           return {
-            type: q.question_type || q.type || 'single_choice',      // ← question_type → type
-            text: q.question_text || q.text || '',                    // ← question_text → text
-            image: q.question_image || q.image || null,               // ← question_image → image
-            data: q.question_data || q.data || {},                    // ← question_data → data
+            type: q.question_type || q.type || 'single_choice',
+            text: q.question_text || q.text || '',
+            image: q.question_image || q.image || null,
+            data: q.question_data || q.data || {},
             points: q.points || 1,
             explanation: q.explanation || ''
           };
@@ -320,19 +316,10 @@ const CreateQuizView = ({ onCreateSuccess, editQuiz = null }) => {
       questions: validQuestions
     };
 
-    try {
-      // ═══════════════════════════════════════════════════════════
-      // KRITIKUS FIX: Check if this is truly an UPDATE or CREATE
-      // ═══════════════════════════════════════════════════════════
-      
-      // If editQuiz exists BUT has isNew flag → CREATE (XML import)
-      // If editQuiz exists AND has ID → UPDATE (edit existing)
-      // If no editQuiz → CREATE (new quiz)
-      
+    try {      
       const isUpdate = editQuiz && !editQuiz.isNew && (editQuiz.quiz?.id || editQuiz.id);
       
       if (isUpdate) {
-        // ═══ UPDATE EXISTING QUIZ ═══
         const quizId = editQuiz.quiz?.id || editQuiz.id;
         
         if (!quizId) {
@@ -357,7 +344,6 @@ const CreateQuizView = ({ onCreateSuccess, editQuiz = null }) => {
 
         alert('Teszt sikeresen frissítve! 🎉');
       } else {
-        // ═══ CREATE NEW QUIZ ═══
         console.log('💾 Creating new quiz' + (editQuiz?.isNew ? ' (from XML import)' : ''));
         
         const response = await fetch(`${API_URL}/api/create-quiz`, {

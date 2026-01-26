@@ -107,9 +107,8 @@ function AppContent() {
   const handleLoadToEditor = (quizData) => {
     console.log('📝 Loading to editor from XML:', quizData);
     
-    // KRITIKUS: isNew flag az első szinten kell legyen!
     setEditQuiz({
-      isNew: true,  // ← Itt az első szinten!
+      isNew: true,
       quiz: {
         title: quizData.title,
         topic: quizData.topic,

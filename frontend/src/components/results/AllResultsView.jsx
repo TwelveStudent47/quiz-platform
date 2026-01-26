@@ -40,12 +40,10 @@ const AllResultsView = ({ onBack, onReviewAttempt }) => {
 
     const total = results.length;
     
-    // percentage can be string or number, convert to number
     const percentages = results.map(r => parseFloat(r.percentage) || 0);
     const avgScore = percentages.reduce((sum, p) => sum + p, 0) / total;
     const bestScore = Math.max(...percentages);
-    
-    // time_spent is in seconds, can be null
+
     const totalTimeSeconds = results.reduce((sum, r) => sum + (parseInt(r.time_spent) || 0), 0);
     const totalTimeMinutes = Math.round(totalTimeSeconds / 60);
 

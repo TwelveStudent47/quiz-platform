@@ -3,15 +3,6 @@ import { Plus, Trash2, GripVertical } from 'lucide-react';
 import Button from '../../common/Button';
 
 const ClozeEditor = ({ question, onUpdate, onUpdateData }) => {
-  // question.data structure:
-  // {
-  //   text: "The capital of France is {0} and the Eiffel Tower is {1} meters tall.",
-  //   blanks: [
-  //     { type: 'dropdown', options: ['Paris', 'London', 'Berlin'], correctIndex: 0 },
-  //     { type: 'text', correctAnswer: '330', caseSensitive: false }
-  //   ]
-  // }
-
   const addBlank = (type = 'dropdown') => {
     const blanks = question.data.blanks || [];
     const newBlank = type === 'dropdown'
@@ -49,7 +40,6 @@ const ClozeEditor = ({ question, onUpdate, onUpdateData }) => {
     const blanks = [...question.data.blanks];
     if (blanks[blankIndex].options.length > 2) {
       blanks[blankIndex].options.splice(optionIndex, 1);
-      // Adjust correctIndex if needed
       if (blanks[blankIndex].correctIndex >= blanks[blankIndex].options.length) {
         blanks[blankIndex].correctIndex = blanks[blankIndex].options.length - 1;
       }

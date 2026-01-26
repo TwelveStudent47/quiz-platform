@@ -46,8 +46,7 @@ const QuizView = ({ quiz, onComplete }) => {
     try {
       const data = await quizAPI.getById(quiz.id);
       setQuizData(data.quiz);
-      
-      // Shuffle questions and options
+
       const shuffledQuestions = shuffleArray(data.questions).map(q => {
         if (q.question_type === 'single_choice' || q.question_type === 'multiple_choice') {
           const optionsWithIndex = q.question_data.options.map((opt, idx) => ({ 
@@ -114,8 +113,7 @@ const QuizView = ({ quiz, onComplete }) => {
 
   const handleSubmit = async () => {
     const timeSpent = Math.floor((Date.now() - startTime) / 1000);
-    
-    // Process answers to match original indices
+
     const processedAnswers = {};
     questions.forEach(q => {
       if (answers[q.id] !== undefined) {
@@ -170,8 +168,7 @@ const QuizView = ({ quiz, onComplete }) => {
 
   if (result) {
     const percentage = Math.round(result.percentage);
-    
-    // Dinamikus ikon és szín választás
+
     const getResultIcon = () => {
       if (percentage >= 90) {
         return {

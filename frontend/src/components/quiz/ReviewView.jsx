@@ -330,24 +330,15 @@ const ReviewView = ({ attempt, onClose }) => {
                     {question.question_type === 'matching' && (
                       <div className="space-y-2">
                         {data.pairs.map((pair, pairIdx) => {
-                          // userAnswer formátuma lehet:
-                          // 1. {leftText: rightIndex} - QuizView új verziójából
-                          // 2. {pairIndex: rightIndex} - régebbi verzióból
-                          // 3. {0: 1, 1: 2} - index alapú
-                          
                           let userRightIdx;
-                          
-                          // Próbáljuk meg mindkét formátumot
+
                           if (userAnswer) {
-                            // Első próba: leftText kulccsal (pl. "Macska": 0)
                             if (userAnswer[pair.left] !== undefined) {
                               userRightIdx = userAnswer[pair.left];
                             }
-                            // Második próba: pairIndex kulccsal (pl. 0: 1)
                             else if (userAnswer[pairIdx] !== undefined) {
                               userRightIdx = userAnswer[pairIdx];
                             }
-                            // Harmadik próba: stringként
                             else if (userAnswer[pairIdx.toString()] !== undefined) {
                               userRightIdx = userAnswer[pairIdx.toString()];
                             }
@@ -355,8 +346,7 @@ const ReviewView = ({ attempt, onClose }) => {
                           
                           const correctRightIdx = data.correctPairs[pairIdx] ?? pairIdx;
                           const isPairCorrect = userRightIdx !== undefined && userRightIdx === correctRightIdx;
-                          
-                          // User által választott jobb oldali elem
+
                           const userRightText = userRightIdx !== undefined && data.pairs[userRightIdx] 
                             ? data.pairs[userRightIdx].right 
                             : null;

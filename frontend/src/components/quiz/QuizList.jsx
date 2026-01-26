@@ -4,18 +4,15 @@ import Card, { CardBody } from '../common/Card';
 import QuizCard from './QuizCard';
 
 const QuizList = ({ quizzes, history, onStartQuiz, onDeleteQuiz, onEditQuiz }) => {
-  // Get unique quiz IDs from recent history (last 5)
   const recentQuizIds = new Set(
     history
-      .slice(0, 5) // Only take the 5 most recent attempts
+      .slice(0, 5)
       .map(attempt => attempt.quiz_id)
   );
 
-  // Filter quizzes to only show those with recent attempts
   const recentQuizzes = quizzes
     .filter(quiz => recentQuizIds.has(quiz.id))
-    .slice(0, 5); // Ensure max 5 quizzes
-
+    .slice(0, 5);
   return (
     <Card>
       <CardBody>

@@ -527,9 +527,9 @@ Ha hibát találsz, nyiss egy issue-t a [GitHub-on](https://github.com/TwelveStu
 - [x] Színkódolt eredmények
 - [x] **Képfeltöltés kérdésekhez** (base64 mellett URL)
 - [x] Cloze/Fill-in-the-blank kérdések
+- [x] Essay típusú kérdések (hosszú szöveges válasz)
 
 ### Folyamatban 🚧
-- [ ] Essay típusú kérdések (hosszú szöveges válasz)
 - [ ] Dark mode
 
 ### Tervezve 📋

@@ -29,7 +29,7 @@ const Header = ({ currentView, onViewChange }) => {
             className="flex items-center gap-2 hover:opacity-80 transition"
           >
             <BookOpen className="w-8 h-8 text-indigo-600" />
-            <span className="text-xl font-bold text-gray-800">Quiz Platform</span>
+            <span className="text-xl font-bold text-gray-800">Exami</span>
           </button>
           
           {/* Desktop Navigation */}

@@ -84,6 +84,8 @@ const ReviewView = ({ attempt, onClose }) => {
         
         return correctCount === totalBlanks;
       }
+      case 'essay':
+        return false;
       default:
         return false;
     }
@@ -96,7 +98,8 @@ const ReviewView = ({ attempt, onClose }) => {
       'true_false': 'Igaz/Hamis',
       'numeric': 'Számos',
       'matching': 'Illesztéses',
-      'cloze': 'Kitöltendő'
+      'cloze': 'Kitöltendő',
+      'essay' : 'Esszé'
     };
     return labels[type] || type;
   };
@@ -500,6 +503,37 @@ const ReviewView = ({ attempt, onClose }) => {
                             
                             return <span key={partIdx}>{part}</span>;
                           })}
+                        </div>
+                      </div>
+                    )}
+
+                    {/* Essay Question */}
+                    {question.question_type === 'essay' && (
+                      <div className="space-y-3">
+                        {/* User's answer */}
+                        <div className="bg-gray-50 p-4 rounded-lg border border-gray-300">
+                          <p className="text-sm font-semibold text-gray-700 mb-2">📝 Te válaszod:</p>
+                          <div className="prose prose-sm max-w-none">
+                            <p className="whitespace-pre-wrap text-gray-800">
+                              {userAnswer?.text || '(Nincs válasz)'}
+                            </p>
+                          </div>
+                          
+                          {userAnswer?.wordCount && (
+                            <p className="text-sm text-gray-600 mt-3">
+                              Szavak száma: <span className="font-semibold">{userAnswer.wordCount}</span>
+                            </p>
+                          )}
+                        </div>
+                        
+                        {/* Manual grading notice */}
+                        <div className="bg-yellow-50 p-4 rounded-lg border border-yellow-300">
+                          <p className="text-sm font-semibold text-yellow-800 mb-1">
+                            ⏳ Manuális értékelésre vár
+                          </p>
+                          <p className="text-sm text-yellow-700">
+                            Ez a kérdés tanári értékelést igényel. A pontszám később kerül megadásra.
+                          </p>
                         </div>
                       </div>
                     )}

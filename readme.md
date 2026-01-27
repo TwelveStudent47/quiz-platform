@@ -526,10 +526,11 @@ Ha hibát találsz, nyiss egy issue-t a [GitHub-on](https://github.com/TwelveStu
 - [x] **Hamburger menü**
 - [x] Színkódolt eredmények
 - [x] **Képfeltöltés kérdésekhez** (base64 mellett URL)
+- [x] Cloze/Fill-in-the-blank kérdések
+- [x] Essay típusú kérdések (hosszú szöveges válasz)
 
 ### Folyamatban 🚧
-- [ ] Essay típusú kérdések (hosszú szöveges válasz)
-- [ ] Cloze/Fill-in-the-blank kérdések
+- [ ] Dark mode
 
 ### Tervezve 📋
 - [ ] **AI-powered kérdésgenerálás** Claude API-val
@@ -541,7 +542,6 @@ Ha hibát találsz, nyiss egy issue-t a [GitHub-on](https://github.com/TwelveStu
 - [ ] **Nehézségi szintek** (easy/medium/hard)
 - [ ] **Quiz szerkesztés** (meglévő tesztek módosítása)
 - [ ] **Többnyelvűség** (i18n)
-- [ ] **Dark mode**
 - [ ] **Notifications** (email értesítések)
 - [ ] **Leader board** (top eredmények)
 - [ ] **Tanár/Diák nézet** (role-based access)

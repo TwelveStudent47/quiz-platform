@@ -66,17 +66,6 @@ const QuizView = ({ quiz, onComplete }) => {
           };
         }
         
-        if (q.question_type === 'matching') {
-          const rightItems = shuffleArray(q.question_data.pairs.map(p => p.right));
-          return {
-            ...q,
-            question_data: {
-              ...q.question_data,
-              shuffledRightItems: rightItems
-            }
-          };
-        }
-        
         return q;
       });
       
@@ -505,6 +494,66 @@ const QuizView = ({ quiz, onComplete }) => {
                       
                       return <span key={idx}>{part}</span>;
                     })}
+                  </div>
+                </div>
+              )}
+
+              {currentQuestion.question_type === 'essay' && (
+                <div className="space-y-4">
+                  {/* Instructions */}
+                  {(currentQuestion.question_data.minWordLimit || currentQuestion.question_data.maxWordLimit) && (
+                    <div className="text-sm text-gray-600 bg-blue-50 p-3 rounded-lg border border-blue-200">
+                      <p className="font-semibold text-blue-800 mb-1">📝 Követelmények:</p>
+                      {currentQuestion.question_data.minWordLimit && (
+                        <p>• Minimum {currentQuestion.question_data.minWordLimit} szó</p>
+                      )}
+                      {currentQuestion.question_data.maxWordLimit && (
+                        <p>• Maximum {currentQuestion.question_data.maxWordLimit} szó</p>
+                      )}
+                    </div>
+                  )}
+
+                  {/* Textarea */}
+                  <div>
+                    <textarea
+                      value={answers[currentQuestion.id]?.text || ''}
+                      onChange={(e) => {
+                        const text = e.target.value;
+                        const wordCount = text.trim().split(/\s+/).filter(w => w.length > 0).length;
+                        
+                        handleAnswer(currentQuestion.id, {
+                          text: text,
+                          wordCount: wordCount
+                        });
+                      }}
+                      placeholder="Írd ide a válaszod..."
+                      rows={currentQuestion.question_data.responseFieldLines || 15}
+                      className="w-full px-4 py-3 border-2 border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent resize-y font-sans"
+                    />
+                    
+                    {/* Word count */}
+                    <div className="flex justify-between items-center mt-2 text-sm">
+                      <p className="text-gray-600">
+                        Szavak száma: <span className="font-semibold">
+                          {answers[currentQuestion.id]?.wordCount || 0}
+                        </span>
+                      </p>
+                      
+                      {/* Warning for limits */}
+                      {currentQuestion.question_data.minWordLimit && 
+                       (answers[currentQuestion.id]?.wordCount || 0) < currentQuestion.question_data.minWordLimit && (
+                        <p className="text-orange-600 font-medium">
+                          ⚠️ Minimum {currentQuestion.question_data.minWordLimit} szó szükséges
+                        </p>
+                      )}
+                      
+                      {currentQuestion.question_data.maxWordLimit && 
+                       (answers[currentQuestion.id]?.wordCount || 0) > currentQuestion.question_data.maxWordLimit && (
+                        <p className="text-red-600 font-medium">
+                          ❌ Maximum {currentQuestion.question_data.maxWordLimit} szó engedélyezett
+                        </p>
+                      )}
+                    </div>
                   </div>
                 </div>
               )}

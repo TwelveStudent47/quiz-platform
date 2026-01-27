@@ -446,6 +446,16 @@ app.post('/api/submit', isAuthenticated, async (req, res) => {
             }
           }
           break;
+        case 'essay': {
+          // Essay questions are manually graded
+          // For now, we check if answer exists and award participation points
+          if (userAnswer && userAnswer.text && userAnswer.text.trim().length > 0) {
+            // Participation credit: 0 points until manual grading
+            // Teachers will grade manually later
+            isCorrect = false;  // 0 points initially
+          }
+          break;
+        }
         default:
           isCorrect = false;
       }

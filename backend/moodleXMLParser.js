@@ -268,7 +268,33 @@ async function parseMoodleXML(xmlBuffer) {
                 console.log(`  ✅ Cloze parsed: ${clozeData.blanks.length} blanks`);
                 break;
               case 'shortanswer':
-              case 'essay':
+              case 'essay': {
+                const responseFormat = q.responseformat?.[0] || 'editor';
+                const responseRequired = q.responserequired?.[0] === '1';
+                const responseFieldLines = parseInt(q.responsefieldlines?.[0] || '15');
+                const minWordLimit = parseInt(q.minwordlimit?.[0] || '0') || null;
+                const maxWordLimit = parseInt(q.maxwordlimit?.[0] || '0') || null;
+                const attachments = parseInt(q.attachments?.[0] || '0');
+                const maxBytes = parseInt(q.maxbytes?.[0] || '0');
+                
+                parsedQuestion = {
+                  type: 'essay',
+                  text: questionText,
+                  image: imageUrl,
+                  data: {
+                    responseFormat,
+                    responseRequired,
+                    responseFieldLines,
+                    minWordLimit,
+                    maxWordLimit,
+                    attachmentsAllowed: attachments,
+                    maxBytes
+                  },
+                  points: Math.round(defaultGrade),
+                  explanation: generalFeedback
+                };
+                break;
+              }
               case 'description':
                 console.log(`Skipping unsupported question type: ${questionType}`);
                 break;

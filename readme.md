@@ -528,19 +528,19 @@ Ha hibát találsz, nyiss egy issue-t a [GitHub-on](https://github.com/TwelveStu
 - [x] **Képfeltöltés kérdésekhez** (base64 mellett URL)
 - [x] Cloze/Fill-in-the-blank kérdések
 - [x] Essay típusú kérdések (hosszú szöveges válasz)
+- [x] Dark mode
+- [x] **Quiz szerkesztés** (meglévő tesztek módosítása)
 
 ### Folyamatban 🚧
-- [ ] Dark mode
+- [ ] **AI-powered kérdésgenerálás** Claude API-val
 
 ### Tervezve 📋
-- [ ] **AI-powered kérdésgenerálás** Claude API-val
 - [ ] **Markdown támogatás** kérdésekben és magyarázatokban
 - [ ] **Témaköri statisztikák** (témakör szerinti teljesítmény)
 - [ ] **Spaced repetition algoritmus** (intelligens ismétlés)
 - [ ] **Export eredmények PDF-be**
 - [ ] **Social sharing** (eredmények megosztása)
 - [ ] **Nehézségi szintek** (easy/medium/hard)
-- [ ] **Quiz szerkesztés** (meglévő tesztek módosítása)
 - [ ] **Többnyelvűség** (i18n)
 - [ ] **Notifications** (email értesítések)
 - [ ] **Leader board** (top eredmények)

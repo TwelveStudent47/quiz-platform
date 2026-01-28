@@ -13,16 +13,17 @@ const QuizList = ({ quizzes, history, onStartQuiz, onDeleteQuiz, onEditQuiz }) =
   const recentQuizzes = quizzes
     .filter(quiz => recentQuizIds.has(quiz.id))
     .slice(0, 5);
+    
   return (
     <Card>
       <CardBody>
-        <h2 className="text-xl font-bold text-gray-800 mb-4 flex items-center gap-2">
-          <Clock className="w-5 h-5" />
+        <h2 className="text-xl font-bold text-gray-800 dark:text-white mb-4 flex items-center gap-2 transition-colors">
+          <Clock className="w-5 h-5 text-gray-800 dark:text-white" />
           Nemrég Kitöltött Tesztek
         </h2>
         <div className="space-y-3">
           {recentQuizzes.length === 0 ? (
-            <p className="text-gray-500 text-center py-8">
+            <p className="text-gray-500 dark:text-gray-400 text-center py-8 transition-colors">
               Még nem töltöttél ki tesztet
             </p>
           ) : (

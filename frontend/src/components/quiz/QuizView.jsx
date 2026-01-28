@@ -5,6 +5,7 @@ import { shuffleArray } from '../../utils/helpers';
 import Card, { CardBody } from '../common/Card';
 import Button from '../common/Button';
 import LoadingSpinner from '../common/LoadingSpinner';
+import { API_URL } from '../../utils/constants';
 
 const QuizView = ({ quiz, onComplete }) => {
   const [questions, setQuestions] = useState([]);
@@ -122,7 +123,7 @@ const QuizView = ({ quiz, onComplete }) => {
     });
     
     try {
-      const result = await fetch(`${process.env.REACT_APP_API_URL || 'http://localhost:5000'}/api/submit`, {
+      const result = await fetch(`${API_URL}/api/submit`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         credentials: 'include',
@@ -162,36 +163,36 @@ const QuizView = ({ quiz, onComplete }) => {
       if (percentage >= 90) {
         return {
           icon: Trophy,
-          color: 'text-yellow-500',
-          bgColor: 'bg-yellow-50',
+          color: 'text-yellow-500 dark:text-yellow-400',
+          bgColor: 'bg-yellow-50 dark:bg-yellow-900/30',
           message: 'Kiváló teljesítmény! 🎉'
         };
       } else if (percentage >= 80) {
         return {
           icon: Star,
-          color: 'text-green-500',
-          bgColor: 'bg-green-50',
+          color: 'text-green-500 dark:text-green-400',
+          bgColor: 'bg-green-50 dark:bg-green-900/30',
           message: 'Nagyon jó munka! ⭐'
         };
       } else if (percentage >= 70) {
         return {
           icon: CheckCircle,
-          color: 'text-green-500',
-          bgColor: 'bg-green-50',
+          color: 'text-green-500 dark:text-green-400',
+          bgColor: 'bg-green-50 dark:bg-green-900/30',
           message: 'Jó teljesítmény! ✓'
         };
       } else if (percentage >= 50) {
         return {
           icon: Meh,
-          color: 'text-orange-500',
-          bgColor: 'bg-orange-50',
+          color: 'text-orange-500 dark:text-orange-400',
+          bgColor: 'bg-orange-50 dark:bg-orange-900/30',
           message: 'Még van mit fejlődni! 💪'
         };
       } else {
         return {
           icon: Frown,
-          color: 'text-red-500',
-          bgColor: 'bg-red-50',
+          color: 'text-red-500 dark:text-red-400',
+          bgColor: 'bg-red-50 dark:bg-red-900/30',
           message: 'Ne add fel, próbáld újra! 🔄'
         };
       }
@@ -206,26 +207,28 @@ const QuizView = ({ quiz, onComplete }) => {
           <CardBody className="p-8">
             <div className="text-center">
               {/* Dinamikus ikon színes háttérrel */}
-              <div className={`inline-flex items-center justify-center w-24 h-24 ${resultIcon.bgColor} rounded-full mb-4`}>
+              <div className={`inline-flex items-center justify-center w-24 h-24 ${resultIcon.bgColor} rounded-full mb-4 transition-colors`}>
                 <ResultIcon className={`w-16 h-16 ${resultIcon.color}`} />
               </div>
               
-              <h2 className="text-3xl font-bold text-gray-800 mb-2">Teszt Befejezve!</h2>
+              <h2 className="text-3xl font-bold text-gray-800 dark:text-white mb-2 transition-colors">
+                Teszt Befejezve!
+              </h2>
               
               {/* Üzenet */}
-              <p className="text-lg font-medium text-gray-700 mb-4">
+              <p className="text-lg font-medium text-gray-700 dark:text-gray-300 mb-4 transition-colors">
                 {resultIcon.message}
               </p>
               
               {/* Százalék - dinamikus szín */}
-              <div className={`text-6xl font-bold my-6 ${resultIcon.color}`}>
+              <div className={`text-6xl font-bold my-6 ${resultIcon.color} transition-colors`}>
                 {percentage}%
               </div>
               
-              <p className="text-xl text-gray-600 mb-2">
+              <p className="text-xl text-gray-600 dark:text-gray-400 mb-2 transition-colors">
                 {result.score} / {result.total_points} pont
               </p>
-              <p className="text-sm text-gray-500">
+              <p className="text-sm text-gray-500 dark:text-gray-500 transition-colors">
                 Eltelt idő: {Math.floor(result.time_spent / 60)} perc {result.time_spent % 60} másodperc
               </p>
               
@@ -256,10 +259,14 @@ const QuizView = ({ quiz, onComplete }) => {
           {/* Header */}
           <div className="mb-6">
             <div className="flex justify-between items-center mb-4">
-              <h2 className="text-2xl font-bold text-gray-800">{quizData.title}</h2>
+              <h2 className="text-2xl font-bold text-gray-800 dark:text-white transition-colors">
+                {quizData.title}
+              </h2>
               {timeRemaining !== null && (
-                <div className={`flex items-center gap-2 px-4 py-2 rounded-lg ${
-                  timeRemaining < 60 ? 'bg-red-100 text-red-700' : 'bg-blue-100 text-blue-700'
+                <div className={`flex items-center gap-2 px-4 py-2 rounded-lg transition-colors ${
+                  timeRemaining < 60 
+                    ? 'bg-red-100 dark:bg-red-900/30 text-red-700 dark:text-red-400' 
+                    : 'bg-blue-100 dark:bg-blue-900/30 text-blue-700 dark:text-blue-400'
                 }`}>
                   <Clock className="w-5 h-5" />
                   <span className="font-bold">{formatTime(timeRemaining)}</span>
@@ -268,13 +275,13 @@ const QuizView = ({ quiz, onComplete }) => {
             </div>
             
             {/* Progress bar */}
-            <div className="w-full bg-gray-200 rounded-full h-2">
+            <div className="w-full bg-gray-200 dark:bg-gray-700 rounded-full h-2 transition-colors">
               <div
-                className="bg-indigo-600 h-2 rounded-full transition-all"
+                className="bg-indigo-600 dark:bg-indigo-500 h-2 rounded-full transition-all"
                 style={{ width: `${progress}%` }}
               />
             </div>
-            <p className="text-sm text-gray-600 mt-2">
+            <p className="text-sm text-gray-600 dark:text-gray-400 mt-2 transition-colors">
               Kérdés {currentIndex + 1} / {questions.length}
             </p>
           </div>
@@ -282,12 +289,12 @@ const QuizView = ({ quiz, onComplete }) => {
           {/* Question */}
           <div className="mb-8">
             <div className="flex items-start gap-3 mb-4">
-              <span className="px-3 py-1 bg-indigo-100 text-indigo-700 rounded-full text-sm font-medium">
+              <span className="px-3 py-1 bg-indigo-100 dark:bg-indigo-900/30 text-indigo-700 dark:text-indigo-400 rounded-full text-sm font-medium transition-colors">
                 {currentQuestion.points} pont
               </span>
             </div>
             
-            <h3 className="text-xl font-semibold text-gray-800 mb-4">
+            <h3 className="text-xl font-semibold text-gray-800 dark:text-white mb-4 transition-colors">
               {currentQuestion.question_type === 'cloze' 
                 ? ''
                 : currentQuestion.question_text
@@ -298,7 +305,7 @@ const QuizView = ({ quiz, onComplete }) => {
               <img
                 src={currentQuestion.question_image}
                 alt="Question"
-                className="w-full max-h-96 object-contain rounded-lg border border-gray-300 mb-6"
+                className="w-full max-h-96 object-contain rounded-lg border border-gray-300 dark:border-gray-600 mb-6 transition-colors"
               />
             )}
 
@@ -312,8 +319,8 @@ const QuizView = ({ quiz, onComplete }) => {
                       onClick={() => handleAnswer(currentQuestion.id, idx)}
                       className={`w-full text-left px-4 py-3 rounded-lg border-2 transition ${
                         answers[currentQuestion.id] === idx
-                          ? 'border-indigo-600 bg-indigo-50'
-                          : 'border-gray-300 hover:border-gray-400'
+                          ? 'border-indigo-600 dark:border-indigo-500 bg-indigo-50 dark:bg-indigo-900/30 text-gray-900 dark:text-white'
+                          : 'border-gray-300 dark:border-gray-600 hover:border-gray-400 dark:hover:border-gray-500 bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100'
                       }`}
                     >
                       <span className="font-medium mr-2">{String.fromCharCode(65 + idx)}.</span>
@@ -331,8 +338,8 @@ const QuizView = ({ quiz, onComplete }) => {
                       onClick={() => handleMultipleAnswer(currentQuestion.id, idx)}
                       className={`w-full text-left px-4 py-3 rounded-lg border-2 transition ${
                         (answers[currentQuestion.id] || []).includes(idx)
-                          ? 'border-indigo-600 bg-indigo-50'
-                          : 'border-gray-300 hover:border-gray-400'
+                          ? 'border-indigo-600 dark:border-indigo-500 bg-indigo-50 dark:bg-indigo-900/30 text-gray-900 dark:text-white'
+                          : 'border-gray-300 dark:border-gray-600 hover:border-gray-400 dark:hover:border-gray-500 bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100'
                       }`}
                     >
                       <input
@@ -354,8 +361,8 @@ const QuizView = ({ quiz, onComplete }) => {
                     onClick={() => handleAnswer(currentQuestion.id, true)}
                     className={`flex-1 px-6 py-4 rounded-lg border-2 transition ${
                       answers[currentQuestion.id] === true
-                        ? 'border-green-500 bg-green-50'
-                        : 'border-gray-300 hover:border-gray-400'
+                        ? 'border-green-500 dark:border-green-600 bg-green-50 dark:bg-green-900/30 text-green-800 dark:text-green-300'
+                        : 'border-gray-300 dark:border-gray-600 hover:border-gray-400 dark:hover:border-gray-500 bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100'
                     }`}
                   >
                     <span className="font-bold text-lg">IGAZ</span>
@@ -364,8 +371,8 @@ const QuizView = ({ quiz, onComplete }) => {
                     onClick={() => handleAnswer(currentQuestion.id, false)}
                     className={`flex-1 px-6 py-4 rounded-lg border-2 transition ${
                       answers[currentQuestion.id] === false
-                        ? 'border-red-500 bg-red-50'
-                        : 'border-gray-300 hover:border-gray-400'
+                        ? 'border-red-500 dark:border-red-600 bg-red-50 dark:bg-red-900/30 text-red-800 dark:text-red-300'
+                        : 'border-gray-300 dark:border-gray-600 hover:border-gray-400 dark:hover:border-gray-500 bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100'
                     }`}
                   >
                     <span className="font-bold text-lg">HAMIS</span>
@@ -381,10 +388,10 @@ const QuizView = ({ quiz, onComplete }) => {
                     value={answers[currentQuestion.id] || ''}
                     onChange={(e) => handleAnswer(currentQuestion.id, e.target.value)}
                     placeholder="Írd be a választ"
-                    className="w-full px-4 py-3 border-2 border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent"
+                    className="w-full px-4 py-3 border-2 border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-indigo-500 dark:focus:ring-indigo-400 focus:border-transparent bg-white dark:bg-gray-700 text-gray-900 dark:text-white transition-colors"
                   />
                   {currentQuestion.question_data.unit && (
-                    <p className="text-sm text-gray-500 mt-2">
+                    <p className="text-sm text-gray-500 dark:text-gray-400 mt-2 transition-colors">
                       Mértékegység: {currentQuestion.question_data.unit}
                     </p>
                   )}
@@ -393,7 +400,7 @@ const QuizView = ({ quiz, onComplete }) => {
 
               {currentQuestion.question_type === 'matching' && (
                 <div className="space-y-4">
-                  <p className="text-sm text-gray-600 mb-4">
+                  <p className="text-sm text-gray-600 dark:text-gray-400 mb-4 transition-colors">
                     Válaszd ki minden bal oldali elemhez a megfelelő jobb oldali párt!
                   </p>
                   {currentQuestion.question_data.pairs.map((pair, pairIdx) => {
@@ -402,15 +409,15 @@ const QuizView = ({ quiz, onComplete }) => {
                                       currentQuestion.question_data.pairs.map(p => p.right);
                     
                     return (
-                      <div key={pairIdx} className="p-4 bg-gray-50 rounded-lg">
+                      <div key={pairIdx} className="p-4 bg-gray-50 dark:bg-gray-800 rounded-lg transition-colors">
                         <div className="flex items-center gap-4">
                           {/* Left item */}
-                          <div className="flex-1 font-semibold text-gray-800">
+                          <div className="flex-1 font-semibold text-gray-800 dark:text-white transition-colors">
                             {pair.left}
                           </div>
                           
                           {/* Arrow */}
-                          <div className="text-gray-400">
+                          <div className="text-gray-400 dark:text-gray-500">
                             →
                           </div>
                           
@@ -423,7 +430,7 @@ const QuizView = ({ quiz, onComplete }) => {
                                 pair.left, 
                                 e.target.value === '' ? undefined : parseInt(e.target.value)
                               )}
-                              className="w-full px-4 py-2 border-2 border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent"
+                              className="w-full px-4 py-2 border-2 border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-indigo-500 dark:focus:ring-indigo-400 focus:border-transparent bg-white dark:bg-gray-700 text-gray-900 dark:text-white transition-colors"
                             >
                               <option value="">-- Válassz --</option>
                               {rightItems.map((rightItem, rightIdx) => (
@@ -442,7 +449,7 @@ const QuizView = ({ quiz, onComplete }) => {
 
               {currentQuestion.question_type === 'cloze' && (
                 <div className="space-y-4">
-                  <div className="text-base leading-relaxed">
+                  <div className="text-base leading-relaxed text-gray-800 dark:text-gray-200 transition-colors">
                     {currentQuestion.question_data.text.split(/(\{\d+\})/g).map((part, idx) => {
                       const match = part.match(/\{(\d+)\}/);
                       
@@ -464,7 +471,7 @@ const QuizView = ({ quiz, onComplete }) => {
                                 newAnswers[blankIdx] = e.target.value === '' ? undefined : parseInt(e.target.value);
                                 handleAnswer(currentQuestion.id, newAnswers);
                               }}
-                              className="inline-block mx-1 px-3 py-1 border-2 border-indigo-300 rounded-lg bg-white focus:ring-2 focus:ring-indigo-500 focus:border-transparent"
+                              className="inline-block mx-1 px-3 py-1 border-2 border-indigo-300 dark:border-indigo-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-indigo-500 dark:focus:ring-indigo-400 focus:border-transparent transition-colors"
                             >
                               <option value="">--</option>
                               {blank.options.map((opt, optIdx) => (
@@ -486,7 +493,7 @@ const QuizView = ({ quiz, onComplete }) => {
                                 handleAnswer(currentQuestion.id, newAnswers);
                               }}
                               placeholder="..."
-                              className="inline-block mx-1 px-3 py-1 w-32 border-2 border-indigo-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent"
+                              className="inline-block mx-1 px-3 py-1 w-32 border-2 border-indigo-300 dark:border-indigo-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-indigo-500 dark:focus:ring-indigo-400 focus:border-transparent transition-colors"
                             />
                           );
                         }
@@ -502,8 +509,10 @@ const QuizView = ({ quiz, onComplete }) => {
                 <div className="space-y-4">
                   {/* Instructions */}
                   {(currentQuestion.question_data.minWordLimit || currentQuestion.question_data.maxWordLimit) && (
-                    <div className="text-sm text-gray-600 bg-blue-50 p-3 rounded-lg border border-blue-200">
-                      <p className="font-semibold text-blue-800 mb-1">📝 Követelmények:</p>
+                    <div className="text-sm text-gray-600 dark:text-gray-400 bg-blue-50 dark:bg-blue-900/20 p-3 rounded-lg border border-blue-200 dark:border-blue-700 transition-colors">
+                      <p className="font-semibold text-blue-800 dark:text-blue-300 mb-1 transition-colors">
+                        📝 Követelmények:
+                      </p>
                       {currentQuestion.question_data.minWordLimit && (
                         <p>• Minimum {currentQuestion.question_data.minWordLimit} szó</p>
                       )}
@@ -528,12 +537,12 @@ const QuizView = ({ quiz, onComplete }) => {
                       }}
                       placeholder="Írd ide a válaszod..."
                       rows={currentQuestion.question_data.responseFieldLines || 15}
-                      className="w-full px-4 py-3 border-2 border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent resize-y font-sans"
+                      className="w-full px-4 py-3 border-2 border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-indigo-500 dark:focus:ring-indigo-400 focus:border-transparent resize-y font-sans bg-white dark:bg-gray-700 text-gray-900 dark:text-white transition-colors"
                     />
                     
                     {/* Word count */}
                     <div className="flex justify-between items-center mt-2 text-sm">
-                      <p className="text-gray-600">
+                      <p className="text-gray-600 dark:text-gray-400 transition-colors">
                         Szavak száma: <span className="font-semibold">
                           {answers[currentQuestion.id]?.wordCount || 0}
                         </span>
@@ -542,14 +551,14 @@ const QuizView = ({ quiz, onComplete }) => {
                       {/* Warning for limits */}
                       {currentQuestion.question_data.minWordLimit && 
                        (answers[currentQuestion.id]?.wordCount || 0) < currentQuestion.question_data.minWordLimit && (
-                        <p className="text-orange-600 font-medium">
+                        <p className="text-orange-600 dark:text-orange-400 font-medium transition-colors">
                           ⚠️ Minimum {currentQuestion.question_data.minWordLimit} szó szükséges
                         </p>
                       )}
                       
                       {currentQuestion.question_data.maxWordLimit && 
                        (answers[currentQuestion.id]?.wordCount || 0) > currentQuestion.question_data.maxWordLimit && (
-                        <p className="text-red-600 font-medium">
+                        <p className="text-red-600 dark:text-red-400 font-medium transition-colors">
                           ❌ Maximum {currentQuestion.question_data.maxWordLimit} szó engedélyezett
                         </p>
                       )}

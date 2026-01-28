@@ -76,10 +76,10 @@ const AllResultsView = ({ onBack, onReviewAttempt }) => {
 
   const getScoreColor = (percentage) => {
     const pct = parseFloat(percentage) || 0;
-    if (pct >= 90) return 'text-green-600 bg-green-50';
-    if (pct >= 70) return 'text-blue-600 bg-blue-50';
-    if (pct >= 50) return 'text-yellow-600 bg-yellow-50';
-    return 'text-red-600 bg-red-50';
+    if (pct >= 90) return 'text-green-600 dark:text-green-400 bg-green-50 dark:bg-green-900/30';
+    if (pct >= 70) return 'text-blue-600 dark:text-blue-400 bg-blue-50 dark:bg-blue-900/30';
+    if (pct >= 50) return 'text-yellow-600 dark:text-yellow-400 bg-yellow-50 dark:bg-yellow-900/30';
+    return 'text-red-600 dark:text-red-400 bg-red-50 dark:bg-red-900/30';
   };
 
   const getScoreBadge = (percentage) => {
@@ -93,7 +93,7 @@ const AllResultsView = ({ onBack, onReviewAttempt }) => {
   if (loading) {
     return (
       <div className="flex items-center justify-center min-h-96">
-        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-indigo-600"></div>
+        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-indigo-600 dark:border-indigo-400"></div>
       </div>
     );
   }
@@ -114,10 +114,10 @@ const AllResultsView = ({ onBack, onReviewAttempt }) => {
               Vissza
             </Button>
             <div>
-              <h1 className="text-xl sm:text-2xl font-bold text-gray-800">
+              <h1 className="text-xl sm:text-2xl font-bold text-gray-800 dark:text-white transition-colors">
                 Összes Eredmény
               </h1>
-              <p className="text-xs sm:text-sm text-gray-600 mt-1">
+              <p className="text-xs sm:text-sm text-gray-600 dark:text-gray-400 mt-1 transition-colors">
                 {allResults.length} próbálkozás összesen
               </p>
             </div>
@@ -126,50 +126,50 @@ const AllResultsView = ({ onBack, onReviewAttempt }) => {
           {/* Stats Grid */}
           {allResults.length > 0 && (
             <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4">
-              <div className="bg-indigo-50 rounded-lg p-3 sm:p-4">
+              <div className="bg-indigo-50 dark:bg-indigo-900/30 rounded-lg p-3 sm:p-4 transition-colors">
                 <div className="flex items-center gap-2 mb-2">
-                  <Trophy className="w-4 h-4 text-indigo-600" />
-                  <span className="text-xs sm:text-sm text-indigo-600 font-medium">
+                  <Trophy className="w-4 h-4 text-indigo-600 dark:text-indigo-400" />
+                  <span className="text-xs sm:text-sm text-indigo-600 dark:text-indigo-400 font-medium transition-colors">
                     Legjobb
                   </span>
                 </div>
-                <div className="text-xl sm:text-2xl font-bold text-indigo-600">
+                <div className="text-xl sm:text-2xl font-bold text-indigo-600 dark:text-indigo-400 transition-colors">
                   {stats.bestScore}%
                 </div>
               </div>
 
-              <div className="bg-green-50 rounded-lg p-3 sm:p-4">
+              <div className="bg-green-50 dark:bg-green-900/30 rounded-lg p-3 sm:p-4 transition-colors">
                 <div className="flex items-center gap-2 mb-2">
-                  <Target className="w-4 h-4 text-green-600" />
-                  <span className="text-xs sm:text-sm text-green-600 font-medium">
+                  <Target className="w-4 h-4 text-green-600 dark:text-green-400" />
+                  <span className="text-xs sm:text-sm text-green-600 dark:text-green-400 font-medium transition-colors">
                     Átlag
                   </span>
                 </div>
-                <div className="text-xl sm:text-2xl font-bold text-green-600">
+                <div className="text-xl sm:text-2xl font-bold text-green-600 dark:text-green-400 transition-colors">
                   {stats.avgScore}%
                 </div>
               </div>
 
-              <div className="bg-blue-50 rounded-lg p-3 sm:p-4">
+              <div className="bg-blue-50 dark:bg-blue-900/30 rounded-lg p-3 sm:p-4 transition-colors">
                 <div className="flex items-center gap-2 mb-2">
-                  <TrendingUp className="w-4 h-4 text-blue-600" />
-                  <span className="text-xs sm:text-sm text-blue-600 font-medium">
+                  <TrendingUp className="w-4 h-4 text-blue-600 dark:text-blue-400" />
+                  <span className="text-xs sm:text-sm text-blue-600 dark:text-blue-400 font-medium transition-colors">
                     Tesztek
                   </span>
                 </div>
-                <div className="text-xl sm:text-2xl font-bold text-blue-600">
+                <div className="text-xl sm:text-2xl font-bold text-blue-600 dark:text-blue-400 transition-colors">
                   {stats.total}
                 </div>
               </div>
 
-              <div className="bg-purple-50 rounded-lg p-3 sm:p-4">
+              <div className="bg-purple-50 dark:bg-purple-900/30 rounded-lg p-3 sm:p-4 transition-colors">
                 <div className="flex items-center gap-2 mb-2">
-                  <Clock className="w-4 h-4 text-purple-600" />
-                  <span className="text-xs sm:text-sm text-purple-600 font-medium">
+                  <Clock className="w-4 h-4 text-purple-600 dark:text-purple-400" />
+                  <span className="text-xs sm:text-sm text-purple-600 dark:text-purple-400 font-medium transition-colors">
                     Össz idő
                   </span>
                 </div>
-                <div className="text-xl sm:text-2xl font-bold text-purple-600">
+                <div className="text-xl sm:text-2xl font-bold text-purple-600 dark:text-purple-400 transition-colors">
                   {stats.totalTime}p
                 </div>
               </div>
@@ -182,8 +182,10 @@ const AllResultsView = ({ onBack, onReviewAttempt }) => {
       {allResults.length === 0 ? (
         <Card>
           <CardBody className="p-8 sm:p-12 text-center">
-            <TrendingUp className="w-12 h-12 sm:w-16 sm:h-16 text-gray-400 mx-auto mb-4" />
-            <p className="text-gray-600 text-sm sm:text-base">Még nincs kitöltött teszt</p>
+            <TrendingUp className="w-12 h-12 sm:w-16 sm:h-16 text-gray-400 dark:text-gray-500 mx-auto mb-4" />
+            <p className="text-gray-600 dark:text-gray-400 text-sm sm:text-base transition-colors">
+              Még nincs kitöltött teszt
+            </p>
           </CardBody>
         </Card>
       ) : (
@@ -191,23 +193,23 @@ const AllResultsView = ({ onBack, onReviewAttempt }) => {
           {allResults.map((attempt) => {
             const pct = parseFloat(attempt.percentage) || 0;
             return (
-              <Card key={attempt.id} className="hover:shadow-lg transition-shadow">
+              <Card key={attempt.id} className="hover:shadow-lg dark:hover:shadow-gray-900 transition-shadow">
                 <CardBody className="p-4 sm:p-6">
                   <div className="space-y-3 sm:space-y-4">
                     {/* Header */}
                     <div className="flex justify-between items-start gap-3">
                       <div className="flex-1 min-w-0">
-                        <h3 className="font-bold text-base sm:text-lg text-gray-800 line-clamp-2">
+                        <h3 className="font-bold text-base sm:text-lg text-gray-800 dark:text-white line-clamp-2 transition-colors">
                           {attempt.quiz_title}
                         </h3>
-                        <div className="flex items-center gap-2 mt-1 text-xs sm:text-sm text-gray-500">
+                        <div className="flex items-center gap-2 mt-1 text-xs sm:text-sm text-gray-500 dark:text-gray-400 transition-colors">
                           <Calendar className="w-3 h-3 sm:w-4 sm:h-4" />
                           <span>{formatDate(attempt.completed_at)}</span>
                         </div>
                       </div>
 
                       {/* Score Badge */}
-                      <div className={`px-3 py-2 rounded-lg text-center ${getScoreColor(attempt.percentage)}`}>
+                      <div className={`px-3 py-2 rounded-lg text-center transition-colors ${getScoreColor(attempt.percentage)}`}>
                         <div className="text-xl sm:text-2xl font-bold">
                           {Math.round(pct)}%
                         </div>
@@ -218,12 +220,12 @@ const AllResultsView = ({ onBack, onReviewAttempt }) => {
                     </div>
 
                     {/* Performance Badge */}
-                    <div className="inline-flex items-center gap-2 px-3 py-1 bg-gray-100 rounded-full text-xs sm:text-sm font-medium text-gray-700">
+                    <div className="inline-flex items-center gap-2 px-3 py-1 bg-gray-100 dark:bg-gray-700 rounded-full text-xs sm:text-sm font-medium text-gray-700 dark:text-gray-300 transition-colors">
                       {getScoreBadge(attempt.percentage)}
                     </div>
 
                     {/* Details */}
-                    <div className="flex items-center justify-between text-xs sm:text-sm text-gray-600">
+                    <div className="flex items-center justify-between text-xs sm:text-sm text-gray-600 dark:text-gray-400 transition-colors">
                       {attempt.time_spent && (
                         <div className="flex items-center gap-1">
                           <Clock className="w-3 h-3 sm:w-4 sm:h-4" />

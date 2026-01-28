@@ -111,38 +111,40 @@ const ReviewView = ({ attempt, onClose }) => {
           {/* Header */}
           <div className="flex justify-between items-start mb-6">
             <div>
-              <h2 className="text-2xl font-bold text-gray-800">{attempt.quiz_title}</h2>
-              <p className="text-gray-600 mt-1">
+              <h2 className="text-2xl font-bold text-gray-800 dark:text-white transition-colors">
+                {attempt.quiz_title}
+              </h2>
+              <p className="text-gray-600 dark:text-gray-400 mt-1 transition-colors">
                 Kitöltve: {formatDate(attempt.completed_at)}
               </p>
             </div>
             <button
               onClick={onClose}
-              className="p-2 hover:bg-gray-100 rounded-lg transition"
+              className="p-2 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg transition"
             >
-              <X className="w-6 h-6 text-gray-600" />
+              <X className="w-6 h-6 text-gray-600 dark:text-gray-400" />
             </button>
           </div>
 
           {/* Summary */}
-          <div className="mb-8 p-6 bg-gradient-to-r from-indigo-50 to-purple-50 rounded-lg">
+          <div className="mb-8 p-6 bg-gradient-to-r from-indigo-50 to-purple-50 dark:from-indigo-900/30 dark:to-purple-900/30 rounded-lg transition-colors">
             <div className="flex items-center justify-between">
               <div>
-                <p className="text-gray-600 text-sm">Eredmény</p>
-                <p className="text-3xl font-bold text-indigo-600">
+                <p className="text-gray-600 dark:text-gray-400 text-sm transition-colors">Eredmény</p>
+                <p className="text-3xl font-bold text-indigo-600 dark:text-indigo-400 transition-colors">
                   {Math.round(attempt.percentage)}%
                 </p>
               </div>
               <div>
-                <p className="text-gray-600 text-sm">Helyes válaszok</p>
-                <p className="text-2xl font-semibold text-gray-800">
+                <p className="text-gray-600 dark:text-gray-400 text-sm transition-colors">Helyes válaszok</p>
+                <p className="text-2xl font-semibold text-gray-800 dark:text-white transition-colors">
                   {attempt.score} / {attempt.total_points} pont
                 </p>
               </div>
               {attempt.time_spent && (
                 <div>
-                  <p className="text-gray-600 text-sm">Időtartam</p>
-                  <p className="text-2xl font-semibold text-gray-800">
+                  <p className="text-gray-600 dark:text-gray-400 text-sm transition-colors">Időtartam</p>
+                  <p className="text-2xl font-semibold text-gray-800 dark:text-white transition-colors">
                     {formatTime(attempt.time_spent)}
                   </p>
                 </div>
@@ -152,7 +154,9 @@ const ReviewView = ({ attempt, onClose }) => {
 
           {/* Questions Review */}
           <div className="space-y-6">
-            <h3 className="text-xl font-bold text-gray-800">Minden kérdés áttekintése</h3>
+            <h3 className="text-xl font-bold text-gray-800 dark:text-white transition-colors">
+              Minden kérdés áttekintése
+            </h3>
             
             {attempt.questions.map((question, idx) => {
               const userAnswer = answers[question.id];
@@ -162,31 +166,33 @@ const ReviewView = ({ attempt, onClose }) => {
               return (
                 <div 
                   key={question.id} 
-                  className={`p-6 rounded-lg border-2 ${
+                  className={`p-6 rounded-lg border-2 transition-colors ${
                     isCorrect 
-                      ? 'bg-green-50 border-green-200' 
-                      : 'bg-red-50 border-red-200'
+                      ? 'bg-green-50 dark:bg-green-900/20 border-green-200 dark:border-green-700' 
+                      : 'bg-red-50 dark:bg-red-900/20 border-red-200 dark:border-red-700'
                   }`}
                 >
                   {/* Question header */}
                   <div className="flex items-start gap-3 mb-4">
                     {isCorrect ? (
-                      <CheckCircle className="w-6 h-6 text-green-500 flex-shrink-0 mt-1" />
+                      <CheckCircle className="w-6 h-6 text-green-500 dark:text-green-400 flex-shrink-0 mt-1" />
                     ) : (
-                      <XCircle className="w-6 h-6 text-red-500 flex-shrink-0 mt-1" />
+                      <XCircle className="w-6 h-6 text-red-500 dark:text-red-400 flex-shrink-0 mt-1" />
                     )}
                     <div className="flex-1">
                       <div className="flex items-start justify-between">
-                        <p className="font-semibold text-gray-800 text-lg">
+                        <p className="font-semibold text-gray-800 dark:text-white text-lg transition-colors">
                           {idx + 1}. {question.question_type === 'cloze' ? '' : question.question_text}
                         </p>
-                        <span className={`px-2 py-1 rounded text-xs font-medium ml-2 whitespace-nowrap ${
-                          isCorrect ? 'bg-green-200 text-green-800' : 'bg-red-200 text-red-800'
+                        <span className={`px-2 py-1 rounded text-xs font-medium ml-2 whitespace-nowrap transition-colors ${
+                          isCorrect 
+                            ? 'bg-green-200 dark:bg-green-800 text-green-800 dark:text-green-200' 
+                            : 'bg-red-200 dark:bg-red-800 text-red-800 dark:text-red-200'
                         }`}>
                           {question.points || 1} pont
                         </span>
                       </div>
-                      <span className="text-xs text-gray-500 mt-1 inline-block">
+                      <span className="text-xs text-gray-500 dark:text-gray-400 mt-1 inline-block transition-colors">
                         Típus: {getQuestionTypeLabel(question.question_type)}
                       </span>
                     </div>
@@ -198,7 +204,7 @@ const ReviewView = ({ attempt, onClose }) => {
                       <img 
                         src={question.question_image} 
                         alt="Question" 
-                        className="w-full max-h-64 object-contain rounded-lg border border-gray-200"
+                        className="w-full max-h-64 object-contain rounded-lg border border-gray-200 dark:border-gray-600"
                       />
                     </div>
                   )}
@@ -215,36 +221,36 @@ const ReviewView = ({ attempt, onClose }) => {
                           return (
                             <div
                               key={optIdx}
-                              className={`p-3 rounded-lg ${
+                              className={`p-3 rounded-lg transition-colors ${
                                 isCorrectAnswer 
-                                  ? 'bg-green-100 border-2 border-green-300' 
+                                  ? 'bg-green-100 dark:bg-green-900/30 border-2 border-green-300 dark:border-green-600' 
                                   : isUserAnswer 
-                                  ? 'bg-red-100 border-2 border-red-300'
-                                  : 'bg-white border border-gray-200'
+                                  ? 'bg-red-100 dark:bg-red-900/30 border-2 border-red-300 dark:border-red-600'
+                                  : 'bg-white dark:bg-gray-700 border border-gray-200 dark:border-gray-600'
                               }`}
                             >
                               <div className="flex items-center gap-2">
-                                <span className="font-medium text-gray-700">
+                                <span className="font-medium text-gray-700 dark:text-gray-300">
                                   {String.fromCharCode(65 + optIdx)}.
                                 </span>
-                                <span className={`flex-1 ${
-                                  isCorrectAnswer ? 'font-semibold text-green-800' : 
-                                  isUserAnswer ? 'font-semibold text-red-800' : 'text-gray-700'
+                                <span className={`flex-1 transition-colors ${
+                                  isCorrectAnswer ? 'font-semibold text-green-800 dark:text-green-300' : 
+                                  isUserAnswer ? 'font-semibold text-red-800 dark:text-red-300' : 'text-gray-700 dark:text-gray-300'
                                 }`}>
                                   {option}
                                 </span>
                                 {isCorrectAnswer && !isUserAnswer && (
-                                  <span className="text-xs bg-green-200 text-green-800 px-2 py-1 rounded-full font-medium">
+                                  <span className="text-xs bg-green-200 dark:bg-green-800 text-green-800 dark:text-green-200 px-2 py-1 rounded-full font-medium">
                                     ✓ Helyes válasz
                                   </span>
                                 )}
                                 {isUserAnswer && !isCorrect && (
-                                  <span className="text-xs bg-red-200 text-red-800 px-2 py-1 rounded-full font-medium">
+                                  <span className="text-xs bg-red-200 dark:bg-red-800 text-red-800 dark:text-red-200 px-2 py-1 rounded-full font-medium">
                                     ✗ Te választottad
                                   </span>
                                 )}
                                 {isUserAnswer && isCorrect && (
-                                  <span className="text-xs bg-green-200 text-green-800 px-2 py-1 rounded-full font-medium">
+                                  <span className="text-xs bg-green-200 dark:bg-green-800 text-green-800 dark:text-green-200 px-2 py-1 rounded-full font-medium">
                                     ✓ Te választottad (Helyes!)
                                   </span>
                                 )}
@@ -265,36 +271,36 @@ const ReviewView = ({ attempt, onClose }) => {
                           return (
                             <div
                               key={optIdx}
-                              className={`p-3 rounded-lg ${
+                              className={`p-3 rounded-lg transition-colors ${
                                 isCorrectAnswer 
-                                  ? 'bg-green-100 border-2 border-green-300' 
+                                  ? 'bg-green-100 dark:bg-green-900/30 border-2 border-green-300 dark:border-green-600' 
                                   : isUserAnswer 
-                                  ? 'bg-red-100 border-2 border-red-300'
-                                  : 'bg-white border border-gray-200'
+                                  ? 'bg-red-100 dark:bg-red-900/30 border-2 border-red-300 dark:border-red-600'
+                                  : 'bg-white dark:bg-gray-700 border border-gray-200 dark:border-gray-600'
                               }`}
                             >
                               <div className="flex items-center gap-2">
-                                <span className="font-medium text-gray-700">
+                                <span className="font-medium text-gray-700 dark:text-gray-300">
                                   {String.fromCharCode(65 + optIdx)}.
                                 </span>
-                                <span className={`flex-1 ${
-                                  isCorrectAnswer ? 'font-semibold text-green-800' : 
-                                  isUserAnswer ? 'font-semibold text-red-800' : 'text-gray-700'
+                                <span className={`flex-1 transition-colors ${
+                                  isCorrectAnswer ? 'font-semibold text-green-800 dark:text-green-300' : 
+                                  isUserAnswer ? 'font-semibold text-red-800 dark:text-red-300' : 'text-gray-700 dark:text-gray-300'
                                 }`}>
                                   {option}
                                 </span>
                                 {isCorrectAnswer && !isUserAnswer && (
-                                  <span className="text-xs bg-green-200 text-green-800 px-2 py-1 rounded-full font-medium">
+                                  <span className="text-xs bg-green-200 dark:bg-green-800 text-green-800 dark:text-green-200 px-2 py-1 rounded-full font-medium">
                                     ✓ Helyes
                                   </span>
                                 )}
                                 {isUserAnswer && !isCorrectAnswer && (
-                                  <span className="text-xs bg-red-200 text-red-800 px-2 py-1 rounded-full font-medium">
+                                  <span className="text-xs bg-red-200 dark:bg-red-800 text-red-800 dark:text-red-200 px-2 py-1 rounded-full font-medium">
                                     ✗ Rosszul választva
                                   </span>
                                 )}
                                 {isUserAnswer && isCorrectAnswer && (
-                                  <span className="text-xs bg-green-200 text-green-800 px-2 py-1 rounded-full font-medium">
+                                  <span className="text-xs bg-green-200 dark:bg-green-800 text-green-800 dark:text-green-200 px-2 py-1 rounded-full font-medium">
                                     ✓ Helyesen választva
                                   </span>
                                 )}
@@ -308,15 +314,17 @@ const ReviewView = ({ attempt, onClose }) => {
                     {/* True/False */}
                     {question.question_type === 'true_false' && (
                       <div>
-                        <p className="text-sm text-gray-600 mb-2">Te válaszod:</p>
-                        <p className={`text-lg font-semibold ${
-                          isCorrect ? 'text-green-700' : 'text-red-700'
+                        <p className="text-sm text-gray-600 dark:text-gray-400 mb-2 transition-colors">
+                          Te válaszod:
+                        </p>
+                        <p className={`text-lg font-semibold transition-colors ${
+                          isCorrect ? 'text-green-700 dark:text-green-400' : 'text-red-700 dark:text-red-400'
                         }`}>
                           {userAnswer === true ? 'IGAZ' : userAnswer === false ? 'HAMIS' : 'Nincs válasz'}
                         </p>
                         {!isCorrect && (
-                          <p className="text-sm text-gray-600 mt-2">
-                            Helyes válasz: <span className="font-semibold text-green-700">
+                          <p className="text-sm text-gray-600 dark:text-gray-400 mt-2 transition-colors">
+                            Helyes válasz: <span className="font-semibold text-green-700 dark:text-green-400">
                               {data.correctAnswer ? 'IGAZ' : 'HAMIS'}
                             </span>
                           </p>
@@ -327,15 +335,17 @@ const ReviewView = ({ attempt, onClose }) => {
                     {/* Numeric */}
                     {question.question_type === 'numeric' && (
                       <div>
-                        <p className="text-sm text-gray-600 mb-2">Te válaszod:</p>
-                        <p className={`text-lg font-semibold ${
-                          isCorrect ? 'text-green-700' : 'text-red-700'
+                        <p className="text-sm text-gray-600 dark:text-gray-400 mb-2 transition-colors">
+                          Te válaszod:
+                        </p>
+                        <p className={`text-lg font-semibold transition-colors ${
+                          isCorrect ? 'text-green-700 dark:text-green-400' : 'text-red-700 dark:text-red-400'
                         }`}>
                           {userAnswer || 'Nincs válasz'} {data.unit || ''}
                         </p>
                         {!isCorrect && (
-                          <p className="text-sm text-gray-600 mt-2">
-                            Helyes válasz: <span className="font-semibold text-green-700">
+                          <p className="text-sm text-gray-600 dark:text-gray-400 mt-2 transition-colors">
+                            Helyes válasz: <span className="font-semibold text-green-700 dark:text-green-400">
                               {data.correctAnswer} {data.unit || ''}
                             </span>
                           </p>
@@ -371,21 +381,21 @@ const ReviewView = ({ attempt, onClose }) => {
                           return (
                             <div
                               key={pairIdx}
-                              className={`p-4 rounded-lg border-2 ${
+                              className={`p-4 rounded-lg border-2 transition-colors ${
                                 isPairCorrect 
-                                  ? 'bg-green-50 border-green-400' 
-                                  : 'bg-red-50 border-red-400'
+                                  ? 'bg-green-50 dark:bg-green-900/20 border-green-400 dark:border-green-600' 
+                                  : 'bg-red-50 dark:bg-red-900/20 border-red-400 dark:border-red-600'
                               }`}
                             >
                               <div className="flex items-center justify-between gap-4">
                                 {/* Bal oldal + user válasz */}
                                 <div className="flex items-center gap-3 flex-1">
-                                  <span className="font-semibold text-gray-900 min-w-[120px]">
+                                  <span className="font-semibold text-gray-900 dark:text-white min-w-[120px] transition-colors">
                                     {pair.left}
                                   </span>
-                                  <span className="text-2xl text-gray-400">→</span>
-                                  <span className={`font-semibold ${
-                                    isPairCorrect ? 'text-green-700' : 'text-red-700'
+                                  <span className="text-2xl text-gray-400 dark:text-gray-500">→</span>
+                                  <span className={`font-semibold transition-colors ${
+                                    isPairCorrect ? 'text-green-700 dark:text-green-400' : 'text-red-700 dark:text-red-400'
                                   }`}>
                                     {userRightText || 'Nincs válasz'}
                                   </span>
@@ -394,15 +404,15 @@ const ReviewView = ({ attempt, onClose }) => {
                                 {/* Badge */}
                                 <div>
                                   {isPairCorrect ? (
-                                    <span className="text-xs bg-green-600 text-white px-2 py-1 rounded-full font-bold">
+                                    <span className="text-xs bg-green-600 dark:bg-green-700 text-white px-2 py-1 rounded-full font-bold">
                                       ✓ HELYES
                                     </span>
                                   ) : userRightText ? (
-                                    <span className="text-xs bg-red-600 text-white px-2 py-1 rounded-full font-bold">
+                                    <span className="text-xs bg-red-600 dark:bg-red-700 text-white px-2 py-1 rounded-full font-bold">
                                       ✗ ROSSZ
                                     </span>
                                   ) : (
-                                    <span className="text-xs bg-gray-400 text-white px-2 py-1 rounded-full font-bold">
+                                    <span className="text-xs bg-gray-400 dark:bg-gray-600 text-white px-2 py-1 rounded-full font-bold">
                                       - NINCS VÁLASZ
                                     </span>
                                   )}
@@ -411,10 +421,10 @@ const ReviewView = ({ attempt, onClose }) => {
                               
                               {/* Helyes válasz ha rossz volt */}
                               {!isPairCorrect && (
-                                <div className="mt-3 pt-3 border-t border-gray-300">
-                                  <p className="text-sm text-gray-600">
+                                <div className="mt-3 pt-3 border-t border-gray-300 dark:border-gray-600 transition-colors">
+                                  <p className="text-sm text-gray-600 dark:text-gray-400 transition-colors">
                                     Helyes válasz: 
-                                    <span className="ml-2 font-bold text-green-700">
+                                    <span className="ml-2 font-bold text-green-700 dark:text-green-400">
                                       {pair.left} → {pair.right}
                                     </span>
                                   </p>
@@ -463,15 +473,15 @@ const ReviewView = ({ attempt, onClose }) => {
                                 return (
                                   <span
                                     key={partIdx}
-                                    className={`inline-block mx-1 px-3 py-1 rounded-lg border-2 font-semibold ${
+                                    className={`inline-block mx-1 px-3 py-1 rounded-lg border-2 font-semibold transition-colors ${
                                       isBlankCorrect
-                                        ? 'bg-green-100 border-green-400 text-green-800'
-                                        : 'bg-red-100 border-red-400 text-red-800'
+                                        ? 'bg-green-100 dark:bg-green-900/30 border-green-400 dark:border-green-600 text-green-800 dark:text-green-300'
+                                        : 'bg-red-100 dark:bg-red-900/30 border-red-400 dark:border-red-600 text-red-800 dark:text-red-300'
                                     }`}
                                   >
                                     {userOptionText}
                                     {!isBlankCorrect && (
-                                      <span className="ml-2 text-green-700">
+                                      <span className="ml-2 text-green-700 dark:text-green-400">
                                         (helyes: {correctOptionText})
                                       </span>
                                     )}
@@ -484,15 +494,15 @@ const ReviewView = ({ attempt, onClose }) => {
                                 return (
                                   <span
                                     key={partIdx}
-                                    className={`inline-block mx-1 px-3 py-1 rounded-lg border-2 font-semibold ${
+                                    className={`inline-block mx-1 px-3 py-1 rounded-lg border-2 font-semibold transition-colors ${
                                       isBlankCorrect
-                                        ? 'bg-green-100 border-green-400 text-green-800'
-                                        : 'bg-red-100 border-red-400 text-red-800'
+                                        ? 'bg-green-100 dark:bg-green-900/30 border-green-400 dark:border-green-600 text-green-800 dark:text-green-300'
+                                        : 'bg-red-100 dark:bg-red-900/30 border-red-400 dark:border-red-600 text-red-800 dark:text-red-300'
                                     }`}
                                   >
                                     {userText}
                                     {!isBlankCorrect && (
-                                      <span className="ml-2 text-green-700">
+                                      <span className="ml-2 text-green-700 dark:text-green-400">
                                         (helyes: {correctText})
                                       </span>
                                     )}
@@ -501,7 +511,7 @@ const ReviewView = ({ attempt, onClose }) => {
                               }
                             }
                             
-                            return <span key={partIdx}>{part}</span>;
+                            return <span key={partIdx} className="text-gray-800 dark:text-gray-200">{part}</span>;
                           })}
                         </div>
                       </div>
@@ -511,27 +521,29 @@ const ReviewView = ({ attempt, onClose }) => {
                     {question.question_type === 'essay' && (
                       <div className="space-y-3">
                         {/* User's answer */}
-                        <div className="bg-gray-50 p-4 rounded-lg border border-gray-300">
-                          <p className="text-sm font-semibold text-gray-700 mb-2">📝 Te válaszod:</p>
-                          <div className="prose prose-sm max-w-none">
-                            <p className="whitespace-pre-wrap text-gray-800">
+                        <div className="bg-gray-50 dark:bg-gray-800 p-4 rounded-lg border border-gray-300 dark:border-gray-600 transition-colors">
+                          <p className="text-sm font-semibold text-gray-700 dark:text-gray-300 mb-2 transition-colors">
+                            📝 Te válaszod:
+                          </p>
+                          <div className="prose prose-sm max-w-none dark:prose-invert">
+                            <p className="whitespace-pre-wrap text-gray-800 dark:text-gray-200 transition-colors">
                               {userAnswer?.text || '(Nincs válasz)'}
                             </p>
                           </div>
                           
                           {userAnswer?.wordCount && (
-                            <p className="text-sm text-gray-600 mt-3">
+                            <p className="text-sm text-gray-600 dark:text-gray-400 mt-3 transition-colors">
                               Szavak száma: <span className="font-semibold">{userAnswer.wordCount}</span>
                             </p>
                           )}
                         </div>
                         
                         {/* Manual grading notice */}
-                        <div className="bg-yellow-50 p-4 rounded-lg border border-yellow-300">
-                          <p className="text-sm font-semibold text-yellow-800 mb-1">
+                        <div className="bg-yellow-50 dark:bg-yellow-900/20 p-4 rounded-lg border border-yellow-300 dark:border-yellow-700 transition-colors">
+                          <p className="text-sm font-semibold text-yellow-800 dark:text-yellow-400 mb-1 transition-colors">
                             ⏳ Manuális értékelésre vár
                           </p>
-                          <p className="text-sm text-yellow-700">
+                          <p className="text-sm text-yellow-700 dark:text-yellow-500 transition-colors">
                             Ez a kérdés tanári értékelést igényel. A pontszám később kerül megadásra.
                           </p>
                         </div>
@@ -541,9 +553,13 @@ const ReviewView = ({ attempt, onClose }) => {
 
                   {/* Explanation */}
                   {question.question_explanation && (
-                    <div className="ml-9 mt-4 p-3 bg-blue-50 border border-blue-200 rounded-lg">
-                      <p className="text-sm font-semibold text-blue-900 mb-1">💡 Magyarázat:</p>
-                      <p className="text-sm text-blue-800">{question.question_explanation}</p>
+                    <div className="ml-9 mt-4 p-3 bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-700 rounded-lg transition-colors">
+                      <p className="text-sm font-semibold text-blue-900 dark:text-blue-300 mb-1 transition-colors">
+                        💡 Magyarázat:
+                      </p>
+                      <p className="text-sm text-blue-800 dark:text-blue-400 transition-colors">
+                        {question.question_explanation}
+                      </p>
                     </div>
                   )}
                 </div>

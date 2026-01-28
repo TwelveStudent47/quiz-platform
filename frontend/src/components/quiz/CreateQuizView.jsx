@@ -1,14 +1,10 @@
-import React, { useState, useEffect } from 'react';
-import { Edit3, Plus, Trash2, Clock, X, Image as ImageIcon, Download } from 'lucide-react';
+import React, { useState, useEffect, useRef } from 'react';
+import { Edit3, Download, Clock } from 'lucide-react';
 import Card, { CardBody } from '../common/Card';
 import Button from '../common/Button';
-import SingleChoiceEditor from './creator/SingleChoiceEditor';
-import MultipleChoiceEditor from './creator/MultipleChoiceEditor';
-import TrueFalseEditor from './creator/TrueFalseEditor';
-import NumericEditor from './creator/NumericEditor';
-import MatchingEditor from './creator/MatchingEditor';
-import ClozeEditor from './creator/ClozeEditor';
-import EssayEditor from './creator/EssayEditor';
+import QuestionDrawer from './QuestionDrawer';
+import QuestionListItem from './QuestionListItem';
+import StickyQuestionNav from './StickyQuestionNav';
 import { useQuizzes } from '../../hooks/useQuizzes';
 import { API_URL } from '../../utils/constants';
 import { exportToMoodleXML, downloadMoodleXML } from '../../utils/moodleXMLExport';
@@ -20,18 +16,15 @@ const CreateQuizView = ({ onCreateSuccess, editQuiz = null }) => {
   const [description, setDescription] = useState('');
   const [isTimeLimited, setIsTimeLimited] = useState(false);
   const [timeLimit, setTimeLimit] = useState(30);
-  const [questions, setQuestions] = useState([{
-    type: 'single_choice',
-    text: '',
-    image: null,
-    data: {
-      options: ['', '', '', ''],
-      correctIndex: 0
-    },
-    points: 1,
-    explanation: ''
-  }]);
+  const [questions, setQuestions] = useState([]);
   const [coverImage, setCoverImage] = useState(null);
+  
+  // Drawer state
+  const [isDrawerOpen, setIsDrawerOpen] = useState(false);
+  const [editingIndex, setEditingIndex] = useState(null);
+  
+  // Refs for scrolling
+  const questionRefs = useRef([]);
 
   useEffect(() => {
     if (editQuiz) {
@@ -39,9 +32,6 @@ const CreateQuizView = ({ onCreateSuccess, editQuiz = null }) => {
 
       const quizData = editQuiz.quiz || editQuiz;
       const questionsData = editQuiz.questions || [];
-      
-      console.log('📦 Quiz metadata:', quizData);
-      console.log('📝 Questions array:', questionsData);
       
       setTitle(quizData.title || '');
       setTopic(quizData.topic || '');
@@ -54,27 +44,24 @@ const CreateQuizView = ({ onCreateSuccess, editQuiz = null }) => {
       }
       
       if (questionsData.length > 0) {
-        const loadedQuestions = questionsData.map(q => {
-          console.log('🔄 Processing question:', q);
-          
-          return {
-            type: q.question_type || q.type || 'single_choice',
-            text: q.question_text || q.text || '',
-            image: q.question_image || q.image || null,
-            data: q.question_data || q.data || {},
-            points: q.points || 1,
-            explanation: q.explanation || ''
-          };
-        });
+        const loadedQuestions = questionsData.map(q => ({
+          type: q.question_type || q.type || 'single_choice',
+          text: q.question_text || q.text || '',
+          image: q.question_image || q.image || null,
+          data: q.question_data || q.data || {},
+          points: q.points || 1,
+          explanation: q.explanation || ''
+        }));
         
-        console.log('✅ Loaded questions:', loadedQuestions);
         setQuestions(loadedQuestions);
       }
+      // Removed auto-creation of empty question for editing
     }
+    // Removed auto-creation of empty question for new quiz
   }, [editQuiz]);
 
   const addQuestion = () => {
-    setQuestions([...questions, {
+    const newQ = {
       type: 'single_choice',
       text: '',
       image: null,
@@ -84,143 +71,55 @@ const CreateQuizView = ({ onCreateSuccess, editQuiz = null }) => {
       },
       points: 1,
       explanation: ''
-    }]);
+    };
+    
+    const newQuestions = [...questions, newQ];
+    setQuestions(newQuestions);
+    
+    // Smooth scroll to new question + auto-open for better UX
+    setTimeout(() => {
+      const newIndex = newQuestions.length - 1;
+      questionRefs.current[newIndex]?.scrollIntoView({
+        behavior: 'smooth',
+        block: 'center'
+      });
+      
+      // Auto-open drawer for immediate editing
+      setEditingIndex(newIndex);
+      setIsDrawerOpen(true);
+    }, 100);
   };
 
-  const changeQuestionType = (qIndex, newType) => {
+  const openEditor = (index) => {
+    setEditingIndex(index);
+    setIsDrawerOpen(true);
+  };
+
+  const closeEditor = () => {
+    setIsDrawerOpen(false);
+    setEditingIndex(null);
+  };
+
+  const updateQuestion = (index, updatedQuestion) => {
     const newQuestions = [...questions];
-    newQuestions[qIndex].type = newType;
-    
-    switch(newType) {
-      case 'single_choice':
-        newQuestions[qIndex].data = { options: ['', '', '', ''], correctIndex: 0 };
-        break;
-      case 'multiple_choice':
-        newQuestions[qIndex].data = { options: ['', '', '', ''], correctIndices: [] };
-        break;
-      case 'true_false':
-        newQuestions[qIndex].data = { correctAnswer: true };
-        break;
-      case 'numeric':
-        newQuestions[qIndex].data = { correctAnswer: 0, unit: '' };
-        break;
-      case 'matching':
-        newQuestions[qIndex].data = { 
-          pairs: [{ left: '', right: '' }, { left: '', right: '' }], 
-          correctPairs: {} 
-        };
-        break;
-      case 'cloze':
-        newQuestions[qIndex].data = {
-          text: '',
-          blanks: []
-        };
-        break;
-      case 'essay':
-        newQuestions[qIndex].data = {
-          responseFormat: 'editor',
-          responseRequired: true,
-          responseFieldLines: 15,
-          minWordLimit: null,
-          maxWordLimit: null,
-          attachmentsAllowed: 0,
-          maxBytes: 0
-        };
-        break;
-      default:
-        break;
-    }
-    
+    newQuestions[index] = updatedQuestion;
     setQuestions(newQuestions);
+    closeEditor();
   };
 
   const removeQuestion = (index) => {
     if (questions.length > 1) {
       setQuestions(questions.filter((_, i) => i !== index));
-    }
-  };
-
-  const updateQuestion = (index, field, value) => {
-    const newQuestions = [...questions];
-    newQuestions[index][field] = value;
-    setQuestions(newQuestions);
-  };
-
-  const updateQuestionData = (qIndex, field, value) => {
-    const newQuestions = [...questions];
-    newQuestions[qIndex].data[field] = value;
-    setQuestions(newQuestions);
-  };
-
-  const updateOption = (qIndex, oIndex, value) => {
-    const newQuestions = [...questions];
-    newQuestions[qIndex].data.options[oIndex] = value;
-    setQuestions(newQuestions);
-  };
-
-  const addOption = (qIndex) => {
-    const newQuestions = [...questions];
-    if (newQuestions[qIndex].data.options.length < 6) {
-      newQuestions[qIndex].data.options.push('');
-      setQuestions(newQuestions);
-    }
-  };
-
-  const removeOption = (qIndex) => {
-    const newQuestions = [...questions];
-    if (newQuestions[qIndex].data.options.length > 2) {
-      newQuestions[qIndex].data.options.pop();
-      const q = newQuestions[qIndex];
-      if (q.type === 'single_choice' && q.data.correctIndex >= q.data.options.length) {
-        q.data.correctIndex = q.data.options.length - 1;
-      }
-      if (q.type === 'multiple_choice') {
-        q.data.correctIndices = q.data.correctIndices.filter(i => i < q.data.options.length);
-      }
-      setQuestions(newQuestions);
-    }
-  };
-
-  const toggleMultipleChoice = (qIndex, optionIndex) => {
-    const newQuestions = [...questions];
-    const indices = newQuestions[qIndex].data.correctIndices || [];
-    const idx = indices.indexOf(optionIndex);
-    
-    if (idx > -1) {
-      indices.splice(idx, 1);
     } else {
-      indices.push(optionIndex);
-    }
-    
-    newQuestions[qIndex].data.correctIndices = indices;
-    setQuestions(newQuestions);
-  };
-
-  const addMatchingPair = (qIndex) => {
-    const newQuestions = [...questions];
-    newQuestions[qIndex].data.pairs.push({ left: '', right: '' });
-    setQuestions(newQuestions);
-  };
-
-  const removeMatchingPair = (qIndex, pairIndex) => {
-    const newQuestions = [...questions];
-    if (newQuestions[qIndex].data.pairs.length > 2) {
-      newQuestions[qIndex].data.pairs.splice(pairIndex, 1);
-      setQuestions(newQuestions);
+      alert('Legalább egy kérdés szükséges!');
     }
   };
 
-  const updateMatchingPair = (qIndex, pairIndex, side, value) => {
-    const newQuestions = [...questions];
-    newQuestions[qIndex].data.pairs[pairIndex][side] = value;
-    
-    const correctPairs = {};
-    newQuestions[qIndex].data.pairs.forEach((pair, idx) => {
-      correctPairs[idx] = idx;
+  const jumpToQuestion = (index) => {
+    questionRefs.current[index]?.scrollIntoView({
+      behavior: 'smooth',
+      block: 'center'
     });
-    newQuestions[qIndex].data.correctPairs = correctPairs;
-    
-    setQuestions(newQuestions);
   };
 
   const handleImageUpload = (qIndex, e) => {
@@ -296,7 +195,8 @@ const CreateQuizView = ({ onCreateSuccess, editQuiz = null }) => {
     }
 
     const validQuestions = questions.filter(q => {
-      if (!q.text.trim()) return false;
+      if (!q.text.trim() && q.type !== 'cloze') return false;
+      if (q.type === 'cloze' && !q.data?.text?.trim()) return false;
       
       switch(q.type) {
         case 'single_choice':
@@ -309,6 +209,8 @@ const CreateQuizView = ({ onCreateSuccess, editQuiz = null }) => {
         case 'matching':
           return q.data.pairs && q.data.pairs.length >= 2 && 
                  q.data.pairs.every(p => p.left.trim() && p.right.trim());
+        case 'cloze':
+          return q.data.text && q.data.blanks && q.data.blanks.length > 0;
         case 'essay':
           return true;
         default:
@@ -389,7 +291,8 @@ const CreateQuizView = ({ onCreateSuccess, editQuiz = null }) => {
     }
 
     const validQuestions = questions.filter(q => {
-      if (!q.text.trim()) return false;
+      if (!q.text.trim() && q.type !== 'cloze') return false;
+      if (q.type === 'cloze' && !q.data?.text?.trim()) return false;
       
       switch(q.type) {
         case 'single_choice':
@@ -434,7 +337,7 @@ const CreateQuizView = ({ onCreateSuccess, editQuiz = null }) => {
   const isUpdate = editQuiz && !editQuiz.isNew && (editQuiz.quiz?.id || editQuiz.id);
 
   return (
-    <div className="max-w-7xl mx-auto px-2 sm:px-4 lg:px-6">
+    <div className="max-w-7xl mx-auto px-2 sm:px-4 lg:px-6 pb-24">
       <Card>
         <CardBody className="p-3 sm:p-6 lg:p-8">
           {/* Header */}
@@ -444,11 +347,11 @@ const CreateQuizView = ({ onCreateSuccess, editQuiz = null }) => {
               {isUpdate ? 'Teszt Szerkesztése' : 'Új Teszt Létrehozása'}
             </h2>
             <p className="text-xs sm:text-sm text-gray-600 dark:text-gray-400 mt-1 transition-colors">
-              Hozz létre egyedi tesztet különböző kérdéstípusokkal
+              Hozz létre egyedi tesztet - kattints egy kérdésre a szerkesztéshez
             </p>
           </div>
 
-          {/* Quiz Info - Responsive Grid */}
+          {/* Quiz Info */}
           <div className="bg-gray-50 dark:bg-gray-800 p-3 sm:p-4 lg:p-6 rounded-lg mb-4 sm:mb-6 transition-colors">
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3 sm:gap-4 mb-3">
               <div className="sm:col-span-2 lg:col-span-1">
@@ -491,7 +394,7 @@ const CreateQuizView = ({ onCreateSuccess, editQuiz = null }) => {
               </div>
             </div>
 
-            {/* Time Limit - Responsive */}
+            {/* Time Limit */}
             <div className="flex flex-col sm:flex-row items-start sm:items-center gap-2 sm:gap-4 pt-3 border-t border-gray-200 dark:border-gray-700 transition-colors">
               <label className="flex items-center gap-2 cursor-pointer">
                 <input
@@ -522,229 +425,41 @@ const CreateQuizView = ({ onCreateSuccess, editQuiz = null }) => {
             </div>
           </div>
 
-          {/* Questions Header */}
-          <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 mb-4 pb-3 border-b-2 border-gray-200 dark:border-gray-700 transition-colors">
-            <h3 className="text-base sm:text-lg font-bold text-gray-800 dark:text-white transition-colors">
-              Kérdések <span className="text-indigo-600 dark:text-indigo-400">({questions.length})</span>
-            </h3>
-            <button
-              onClick={addQuestion}
-              type="button"
-              className="inline-flex items-center gap-2 px-3 py-1.5 bg-indigo-600 dark:bg-indigo-500 text-white text-sm font-medium rounded-lg hover:bg-indigo-700 dark:hover:bg-indigo-600 transition-colors w-full sm:w-auto justify-center"
-            >
-              <Plus className="w-4 h-4" />
-              Új Kérdés
-            </button>
-          </div>
+          {/* Questions List */}
+          <div className="mb-4">
+            <div className="flex items-center justify-between mb-4 pb-3 border-b-2 border-gray-200 dark:border-gray-700 transition-colors">
+              <h3 className="text-base sm:text-lg font-bold text-gray-800 dark:text-white transition-colors">
+                Kérdések <span className="text-indigo-600 dark:text-indigo-400">({questions.length})</span>
+              </h3>
+            </div>
 
-          {/* Questions - Responsive Layout */}
-          <div className="space-y-3 sm:space-y-4">
-            {questions.map((question, qIndex) => (
-              <div key={qIndex} className="border-2 border-gray-200 dark:border-gray-700 rounded-lg overflow-hidden transition-colors">
-                {/* Question Header - Responsive */}
-                <div className="bg-gradient-to-r from-indigo-50 to-purple-50 dark:from-indigo-900/30 dark:to-purple-900/30 px-3 sm:px-4 py-2 sm:py-3 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-2 transition-colors">
-                  <div className="flex items-center gap-2 sm:gap-3">
-                    <span className="flex items-center justify-center w-7 h-7 sm:w-8 sm:h-8 bg-indigo-600 dark:bg-indigo-500 text-white rounded-full text-xs sm:text-sm font-bold transition-colors">
-                      {qIndex + 1}
-                    </span>
-                    <span className="px-2 py-1 bg-white dark:bg-gray-700 border border-indigo-200 dark:border-indigo-600 rounded-full text-xs font-medium text-indigo-700 dark:text-indigo-300 transition-colors">
-                      {question.points} pont
-                    </span>
-                  </div>
-                  {questions.length > 1 && (
-                    <button
-                      onClick={() => removeQuestion(qIndex)}
-                      className="p-1.5 text-red-600 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-900/30 rounded-lg transition self-end sm:self-auto"
-                      title="Kérdés törlése"
-                    >
-                      <Trash2 className="w-4 h-4" />
-                    </button>
-                  )}
-                </div>
-
-                {/* Question Content - Responsive Grid */}
-                <div className="p-3 sm:p-4 grid grid-cols-1 lg:grid-cols-2 gap-3 sm:gap-4">
-                  {/* LEFT COLUMN */}
-                  <div className="space-y-3">
-                    {/* Question Text */}
-                    <div>
-                      <label className="block text-xs font-medium text-gray-600 dark:text-gray-400 mb-1 transition-colors">
-                        Kérdés szövege *
-                      </label>
-                      <textarea
-                        value={question.text}
-                        onChange={(e) => updateQuestion(qIndex, 'text', e.target.value)}
-                        placeholder="Írd ide a kérdést..."
-                        rows={3}
-                        className="w-full px-3 py-2 text-sm sm:text-base border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-indigo-500 dark:focus:ring-indigo-400 focus:border-transparent bg-white dark:bg-gray-700 text-gray-900 dark:text-white placeholder-gray-500 dark:placeholder-gray-500 transition-colors"
-                      />
-                    </div>
-
-                    {/* Type and Points - Responsive */}
-                    <div className="grid grid-cols-2 gap-2">
-                      <div>
-                        <label className="block text-xs font-medium text-gray-600 dark:text-gray-400 mb-1 transition-colors">
-                          Típus *
-                        </label>
-                        <select
-                          value={question.type}
-                          onChange={(e) => changeQuestionType(qIndex, e.target.value)}
-                          className="w-full px-2 sm:px-3 py-2 text-xs sm:text-sm border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-indigo-500 dark:focus:ring-indigo-400 focus:border-transparent bg-white dark:bg-gray-700 text-gray-900 dark:text-white transition-colors"
-                        >
-                          <option value="single_choice">Egy válaszos</option>
-                          <option value="multiple_choice">Több válaszos</option>
-                          <option value="true_false">Igaz/Hamis</option>
-                          <option value="numeric">Számos</option>
-                          <option value="matching">Illesztéses</option>
-                          <option value="cloze">Kitöltendő</option>
-                          <option value="essay">Esszé</option>
-                        </select>
-                      </div>
-
-                      <div>
-                        <label className="block text-xs font-medium text-gray-600 dark:text-gray-400 mb-1 transition-colors">
-                          Pontérték *
-                        </label>
-                        <input
-                          type="number"
-                          min="1"
-                          max="100"
-                          value={question.points}
-                          onChange={(e) => updateQuestion(qIndex, 'points', parseInt(e.target.value) || 1)}
-                          className="w-full px-2 sm:px-3 py-2 text-sm sm:text-base border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-indigo-500 dark:focus:ring-indigo-400 focus:border-transparent bg-white dark:bg-gray-700 text-gray-900 dark:text-white transition-colors"
-                        />
-                      </div>
-                    </div>
-
-                    {/* Image Upload - Responsive */}
-                    <div>
-                      <label className="block text-xs font-medium text-gray-600 dark:text-gray-400 mb-1 transition-colors">
-                        Kép (opcionális)
-                      </label>
-                      <div className="flex gap-2">
-                        <label className="flex-1 flex items-center justify-center gap-2 px-3 py-2 border-2 border-dashed border-gray-300 dark:border-gray-600 rounded-lg cursor-pointer hover:border-indigo-400 dark:hover:border-indigo-500 transition text-xs sm:text-sm bg-white dark:bg-gray-700">
-                          <ImageIcon className="w-4 h-4 text-gray-400 dark:text-gray-500" />
-                          <span className="text-gray-600 dark:text-gray-400 truncate transition-colors">
-                            {question.image ? 'Kép kiválasztva ✓' : 'Kép feltöltése'}
-                          </span>
-                          <input
-                            type="file"
-                            accept="image/*"
-                            onChange={(e) => handleImageUpload(qIndex, e)}
-                            className="hidden"
-                          />
-                        </label>
-                        {question.image && (
-                          <button
-                            onClick={() => updateQuestion(qIndex, 'image', null)}
-                            className="px-3 py-2 bg-red-50 dark:bg-red-900/30 text-red-600 dark:text-red-400 rounded-lg hover:bg-red-100 dark:hover:bg-red-900/50 transition text-sm"
-                          >
-                            <X className="w-4 h-4" />
-                          </button>
-                        )}
-                      </div>
-                      {question.image && (
-                        <img 
-                          src={question.image} 
-                          alt="Preview" 
-                          className="mt-2 w-full h-24 object-cover rounded border border-gray-200 dark:border-gray-600" 
-                        />
-                      )}
-                    </div>
-
-                    {/* Explanation - Responsive */}
-                    <div>
-                      <label className="block text-xs font-medium text-gray-600 dark:text-gray-400 mb-1 transition-colors">
-                        Magyarázat (opcionális)
-                      </label>
-                      <textarea
-                        value={question.explanation}
-                        onChange={(e) => updateQuestion(qIndex, 'explanation', e.target.value)}
-                        placeholder="Miért ez a helyes válasz?"
-                        rows={2}
-                        className="w-full px-3 py-2 text-sm sm:text-base border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-indigo-500 dark:focus:ring-indigo-400 focus:border-transparent bg-white dark:bg-gray-700 text-gray-900 dark:text-white placeholder-gray-500 dark:placeholder-gray-500 transition-colors"
-                      />
-                    </div>
-                  </div>
-
-                  {/* RIGHT COLUMN - Question Type Specific */}
-                  <div className="lg:border-l border-t lg:border-t-0 border-gray-200 dark:border-gray-700 pt-3 lg:pt-0 lg:pl-4 transition-colors">
-                    <label className="block text-xs font-medium text-gray-600 dark:text-gray-400 mb-2 transition-colors">
-                      Válaszlehetőségek
-                    </label>
-                    
-                    {question.type === 'single_choice' && (
-                      <SingleChoiceEditor
-                        question={question}
-                        qIndex={qIndex}
-                        updateQuestionData={updateQuestionData}
-                        updateOption={updateOption}
-                        addOption={addOption}
-                        removeOption={removeOption}
-                      />
-                    )}
-
-                    {question.type === 'multiple_choice' && (
-                      <MultipleChoiceEditor
-                        question={question}
-                        qIndex={qIndex}
-                        updateOption={updateOption}
-                        addOption={addOption}
-                        removeOption={removeOption}
-                        toggleMultipleChoice={toggleMultipleChoice}
-                      />
-                    )}
-
-                    {question.type === 'true_false' && (
-                      <TrueFalseEditor
-                        question={question}
-                        qIndex={qIndex}
-                        updateQuestionData={updateQuestionData}
-                      />
-                    )}
-
-                    {question.type === 'numeric' && (
-                      <NumericEditor
-                        question={question}
-                        qIndex={qIndex}
-                        updateQuestionData={updateQuestionData}
-                      />
-                    )}
-
-                    {question.type === 'matching' && (
-                      <MatchingEditor
-                        question={question}
-                        qIndex={qIndex}
-                        updateQuestionData={updateQuestionData}
-                        addMatchingPair={addMatchingPair}
-                        removeMatchingPair={removeMatchingPair}
-                        updateMatchingPair={updateMatchingPair}
-                      />
-                    )}
-
-                    {question.type === 'cloze' && (
-                      <ClozeEditor
-                        question={question}
-                        onUpdate={(field, value) => updateQuestion(qIndex, field, value)}
-                        onUpdateData={(field, value) => updateQuestionData(qIndex, field, value)}
-                      />
-                    )}
-
-                    {question.type === 'essay' && (
-                      <EssayEditor
-                        question={question}
-                        qIndex={qIndex}
-                        updateQuestionData={updateQuestionData}
-                      />
-                    )}
-                  </div>
-                </div>
+            {questions.length === 0 ? (
+              <div className="text-center py-12 bg-gray-50 dark:bg-gray-800 rounded-lg border-2 border-dashed border-gray-300 dark:border-gray-600 transition-colors">
+                <p className="text-gray-600 dark:text-gray-400 mb-4">
+                  Még nincsenek kérdések. Kattints az "Új kérdés" gombra a kezdéshez!
+                </p>
               </div>
-            ))}
+            ) : (
+              <div className="space-y-3">
+                {questions.map((question, idx) => (
+                  <div
+                    key={idx}
+                    ref={(el) => (questionRefs.current[idx] = el)}
+                  >
+                    <QuestionListItem
+                      question={question}
+                      index={idx}
+                      onEdit={() => openEditor(idx)}
+                      onDelete={() => removeQuestion(idx)}
+                    />
+                  </div>
+                ))}
+              </div>
+            )}
           </div>
 
-          {/* Submit Buttons - Responsive */}
-           <div className="mt-4 sm:mt-6 pt-4 border-t-2 border-gray-200 dark:border-gray-700 transition-colors">
+          {/* Submit Buttons */}
+          <div className="mt-4 sm:mt-6 pt-4 border-t-2 border-gray-200 dark:border-gray-700 transition-colors">
             <div className="flex flex-col sm:flex-row gap-2 sm:gap-3">
               <Button
                 onClick={handleSave}
@@ -753,7 +468,7 @@ const CreateQuizView = ({ onCreateSuccess, editQuiz = null }) => {
                 size="lg"
                 className="flex-1 w-full"
               >
-                {editQuiz ? 'Teszt Frissítése' : 'Teszt Mentése'}
+                {isUpdate ? 'Teszt Frissítése' : 'Teszt Mentése'}
               </Button>
               
               <Button
@@ -783,6 +498,26 @@ const CreateQuizView = ({ onCreateSuccess, editQuiz = null }) => {
           </div>
         </CardBody>
       </Card>
+
+      {/* Question Drawer */}
+      {editingIndex !== null && (
+        <QuestionDrawer
+          isOpen={isDrawerOpen}
+          onClose={closeEditor}
+          question={questions[editingIndex]}
+          questionIndex={editingIndex}
+          onSave={(updatedQuestion) => updateQuestion(editingIndex, updatedQuestion)}
+          onDelete={questions.length > 1 ? () => removeQuestion(editingIndex) : null}
+          handleImageUpload={handleImageUpload}
+        />
+      )}
+
+      {/* Sticky Navigation */}
+      <StickyQuestionNav
+        questions={questions}
+        onAddQuestion={addQuestion}
+        onJumpToQuestion={jumpToQuestion}
+      />
     </div>
   );
 };

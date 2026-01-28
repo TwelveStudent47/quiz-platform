@@ -16,7 +16,7 @@ import LoadingSpinner from './components/common/LoadingSpinner';
 import AllQuizzesView from './components/quiz/AllQuizzesView';
 import AllResultsView from './components/results/AllResultsView';
 
-import { VIEWS } from './utils/constants';
+import { API_URL, VIEWS } from './utils/constants';
 
 function AppContent() {
   const { user, loading: authLoading } = useAuth();
@@ -54,7 +54,7 @@ function AppContent() {
 
   const handleReviewAttempt = async (attempt) => {
     try {
-      const response = await fetch(`http://localhost:5000/api/attempts/${attempt.id}`, {
+      const response = await fetch(`${API_URL}/api/attempts/${attempt.id}`, {
         credentials: 'include'
       });
       

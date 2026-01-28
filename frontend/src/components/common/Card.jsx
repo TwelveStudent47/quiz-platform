@@ -7,8 +7,8 @@ const Card = ({
   hoverable = false,
   ...props 
 }) => {
-  const baseStyles = 'bg-white rounded-xl shadow-sm';
-  const hoverStyles = hoverable ? 'hover:shadow-md transition-shadow cursor-pointer' : '';
+  const baseStyles = 'bg-white dark:bg-gray-800 rounded-xl shadow-sm dark:shadow-gray-900 transition-colors';
+  const hoverStyles = hoverable ? 'hover:shadow-md dark:hover:shadow-gray-700 transition-shadow cursor-pointer' : '';
 
   return (
     <div
@@ -22,7 +22,7 @@ const Card = ({
 };
 
 export const CardHeader = ({ children, className = '' }) => (
-  <div className={`px-6 py-4 border-b border-gray-200 ${className}`}>
+  <div className={`px-6 py-4 border-b border-gray-200 dark:border-gray-700 transition-colors ${className}`}>
     {children}
   </div>
 );
@@ -34,7 +34,7 @@ export const CardBody = ({ children, className = '' }) => (
 );
 
 export const CardFooter = ({ children, className = '' }) => (
-  <div className={`px-6 py-4 border-t border-gray-200 ${className}`}>
+  <div className={`px-6 py-4 border-t border-gray-200 dark:border-gray-700 transition-colors ${className}`}>
     {children}
   </div>
 );

@@ -36,7 +36,7 @@ const AllQuizzesView = ({ onBack, onStartQuiz, onEditQuiz }) => {
   if (loading) {
     return (
       <div className="flex items-center justify-center min-h-96">
-        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-indigo-600"></div>
+        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-indigo-600 dark:border-indigo-400"></div>
       </div>
     );
   }
@@ -57,10 +57,10 @@ const AllQuizzesView = ({ onBack, onStartQuiz, onEditQuiz }) => {
               Vissza
             </Button>
             <div>
-              <h1 className="text-xl sm:text-2xl font-bold text-gray-800">
+              <h1 className="text-xl sm:text-2xl font-bold text-gray-800 dark:text-white transition-colors">
                 Összes Teszt
               </h1>
-              <p className="text-xs sm:text-sm text-gray-600 mt-1">
+              <p className="text-xs sm:text-sm text-gray-600 dark:text-gray-400 mt-1 transition-colors">
                 {allQuizzes.length} teszt található
               </p>
             </div>
@@ -72,25 +72,27 @@ const AllQuizzesView = ({ onBack, onStartQuiz, onEditQuiz }) => {
       {allQuizzes.length === 0 ? (
         <Card>
           <CardBody className="p-8 sm:p-12 text-center">
-            <BookOpen className="w-12 h-12 sm:w-16 sm:h-16 text-gray-400 mx-auto mb-4" />
-            <p className="text-gray-600 text-sm sm:text-base">Nincs elérhető teszt</p>
+            <BookOpen className="w-12 h-12 sm:w-16 sm:h-16 text-gray-400 dark:text-gray-500 mx-auto mb-4" />
+            <p className="text-gray-600 dark:text-gray-400 text-sm sm:text-base transition-colors">
+              Nincs elérhető teszt
+            </p>
           </CardBody>
         </Card>
       ) : (
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6">
           {allQuizzes.map((quiz) => (
-            <Card key={quiz.id} className="hover:shadow-lg transition-shadow">
+            <Card key={quiz.id} className="hover:shadow-lg dark:hover:shadow-gray-900 transition-shadow">
               <CardBody className="p-4 sm:p-6">
                 <div className="space-y-3 sm:space-y-4">
                   {/* Header */}
                   <div>
                     <div className="flex items-start justify-between gap-2 mb-2">
-                      <h3 className="font-bold text-base sm:text-lg text-gray-800 line-clamp-2">
+                      <h3 className="font-bold text-base sm:text-lg text-gray-800 dark:text-white line-clamp-2 transition-colors">
                         {quiz.title}
                       </h3>
                     </div>
                     {quiz.topic && (
-                      <p className="text-xs sm:text-sm text-gray-600 line-clamp-1">
+                      <p className="text-xs sm:text-sm text-gray-600 dark:text-gray-400 line-clamp-1 transition-colors">
                         {quiz.topic}
                       </p>
                     )}
@@ -98,30 +100,30 @@ const AllQuizzesView = ({ onBack, onStartQuiz, onEditQuiz }) => {
 
                   {/* Description */}
                   {quiz.description && (
-                    <p className="text-xs sm:text-sm text-gray-600 line-clamp-2">
+                    <p className="text-xs sm:text-sm text-gray-600 dark:text-gray-400 line-clamp-2 transition-colors">
                       {quiz.description}
                     </p>
                   )}
 
                   {/* Metadata */}
-                  <div className="space-y-2 text-xs sm:text-sm text-gray-600">
+                  <div className="space-y-2 text-xs sm:text-sm text-gray-600 dark:text-gray-400 transition-colors">
                     <div className="flex items-center gap-2">
-                      <BookOpen className="w-4 h-4 text-gray-400" />
+                      <BookOpen className="w-4 h-4 text-gray-400 dark:text-gray-500" />
                       <span>{quiz.question_count} kérdés</span>
                     </div>
                     {quiz.time_limit && (
                       <div className="flex items-center gap-2">
-                        <Clock className="w-4 h-4 text-gray-400" />
+                        <Clock className="w-4 h-4 text-gray-400 dark:text-gray-500" />
                         <span>{quiz.time_limit} perc</span>
                       </div>
                     )}
                     <div className="flex items-center gap-2">
-                      <Calendar className="w-4 h-4 text-gray-400" />
+                      <Calendar className="w-4 h-4 text-gray-400 dark:text-gray-500" />
                       <span>{formatDate(quiz.created_at)}</span>
                     </div>
                     {!quiz.is_mine && quiz.creator_name && (
                       <div className="flex items-center gap-2">
-                        <User className="w-4 h-4 text-gray-400" />
+                        <User className="w-4 h-4 text-gray-400 dark:text-gray-500" />
                         <span className="truncate">{quiz.creator_name}</span>
                       </div>
                     )}
@@ -129,13 +131,13 @@ const AllQuizzesView = ({ onBack, onStartQuiz, onEditQuiz }) => {
 
                   {/* Stats */}
                   {quiz.attempt_count > 0 && (
-                    <div className="pt-3 border-t border-gray-200">
+                    <div className="pt-3 border-t border-gray-200 dark:border-gray-700 transition-colors">
                       <div className="flex items-center justify-between text-xs sm:text-sm">
-                        <span className="text-gray-600">
+                        <span className="text-gray-600 dark:text-gray-400 transition-colors">
                           {quiz.attempt_count} próbálkozás
                         </span>
                         {quiz.average_score !== null && (
-                          <span className="font-semibold text-indigo-600">
+                          <span className="font-semibold text-indigo-600 dark:text-indigo-400 transition-colors">
                             Átlag: {Math.round(quiz.average_score)}%
                           </span>
                         )}

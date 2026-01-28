@@ -25,8 +25,10 @@ const Dashboard = ({
         <CardBody className="p-4 sm:p-6">
           <div className="flex flex-col sm:flex-row items-start sm:items-center gap-4 mb-4">
             <div className="flex-1">
-              <h2 className="text-xl sm:text-2xl font-bold text-gray-800">Dashboard</h2>
-              <p className="text-xs sm:text-sm text-gray-600 mt-1">
+              <h2 className="text-xl sm:text-2xl font-bold text-gray-800 dark:text-white transition-colors">
+                Dashboard
+              </h2>
+              <p className="text-xs sm:text-sm text-gray-600 dark:text-gray-400 mt-1 transition-colors">
                 Elérhető tesztek és eredmények
               </p>
             </div>

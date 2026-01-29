@@ -1,25 +1,14 @@
-import { API_URL } from '../utils/constants';
-
-const fetchWithCredentials = async (url, options = {}) => {
-  const response = await fetch(url, {
-    ...options,
-    credentials: 'include',
-  });
-  
-  if (!response.ok && response.status !== 404) {
-    throw new Error(`API call failed: ${response.statusText}`);
-  }
-  
-  return response;
-};
+// api.js - Using apiFetch helper
+import { API_URL, apiFetch } from '../utils/constants';
 
 export const authAPI = {
   checkAuth: async () => {
-    const response = await fetchWithCredentials(`${API_URL}/auth/user`);
-    if (response.ok) {
-      return response.json();
+    try {
+      return await apiFetch(`${API_URL}/auth/user`);
+    } catch (err) {
+      // User not authenticated
+      return null;
     }
-    return null;
   },
   
   login: () => {
@@ -36,61 +25,75 @@ export const quizAPI = {
     const url = search 
       ? `${API_URL}/api/quizzes?search=${encodeURIComponent(search)}` 
       : `${API_URL}/api/quizzes`;
-    const response = await fetchWithCredentials(url);
-    return response.json();
+    return await apiFetch(url);
   },
   
   getById: async (id) => {
-    const response = await fetchWithCredentials(`${API_URL}/api/quizzes/${id}`);
-    return response.json();
+    return await apiFetch(`${API_URL}/api/quizzes/${id}`);
   },
   
   upload: async (formData) => {
-    const response = await fetchWithCredentials(`${API_URL}/api/upload`, {
+    return await apiFetch(`${API_URL}/api/upload`, {
       method: 'POST',
       body: formData
     });
-    return response.json();
   },
   
   create: async (quizData) => {
-    const response = await fetchWithCredentials(`${API_URL}/api/create`, {
+    return await apiFetch(`${API_URL}/api/create-quiz`, {
       method: 'POST',
-      headers: {
-        'Content-Type': 'application/json'
-      },
       body: JSON.stringify(quizData)
     });
-    return response.json();
+  },
+
+  update: async (id, quizData) => {
+    return await apiFetch(`${API_URL}/api/quizzes/${id}`, {
+      method: 'PUT',
+      body: JSON.stringify(quizData)
+    });
   },
   
   delete: async (id) => {
-    const response = await fetchWithCredentials(`${API_URL}/api/quizzes/${id}`, {
+    await apiFetch(`${API_URL}/api/quizzes/${id}`, {
       method: 'DELETE'
     });
-    return response.ok;
+    return true;
   },
   
-  submit: async (quizId, answers) => {
-    const response = await fetchWithCredentials(`${API_URL}/api/submit`, {
+  submit: async (quizId, answers, timeSpent) => {
+    return await apiFetch(`${API_URL}/api/submit`, {
       method: 'POST',
-      headers: {
-        'Content-Type': 'application/json'
-      },
-      body: JSON.stringify({ quizId, answers })
+      body: JSON.stringify({ quizId, answers, timeSpent })
     });
-    return response.json();
   },
   
   getStats: async (quizId) => {
-    const response = await fetchWithCredentials(`${API_URL}/api/stats/${quizId}`);
-    return response.json();
+    return await apiFetch(`${API_URL}/api/stats/${quizId}`);
+  },
+
+  parseXml: async (formData) => {
+    return await apiFetch(`${API_URL}/api/parse-xml`, {
+      method: 'POST',
+      body: formData
+    });
   }
 };
 
 export const historyAPI = {
   getAll: async () => {
-    const response = await fetchWithCredentials(`${API_URL}/api/history`);
-    return response.json();
+    return await apiFetch(`${API_URL}/api/history`);
+  },
+
+  getAttempt: async (attemptId) => {
+    return await apiFetch(`${API_URL}/api/attempts/${attemptId}`);
+  }
+};
+
+export const aiAPI = {
+  generateQuiz: async (config) => {
+    return await apiFetch(`${API_URL}/api/ai/generate-quiz`, {
+      method: 'POST',
+      body: JSON.stringify(config)
+    });
   }
 };

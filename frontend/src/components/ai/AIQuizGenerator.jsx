@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import { Sparkles, Upload, FileText, X, Loader2 } from 'lucide-react';
 import Card, { CardBody } from '../common/Card';
 import Button from '../common/Button';
-import { API_URL } from '../../utils/constants';
+import { API_URL, apiFetch } from '../../utils/constants';
 
 const AIQuizGenerator = ({ onGenerate, onClose }) => {
   const [topic, setTopic] = useState('');
@@ -52,7 +52,7 @@ const AIQuizGenerator = ({ onGenerate, onClose }) => {
     setGenerationStatus('AI gondolkodik...');
 
     try {
-      const response = await fetch(`${API_URL}/api/ai/generate-quiz`, {
+      const response = await apiFetch(`${API_URL}/api/ai/generate-quiz`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         credentials: 'include',

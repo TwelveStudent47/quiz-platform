@@ -5,7 +5,7 @@ import { shuffleArray } from '../../utils/helpers';
 import Card, { CardBody } from '../common/Card';
 import Button from '../common/Button';
 import LoadingSpinner from '../common/LoadingSpinner';
-import { API_URL } from '../../utils/constants';
+import { API_URL, apiFetch } from '../../utils/constants';
 
 const QuizView = ({ quiz, onComplete }) => {
   const [questions, setQuestions] = useState([]);
@@ -123,7 +123,7 @@ const QuizView = ({ quiz, onComplete }) => {
     });
     
     try {
-      const result = await fetch(`${API_URL}/api/submit`, {
+      const result = await apiFetch(`${API_URL}/api/submit`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         credentials: 'include',

@@ -7,7 +7,7 @@ import QuestionListItem from './QuestionListItem';
 import StickyQuestionNav from './StickyQuestionNav';
 import AIQuizGenerator from '../ai/AIQuizGenerator';
 import { useQuizzes } from '../../hooks/useQuizzes';
-import { API_URL } from '../../utils/constants';
+import { API_URL, apiFetch } from '../../utils/constants';
 import { exportToMoodleXML, downloadMoodleXML } from '../../utils/moodleXMLExport';
 
 const CreateQuizView = ({ onCreateSuccess, editQuiz = null }) => {
@@ -272,7 +272,7 @@ const CreateQuizView = ({ onCreateSuccess, editQuiz = null }) => {
         
         console.log('💾 Updating quiz:', quizId);
         
-        const response = await fetch(`${API_URL}/api/quizzes/${quizId}`, {
+        const response = await apiFetch(`${API_URL}/api/quizzes/${quizId}`, {
           method: 'PUT',
           headers: { 'Content-Type': 'application/json' },
           credentials: 'include',
@@ -288,7 +288,7 @@ const CreateQuizView = ({ onCreateSuccess, editQuiz = null }) => {
       } else {
         console.log('💾 Creating new quiz' + (editQuiz?.isNew ? ' (from XML import)' : ''));
         
-        const response = await fetch(`${API_URL}/api/create-quiz`, {
+        const response = await apiFetch(`${API_URL}/api/create-quiz`, {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           credentials: 'include',

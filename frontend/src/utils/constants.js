@@ -1,4 +1,27 @@
 export const API_URL = process.env.REACT_APP_API_URL || 'http://localhost:5000';
+export const API_KEY = process.env.REACT_APP_API_KEY || 'dev-key-123';
+
+// Helper function to add API key to fetch requests
+export const apiFetch = async (url, options = {}) => {
+  const headers = {
+    'Content-Type': 'application/json',
+    'X-API-Key': API_KEY, // ← Add API key to every request
+    ...options.headers
+  };
+
+  const response = await fetch(url, {
+    ...options,
+    headers,
+    credentials: 'include'
+  });
+
+  if (!response.ok) {
+    const errorData = await response.json().catch(() => ({}));
+    throw new Error(errorData.message || `API call failed: ${response.statusText}`);
+  }
+
+  return response.json();
+};
 
 export const AVATAR_COLORS = [
   'bg-red-500',

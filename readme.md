@@ -533,6 +533,10 @@ Ha hibát találsz, nyiss egy issue-t a [GitHub-on](https://github.com/TwelveStu
 
 ### Folyamatban 🚧
 - [ ] **AI-powered kérdésgenerálás** Claude API-val
+- [ ] **Válasz mentések típus változtatásnál**
+- [ ] **Vágólapról válaszok másolása soronként/1 sorból ;-vel elválasztva**
+- [ ] **Gombnyomásra szerkesztés**
+- [ ] **API kulcsos auth**
 
 ### Tervezve 📋
 - [ ] **Markdown támogatás** kérdésekben és magyarázatokban

@@ -545,7 +545,6 @@ Ha hibát találsz, nyiss egy issue-t a [GitHub-on](https://github.com/TwelveStu
 - [ ] **Spaced repetition algoritmus** (intelligens ismétlés)
 - [ ] **Export eredmények PDF-be**
 - [ ] **Social sharing** (eredmények megosztása)
-- [ ] **Nehézségi szintek** (easy/medium/hard)
 - [ ] **Többnyelvűség** (i18n)
 - [ ] **Notifications** (email értesítések)
 - [ ] **Leader board** (top eredmények)

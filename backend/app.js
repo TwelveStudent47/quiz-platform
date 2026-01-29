@@ -6,8 +6,9 @@ const multer = require('multer');
 const { Pool } = require('pg');
 const xml2js = require('xml2js');
 const cors = require('cors');
-const { parseMoodleXML } = require('./moodleXMLParser')
-require('dotenv').config()
+const { parseMoodleXML } = require('./moodleXMLParser');
+const aiRoutes = require('./routes/ai');
+require('dotenv').config();
 
 const app = express();
 const upload = multer({ storage: multer.memoryStorage() });
@@ -76,6 +77,8 @@ const isAuthenticated = (req, res, next) => {
   if (req.isAuthenticated()) return next();
   res.status(401).json({ error: 'Not authenticated' });
 };
+
+app.use('/api/ai', aiRoutes);
 
 app.get('/auth/google', passport.authenticate('google', { scope: ['profile', 'email'] }));
 

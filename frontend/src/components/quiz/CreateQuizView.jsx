@@ -1,10 +1,11 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { Edit3, Download, Clock } from 'lucide-react';
+import { Edit3, Download, Clock, Sparkles } from 'lucide-react';
 import Card, { CardBody } from '../common/Card';
 import Button from '../common/Button';
 import QuestionDrawer from './QuestionDrawer';
 import QuestionListItem from './QuestionListItem';
 import StickyQuestionNav from './StickyQuestionNav';
+import AIQuizGenerator from '../ai/AIQuizGenerator';
 import { useQuizzes } from '../../hooks/useQuizzes';
 import { API_URL } from '../../utils/constants';
 import { exportToMoodleXML, downloadMoodleXML } from '../../utils/moodleXMLExport';
@@ -22,6 +23,9 @@ const CreateQuizView = ({ onCreateSuccess, editQuiz = null }) => {
   // Drawer state
   const [isDrawerOpen, setIsDrawerOpen] = useState(false);
   const [editingIndex, setEditingIndex] = useState(null);
+  
+  // AI Generator state
+  const [showAIGenerator, setShowAIGenerator] = useState(false);
   
   // Refs for scrolling
   const questionRefs = useRef([]);
@@ -120,6 +124,28 @@ const CreateQuizView = ({ onCreateSuccess, editQuiz = null }) => {
       behavior: 'smooth',
       block: 'center'
     });
+  };
+
+  const handleAIGenerate = (aiData) => {
+    console.log('🤖 AI Generated quiz data:', aiData);
+    
+    // Load AI-generated data
+    setTitle(aiData.title || '');
+    setTopic(aiData.topic || '');
+    setDescription(aiData.description || '');
+    
+    if (aiData.timeLimit) {
+      setIsTimeLimited(true);
+      setTimeLimit(aiData.timeLimit);
+    }
+    
+    if (aiData.questions && aiData.questions.length > 0) {
+      setQuestions(aiData.questions);
+    }
+    
+    setShowAIGenerator(false);
+    
+    alert(`✅ ${aiData.questions.length} kérdés sikeresen generálva! Szerkeszd és mentsd el a tesztet.`);
   };
 
   const handleImageUpload = (qIndex, e) => {
@@ -342,13 +368,31 @@ const CreateQuizView = ({ onCreateSuccess, editQuiz = null }) => {
         <CardBody className="p-3 sm:p-6 lg:p-8">
           {/* Header */}
           <div className="mb-4 sm:mb-6">
-            <h2 className="text-xl sm:text-2xl font-bold text-gray-800 dark:text-white flex items-center gap-2 transition-colors">
-              <Edit3 className="w-5 h-5 sm:w-6 sm:h-6 text-indigo-600 dark:text-indigo-400" />
-              {isUpdate ? 'Teszt Szerkesztése' : 'Új Teszt Létrehozása'}
-            </h2>
-            <p className="text-xs sm:text-sm text-gray-600 dark:text-gray-400 mt-1 transition-colors">
-              Hozz létre egyedi tesztet - kattints egy kérdésre a szerkesztéshez
-            </p>
+            <div className="flex items-start justify-between gap-4">
+              <div>
+                <h2 className="text-xl sm:text-2xl font-bold text-gray-800 dark:text-white flex items-center gap-2 transition-colors">
+                  <Edit3 className="w-5 h-5 sm:w-6 sm:h-6 text-indigo-600 dark:text-indigo-400" />
+                  {isUpdate ? 'Teszt Szerkesztése' : 'Új Teszt Létrehozása'}
+                </h2>
+                <p className="text-xs sm:text-sm text-gray-600 dark:text-gray-400 mt-1 transition-colors">
+                  Hozz létre egyedi tesztet - kattints egy kérdésre a szerkesztéshez
+                </p>
+              </div>
+              
+              {/* AI Generate Button */}
+              {!isUpdate && questions.length === 0 && (
+                <Button
+                  onClick={() => setShowAIGenerator(true)}
+                  variant="secondary"
+                  size="md"
+                  className="flex items-center gap-2 flex-shrink-0"
+                >
+                  <Sparkles className="w-5 h-5" />
+                  <span className="hidden sm:inline">AI Teszt Generálás</span>
+                  <span className="sm:hidden">AI</span>
+                </Button>
+              )}
+            </div>
           </div>
 
           {/* Quiz Info */}
@@ -509,6 +553,14 @@ const CreateQuizView = ({ onCreateSuccess, editQuiz = null }) => {
           onSave={(updatedQuestion) => updateQuestion(editingIndex, updatedQuestion)}
           onDelete={questions.length > 1 ? () => removeQuestion(editingIndex) : null}
           handleImageUpload={handleImageUpload}
+        />
+      )}
+
+      {/* AI Generator Modal */}
+      {showAIGenerator && (
+        <AIQuizGenerator
+          onGenerate={handleAIGenerate}
+          onClose={() => setShowAIGenerator(false)}
         />
       )}
 

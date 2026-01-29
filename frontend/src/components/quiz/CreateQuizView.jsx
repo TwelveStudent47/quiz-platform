@@ -234,7 +234,7 @@ const CreateQuizView = ({ onCreateSuccess, editQuiz = null }) => {
           return q.data.correctAnswer !== undefined && q.data.correctAnswer !== null;
         case 'matching':
           return q.data.pairs && q.data.pairs.length >= 2 && 
-                 q.data.pairs.every(p => p.left.trim() && p.right.trim());
+                q.data.pairs.every(p => p.left.trim() && p.right.trim());
         case 'cloze':
           return q.data.text && q.data.blanks && q.data.blanks.length > 0;
         case 'essay':
@@ -272,33 +272,25 @@ const CreateQuizView = ({ onCreateSuccess, editQuiz = null }) => {
         
         console.log('💾 Updating quiz:', quizId);
         
-        const response = await apiFetch(`${API_URL}/api/quizzes/${quizId}`, {
+        // ✅ apiFetch automatically:
+        // - Adds X-API-Key header
+        // - Adds Content-Type header
+        // - Parses JSON response
+        // - Throws error if response.ok is false
+        await apiFetch(`${API_URL}/api/quizzes/${quizId}`, {
           method: 'PUT',
-          headers: { 'Content-Type': 'application/json' },
-          credentials: 'include',
           body: JSON.stringify(quizData)
         });
-
-        if (!response.ok) {
-          const errorData = await response.json();
-          throw new Error(errorData.error || 'Failed to update quiz');
-        }
 
         alert('Teszt sikeresen frissítve! 🎉');
       } else {
         console.log('💾 Creating new quiz' + (editQuiz?.isNew ? ' (from XML import)' : ''));
         
-        const response = await apiFetch(`${API_URL}/api/create-quiz`, {
+        // ✅ apiFetch automatically handles everything
+        await apiFetch(`${API_URL}/api/create-quiz`, {
           method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          credentials: 'include',
           body: JSON.stringify(quizData)
         });
-
-        if (!response.ok) {
-          const errorData = await response.json();
-          throw new Error(errorData.error || 'Failed to create quiz');
-        }
 
         alert('Teszt sikeresen létrehozva! 🎉');
       }

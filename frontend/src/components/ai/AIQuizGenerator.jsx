@@ -1,3 +1,5 @@
+// AIQuizGenerator.jsx - FIXED error handling
+
 import React, { useState } from 'react';
 import { Sparkles, Upload, FileText, X, Loader2 } from 'lucide-react';
 import Card, { CardBody } from '../common/Card';
@@ -52,10 +54,10 @@ const AIQuizGenerator = ({ onGenerate, onClose }) => {
     setGenerationStatus('AI gondolkodik...');
 
     try {
-      const response = await apiFetch(`${API_URL}/api/ai/generate-quiz`, {
+      console.log('🤖 Sending AI generation request...');
+      
+      const data = await apiFetch(`${API_URL}/api/ai/generate-quiz`, {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        credentials: 'include',
         body: JSON.stringify({
           topic,
           documentation,
@@ -65,12 +67,17 @@ const AIQuizGenerator = ({ onGenerate, onClose }) => {
         })
       });
 
-      if (!response.ok) {
-        throw new Error('AI generation failed');
+      console.log('✅ AI Response received:', data);
+
+      // Validate response
+      if (!data || !data.questions || !Array.isArray(data.questions)) {
+        throw new Error('Invalid response format from AI');
       }
 
-      const data = await response.json();
-      
+      if (data.questions.length === 0) {
+        throw new Error('No questions generated');
+      }
+
       setGenerationStatus('Sikeres generálás! ✓');
       
       // Pass to CreateQuizView
@@ -80,8 +87,22 @@ const AIQuizGenerator = ({ onGenerate, onClose }) => {
       }, 500);
       
     } catch (err) {
-      console.error('AI Generation error:', err);
-      alert('Hiba történt a generálás során. Próbáld újra!');
+      console.error('❌ AI Generation error:', err);
+      
+      // Better error messages
+      let errorMessage = 'Hiba történt a generálás során.';
+      
+      if (err.message.includes('AI Quota Exceeded') || err.message.includes('429')) {
+        errorMessage = '⚠️ Elérted a havi 5 ingyenes AI teszt limitet!\n\nA limit minden hónap 1-én nullázódik.';
+      } else if (err.message.includes('Invalid response format')) {
+        errorMessage = 'Az AI válasz formátuma hibás. Próbáld újra!';
+      } else if (err.message.includes('No questions generated')) {
+        errorMessage = 'Az AI nem tudott kérdéseket generálni. Próbálj más témát!';
+      } else if (err.message.includes('Network')) {
+        errorMessage = 'Hálózati hiba. Ellenőrizd az internetkapcsolatot!';
+      }
+      
+      alert(errorMessage + '\n\nRészletek: ' + err.message);
       setGenerationStatus('');
     } finally {
       setIsGenerating(false);

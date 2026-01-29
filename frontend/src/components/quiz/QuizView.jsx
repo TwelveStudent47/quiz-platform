@@ -134,8 +134,7 @@ const QuizView = ({ quiz, onComplete }) => {
         })
       });
       
-      const data = await result.json();
-      setResult(data);
+      setResult(result);
     } catch (err) {
       console.error('Failed to submit:', err);
       alert('Hiba történt a beküldés során');

@@ -90,6 +90,8 @@ FRONTEND_URL=http://localhost:3000
 # Server
 PORT=5000
 NODE_ENV=development
+ANTHROPIC_API_KEY=your-claude-api-key
+API_SECRET_KEY=your-master-api-key
 ```
 
 ### 3. Adatbázis létrehozása
@@ -543,7 +545,6 @@ Ha hibát találsz, nyiss egy issue-t a [GitHub-on](https://github.com/TwelveStu
 - [ ] **Spaced repetition algoritmus** (intelligens ismétlés)
 - [ ] **Export eredmények PDF-be**
 - [ ] **Social sharing** (eredmények megosztása)
-- [ ] **Nehézségi szintek** (easy/medium/hard)
 - [ ] **Többnyelvűség** (i18n)
 - [ ] **Notifications** (email értesítések)
 - [ ] **Leader board** (top eredmények)

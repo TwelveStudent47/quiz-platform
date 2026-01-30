@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import { Upload, FileText, FileCode } from 'lucide-react';
 import Card, { CardBody } from '../common/Card';
 import Button from '../common/Button';
-import { API_URL } from '../../utils/constants';
+import { API_URL, apiFetch } from '../../utils/constants';
 
 const UploadView = ({ onUploadSuccess, onLoadToEditor }) => {
   const [file, setFile] = useState(null);
@@ -24,17 +24,11 @@ const UploadView = ({ onUploadSuccess, onLoadToEditor }) => {
     setUploading(true);
 
     try {
-      const response = await fetch(`${API_URL}/api/upload`, {
+      const response = await apiFetch(`${API_URL}/api/upload`, {
         method: 'POST',
         credentials: 'include',
         body: formData
       });
-
-      if (!response.ok) {
-        throw new Error('Upload failed');
-      }
-
-      const result = await response.json();
       
       alert('Teszt sikeresen feltöltve!');
       setFile(null);
@@ -64,23 +58,17 @@ const UploadView = ({ onUploadSuccess, onLoadToEditor }) => {
       const formData = new FormData();
       formData.append('file', file);
 
-      const response = await fetch(`${API_URL}/api/parse-xml`, {
+      const quizData = await apiFetch(`${API_URL}/api/parse-xml`, {
         method: 'POST',
-        credentials: 'include',
         body: formData
       });
-
-      if (!response.ok) {
-        throw new Error('Parse failed');
-      }
-
-      const quizData = await response.json();
       
       console.log('📦 Parsed quiz data:', quizData);
       
       onLoadToEditor(quizData);
+      
     } catch (err) {
-      console.error('Parse error:', err);
+      console.error('❌ Parse error:', err);
       alert('Hiba történt a fájl feldolgozása során. Ellenőrizd hogy valid Moodle XML-e!');
     } finally {
       setUploading(false);

@@ -16,7 +16,7 @@ import LoadingSpinner from './components/common/LoadingSpinner';
 import AllQuizzesView from './components/quiz/AllQuizzesView';
 import AllResultsView from './components/results/AllResultsView';
 
-import { API_URL, VIEWS } from './utils/constants';
+import { API_URL, VIEWS, apiFetch } from './utils/constants';
 
 function AppContent() {
   const { user, loading: authLoading } = useAuth();
@@ -54,16 +54,9 @@ function AppContent() {
 
   const handleReviewAttempt = async (attempt) => {
     try {
-      const response = await fetch(`${API_URL}/api/attempts/${attempt.id}`, {
-        credentials: 'include'
-      });
+      const data = await apiFetch(`${API_URL}/api/attempts/${attempt.id}`);
       
-      if (!response.ok) {
-        throw new Error('Failed to load attempt');
-      }
-      
-      const attemptData = await response.json();
-      setReviewAttempt(attemptData);
+      setReviewAttempt(data);  // ← data = parsed JSON!
       setView(VIEWS.REVIEW);
     } catch (err) {
       console.error('Failed to load attempt for review:', err);

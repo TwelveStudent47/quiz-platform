@@ -1,297 +1,295 @@
-const convertClozeToMoodle = (question, escapeXML) => {
-  let moodleText = question.data.text || '';
+// utils/moodleXMLExport.js - CORRECTED VERSION WITH <name> TAGS
+
+export function exportToMoodleXML(quizData) {
+  const { title, topic, questions } = quizData;
   
-  (question.data.blanks || []).forEach((blank, idx) => {
-    const placeholder = `{${idx}}`;
-    let moodleBlank = '';
-    
-    if (blank.type === 'dropdown') {
-      const options = blank.options.map((opt, optIdx) => {
-        const isCorrect = optIdx === blank.correctIndex;
-        return `${isCorrect ? '=' : ''}${escapeXML(opt)}`;
-      }).join('~');
-      
-      moodleBlank = `{${idx + 1}:MULTICHOICE:~${options}}`;
-    } else if (blank.type === 'text') {
-      moodleBlank = `{${idx + 1}:SHORTANSWER:=${escapeXML(blank.correctAnswer)}}`;
-    }
-    
-    moodleText = moodleText.replace(placeholder, moodleBlank);
-  });
+  let xml = '<?xml version="1.0" encoding="UTF-8"?>\n<quiz>\n';
   
-  let xml = '  <question type="cloze">\n';
-  xml += '    <n>\n';
-  xml += `      <text>${escapeXML(question.text || 'Cloze Question')}</text>\n`;
-  xml += '    </n>\n';
-  xml += '    <questiontext format="html">\n';
-  xml += `      <text><![CDATA[${moodleText}]]></text>\n`;
-  xml += '    </questiontext>\n';
-  xml += '    <generalfeedback format="html">\n';
-  xml += `      <text>${escapeXML(question.explanation || '')}</text>\n`;
-  xml += '    </generalfeedback>\n';
-  xml += `    <defaultgrade>${question.points || 1}</defaultgrade>\n`;
-  xml += '    <penalty>0.1</penalty>\n';
-  xml += '    <hidden>0</hidden>\n';
+  // Category
+  xml += '  <question type="category">\n';
+  xml += '    <category>\n';
+  xml += `      <text>$course$/${escapeXML(topic || 'General')}</text>\n`;
+  xml += '    </category>\n';
   xml += '  </question>\n\n';
   
-  return xml;
-};
-
-export const exportToMoodleXML = (quiz) => {
-  const { title, topic, description, questions } = quiz;
-  
-  const escapeXML = (text) => {
-    if (!text) return '';
-    return text
-      .replace(/&/g, '&amp;')
-      .replace(/</g, '&lt;')
-      .replace(/>/g, '&gt;')
-      .replace(/"/g, '&quot;')
-      .replace(/'/g, '&apos;');
-  };
-
-  const wrapCDATA = (text) => {
-    if (!text) return '<text></text>';
-
-    if (/<[^>]+>/.test(text) || /[&<>"]/.test(text)) {
-      return `<text><![CDATA[${text}]]></text>`;
-    }
-    return `<text>${text}</text>`;
-  };
-
-  let xml = '<?xml version="1.0" encoding="UTF-8"?>\n';
-  xml += '<quiz>\n';
-
-  if (topic) {
-    xml += '  <question type="category">\n';
-    xml += '    <category>\n';
-    xml += `      <text>$course$/${escapeXML(topic)}</text>\n`;
-    xml += '    </category>\n';
-    xml += '  </question>\n\n';
-  }
-
-  questions.forEach((question, index) => {
-    xml += `  <!-- Question ${index + 1}: ${escapeXML(question.text.substring(0, 50))}... -->\n`;
+  // Questions
+  questions.forEach((q, idx) => {
+    xml += `  <!-- Question ${idx + 1}: ${escapeXML(q.text).substring(0, 50)}... -->\n`;
     
-    switch (question.type) {
+    switch(q.type) {
       case 'single_choice':
-        xml += generateMultipleChoice(question, false);
+        xml += generateSingleChoice(q);
         break;
       case 'multiple_choice':
-        xml += generateMultipleChoice(question, true);
+        xml += generateMultipleChoice(q);
         break;
       case 'true_false':
-        xml += generateTrueFalse(question);
+        xml += generateTrueFalse(q);
         break;
       case 'numeric':
-        xml += generateNumeric(question);
+        xml += generateNumeric(q);
         break;
       case 'matching':
-        xml += generateMatching(question);
+        xml += generateMatching(q);
         break;
       case 'cloze':
-        xml += convertClozeToMoodle(question, escapeXML);
+        xml += generateCloze(q);
+        break;
+      case 'essay':
+        xml += generateEssay(q);
         break;
       default:
-        console.warn(`Unknown question type: ${question.type}`);
+        console.warn(`Unknown question type: ${q.type}`);
     }
+    
     xml += '\n';
   });
-
+  
   xml += '</quiz>';
   return xml;
+}
 
-  function generateMultipleChoice(q, isMultiple) {
-    let qXML = '  <question type="multichoice">\n';
-    
-    qXML += '    <name>\n';
-    qXML += `      ${wrapCDATA(q.text.substring(0, 100))}\n`;
-    qXML += '    </name>\n';
-
-    qXML += '    <questiontext format="html">\n';
-    let questionHTML = escapeXML(q.text);
-    if (q.image) {
-      questionHTML += `<br/><img src="${q.image}" alt="Question image" style="max-width: 100%;"/>`;
+function generateSingleChoice(q) {
+  let xml = '  <question type="multichoice">\n';
+  xml += '    <name>\n';  // ← CORRECT!
+  xml += `      <text>${escapeXML(q.text).substring(0, 255)}</text>\n`;
+  xml += '    </name>\n';
+  xml += '    <questiontext format="html">\n';
+  xml += `      <text>${escapeXML(q.text)}</text>\n`;
+  xml += '    </questiontext>\n';
+  xml += `    <defaultgrade>${q.points || 1}</defaultgrade>\n`;
+  xml += '    <penalty>0.1</penalty>\n';
+  xml += '    <single>true</single>\n';
+  xml += '    <shuffleanswers>true</shuffleanswers>\n';
+  xml += '    <answernumbering>abc</answernumbering>\n';
+  
+  q.data.options.forEach((option, idx) => {
+    const fraction = idx === q.data.correctIndex ? '100' : '0';
+    xml += `    <answer fraction="${fraction}" format="html">\n`;
+    xml += `      <text>${escapeXML(option)}</text>\n`;
+    if (idx === q.data.correctIndex && q.explanation) {
+      xml += '      <feedback format="html">\n';
+      xml += `        <text><![CDATA[${q.explanation}]]></text>\n`;
+      xml += '      </feedback>\n';
     }
-    qXML += `      ${wrapCDATA(questionHTML)}\n`;
-    qXML += '    </questiontext>\n';
+    xml += '    </answer>\n';
+  });
+  
+  if (q.explanation) {
+    xml += '    <generalfeedback format="html">\n';
+    xml += `      <text><![CDATA[${q.explanation}]]></text>\n`;
+    xml += '    </generalfeedback>\n';
+  }
+  
+  xml += '  </question>\n';
+  return xml;
+}
 
-    qXML += `    <defaultgrade>${q.points || 1}</defaultgrade>\n`;
+function generateMultipleChoice(q) {
+  let xml = '  <question type="multichoice">\n';
+  xml += '    <name>\n';
+  xml += `      <text>${escapeXML(q.text).substring(0, 255)}</text>\n`;
+  xml += '    </name>\n';
+  xml += '    <questiontext format="html">\n';
+  xml += `      <text>${escapeXML(q.text)}</text>\n`;
+  xml += '    </questiontext>\n';
+  xml += `    <defaultgrade>${q.points || 2}</defaultgrade>\n`;
+  xml += '    <penalty>0.1</penalty>\n';
+  xml += '    <single>false</single>\n';
+  xml += '    <shuffleanswers>true</shuffleanswers>\n';
+  xml += '    <answernumbering>abc</answernumbering>\n';
+  
+  const correctCount = q.data.correctIndices.length;
+  const fractionPerCorrect = 100 / correctCount;
+  
+  q.data.options.forEach((option, idx) => {
+    const isCorrect = q.data.correctIndices.includes(idx);
+    const fraction = isCorrect ? fractionPerCorrect.toFixed(5) : '0';
+    xml += `    <answer fraction="${fraction}" format="html">\n`;
+    xml += `      <text>${escapeXML(option)}</text>\n`;
+    xml += '    </answer>\n';
+  });
+  
+  if (q.explanation) {
+    xml += '    <generalfeedback format="html">\n';
+    xml += `      <text><![CDATA[${q.explanation}]]></text>\n`;
+    xml += '    </generalfeedback>\n';
+  }
+  
+  xml += '  </question>\n';
+  return xml;
+}
 
-    qXML += '    <penalty>0.1</penalty>\n';
+function generateTrueFalse(q) {
+  let xml = '  <question type="truefalse">\n';
+  xml += '    <name>\n';
+  xml += `      <text>${escapeXML(q.text).substring(0, 255)}</text>\n`;
+  xml += '    </name>\n';
+  xml += '    <questiontext format="html">\n';
+  xml += `      <text>${escapeXML(q.text)}</text>\n`;
+  xml += '    </questiontext>\n';
+  xml += `    <defaultgrade>${q.points || 1}</defaultgrade>\n`;
+  xml += `    <answer fraction="${q.data.correctAnswer ? '100' : '0'}" format="moodle_auto_format">\n`;
+  xml += `      <text>${q.data.correctAnswer ? 'true' : 'false'}</text>\n`;
+  xml += '    </answer>\n';
+  xml += `    <answer fraction="${q.data.correctAnswer ? '0' : '100'}" format="moodle_auto_format">\n`;
+  xml += `      <text>${q.data.correctAnswer ? 'false' : 'true'}</text>\n`;
+  xml += '    </answer>\n';
+  
+  if (q.explanation) {
+    xml += '    <generalfeedback format="html">\n';
+    xml += `      <text><![CDATA[${q.explanation}]]></text>\n`;
+    xml += '    </generalfeedback>\n';
+  }
+  
+  xml += '  </question>\n';
+  return xml;
+}
+
+function generateNumeric(q) {
+  let xml = '  <question type="numerical">\n';
+  xml += '    <name>\n';
+  xml += `      <text>${escapeXML(q.text).substring(0, 255)}</text>\n`;
+  xml += '    </name>\n';
+  xml += '    <questiontext format="html">\n';
+  xml += `      <text>${escapeXML(q.text)}</text>\n`;
+  xml += '    </questiontext>\n';
+  xml += `    <defaultgrade>${q.points || 2}</defaultgrade>\n`;
+  xml += '    <answer fraction="100" format="moodle_auto_format">\n';
+  xml += `      <text>${q.data.correctAnswer}</text>\n`;
+  xml += '      <tolerance>0.01</tolerance>\n';
+  xml += '    </answer>\n';
+  
+  if (q.data.unit) {
+    xml += '    <units>\n';
+    xml += '      <unit>\n';
+    xml += `        <multiplier>1</multiplier>\n`;
+    xml += `        <unit_name>${escapeXML(q.data.unit)}</unit_name>\n`;
+    xml += '      </unit>\n';
+    xml += '    </units>\n';
+  }
+  
+  if (q.explanation) {
+    xml += '    <generalfeedback format="html">\n';
+    xml += `      <text><![CDATA[${q.explanation}]]></text>\n`;
+    xml += '    </generalfeedback>\n';
+  }
+  
+  xml += '  </question>\n';
+  return xml;
+}
+
+function generateMatching(q) {
+  let xml = '  <question type="matching">\n';
+  xml += '    <name>\n';
+  xml += `      <text>${escapeXML(q.text).substring(0, 255)}</text>\n`;
+  xml += '    </name>\n';
+  xml += '    <questiontext format="html">\n';
+  xml += `      <text>${escapeXML(q.text)}</text>\n`;
+  xml += '    </questiontext>\n';
+  xml += `    <defaultgrade>${q.points || 3}</defaultgrade>\n`;
+  xml += '    <shuffleanswers>true</shuffleanswers>\n';
+  
+  q.data.pairs.forEach((pair) => {
+    xml += '    <subquestion format="html">\n';
+    xml += `      <text>${escapeXML(pair.left)}</text>\n`;
+    xml += `      <answer><text>${escapeXML(pair.right)}</text></answer>\n`;
+    xml += '    </subquestion>\n';
+  });
+  
+  if (q.explanation) {
+    xml += '    <generalfeedback format="html">\n';
+    xml += `      <text><![CDATA[${q.explanation}]]></text>\n`;
+    xml += '    </generalfeedback>\n';
+  }
+  
+  xml += '  </question>\n';
+  return xml;
+}
+
+function generateCloze(q) {
+  let xml = '  <question type="cloze">\n';
+  xml += '    <name>\n';
+  xml += `      <text>${escapeXML(q.text).substring(0, 255)}</text>\n`;
+  xml += '    </name>\n';
+  
+  // Build cloze text with embedded answers
+  let clozeText = q.data.text;
+  q.data.blanks.forEach((blank, idx) => {
+    let replacement = '';
     
-    qXML += `    <single>${isMultiple ? 'false' : 'true'}</single>\n`;
-
-    qXML += '    <shuffleanswers>true</shuffleanswers>\n';
-
-    qXML += '    <answernumbering>abc</answernumbering>\n';
-
-    const options = q.data.options || [];
-    options.forEach((option, idx) => {
-      let fraction = 0;
-      
-      if (isMultiple) {
-        const correctIndices = q.data.correctIndices || [];
-        if (correctIndices.includes(idx)) {
-          fraction = Math.round(100 / correctIndices.length);
+    if (blank.type === 'dropdown') {
+      replacement = `{1:MULTICHOICE:=${escapeXML(blank.options[blank.correctIndex])}`;
+      blank.options.forEach((opt, optIdx) => {
+        if (optIdx !== blank.correctIndex) {
+          replacement += `~${escapeXML(opt)}`;
         }
-      } else {
-        fraction = (q.data.correctIndex === idx) ? 100 : 0;
-      }
-      
-      qXML += `    <answer fraction="${fraction}" format="html">\n`;
-      qXML += `      ${wrapCDATA(escapeXML(option))}\n`;
-      if (q.explanation && fraction > 0) {
-        qXML += '      <feedback format="html">\n';
-        qXML += `        ${wrapCDATA(escapeXML(q.explanation))}\n`;
-        qXML += '      </feedback>\n';
-      }
-      qXML += '    </answer>\n';
-    });
-
-    if (q.explanation) {
-      qXML += '    <generalfeedback format="html">\n';
-      qXML += `      ${wrapCDATA(escapeXML(q.explanation))}\n`;
-      qXML += '    </generalfeedback>\n';
+      });
+      replacement += '}';
+    } else if (blank.type === 'text') {
+      replacement = `{1:SHORTANSWER:=${escapeXML(blank.correctAnswer)}}`;
     }
     
-    qXML += '  </question>\n';
-    return qXML;
+    clozeText = clozeText.replace(`{${idx}}`, replacement);
+  });
+  
+  xml += '    <questiontext format="html">\n';
+  xml += `      <text><![CDATA[${clozeText}]]></text>\n`;
+  xml += '    </questiontext>\n';
+  xml += `    <defaultgrade>${q.points || 2}</defaultgrade>\n`;
+  xml += '    <penalty>0.1</penalty>\n';
+  
+  if (q.explanation) {
+    xml += '    <generalfeedback format="html">\n';
+    xml += `      <text><![CDATA[${q.explanation}]]></text>\n`;
+    xml += '    </generalfeedback>\n';
   }
+  
+  xml += '  </question>\n';
+  return xml;
+}
 
-  function generateTrueFalse(q) {
-    let qXML = '  <question type="truefalse">\n';
-
-    qXML += '    <name>\n';
-    qXML += `      ${wrapCDATA(q.text.substring(0, 100))}\n`;
-    qXML += '    </name>\n';
-
-    qXML += '    <questiontext format="html">\n';
-    let questionHTML = escapeXML(q.text);
-    if (q.image) {
-      questionHTML += `<br/><img src="${q.image}" alt="Question image" style="max-width: 100%;"/>`;
-    }
-    qXML += `      ${wrapCDATA(questionHTML)}\n`;
-    qXML += '    </questiontext>\n';
-
-    qXML += `    <defaultgrade>${q.points || 1}</defaultgrade>\n`;
-
-    qXML += '    <penalty>0.1</penalty>\n';
-
-    qXML += `    <answer fraction="${q.data.correctAnswer === true ? 100 : 0}" format="moodle_auto_format">\n`;
-    qXML += '      <text>true</text>\n';
-    if (q.explanation && q.data.correctAnswer === true) {
-      qXML += '      <feedback format="html">\n';
-      qXML += `        ${wrapCDATA(escapeXML(q.explanation))}\n`;
-      qXML += '      </feedback>\n';
-    }
-    qXML += '    </answer>\n';
-
-    qXML += `    <answer fraction="${q.data.correctAnswer === false ? 100 : 0}" format="moodle_auto_format">\n`;
-    qXML += '      <text>false</text>\n';
-    if (q.explanation && q.data.correctAnswer === false) {
-      qXML += '      <feedback format="html">\n';
-      qXML += `        ${wrapCDATA(escapeXML(q.explanation))}\n`;
-      qXML += '      </feedback>\n';
-    }
-    qXML += '    </answer>\n';
-    
-    qXML += '  </question>\n';
-    return qXML;
+function generateEssay(q) {
+  let xml = '  <question type="essay">\n';
+  xml += '    <name>\n';
+  xml += `      <text>${escapeXML(q.text).substring(0, 255)}</text>\n`;
+  xml += '    </name>\n';
+  xml += '    <questiontext format="html">\n';
+  xml += `      <text>${escapeXML(q.text)}</text>\n`;
+  xml += '    </questiontext>\n';
+  xml += `    <defaultgrade>${q.points || 5}</defaultgrade>\n`;
+  xml += '    <responseformat>editor</responseformat>\n';
+  xml += `    <responserequired>${q.data.responseRequired ? '1' : '0'}</responserequired>\n`;
+  xml += `    <responsefieldlines>${q.data.responseFieldLines || 15}</responsefieldlines>\n`;
+  
+  if (q.explanation) {
+    xml += '    <graderinfo format="html">\n';
+    xml += `      <text><![CDATA[${q.explanation}]]></text>\n`;
+    xml += '    </graderinfo>\n';
   }
+  
+  xml += '  </question>\n';
+  return xml;
+}
 
-  function generateNumeric(q) {
-    let qXML = '  <question type="numerical">\n';
+function escapeXML(text) {
+  if (!text) return '';
+  return String(text)
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;')
+    .replace(/'/g, '&apos;');
+}
 
-    qXML += '    <name>\n';
-    qXML += `      ${wrapCDATA(q.text.substring(0, 100))}\n`;
-    qXML += '    </name>\n';
-
-    qXML += '    <questiontext format="html">\n';
-    let questionHTML = escapeXML(q.text);
-    if (q.image) {
-      questionHTML += `<br/><img src="${q.image}" alt="Question image" style="max-width: 100%;"/>`;
-    }
-    qXML += `      ${wrapCDATA(questionHTML)}\n`;
-    qXML += '    </questiontext>\n';
-
-    qXML += `    <defaultgrade>${q.points || 1}</defaultgrade>\n`;
-
-    qXML += '    <penalty>0.1</penalty>\n';
-
-    qXML += '    <answer fraction="100" format="moodle_auto_format">\n';
-    qXML += `      <text>${q.data.correctAnswer}</text>\n`;
-    qXML += '      <tolerance>0.01</tolerance>\n';
-    if (q.explanation) {
-      qXML += '      <feedback format="html">\n';
-      qXML += `        ${wrapCDATA(escapeXML(q.explanation))}\n`;
-      qXML += '      </feedback>\n';
-    }
-    qXML += '    </answer>\n';
-
-    if (q.data.unit) {
-      qXML += '    <units>\n';
-      qXML += '      <unit>\n';
-      qXML += `        <multiplier>1</multiplier>\n`;
-      qXML += `        <unit_name>${escapeXML(q.data.unit)}</unit_name>\n`;
-      qXML += '      </unit>\n';
-      qXML += '    </units>\n';
-    }
-    
-    qXML += '  </question>\n';
-    return qXML;
-  }
-
-  function generateMatching(q) {
-    let qXML = '  <question type="matching">\n';
-
-    qXML += '    <name>\n';
-    qXML += `      ${wrapCDATA(q.text.substring(0, 100))}\n`;
-    qXML += '    </name>\n';
-
-    qXML += '    <questiontext format="html">\n';
-    let questionHTML = escapeXML(q.text);
-    if (q.image) {
-      questionHTML += `<br/><img src="${q.image}" alt="Question image" style="max-width: 100%;"/>`;
-    }
-    qXML += `      ${wrapCDATA(questionHTML)}\n`;
-    qXML += '    </questiontext>\n';
-
-    qXML += `    <defaultgrade>${q.points || 1}</defaultgrade>\n`;
-
-    qXML += '    <penalty>0.1</penalty>\n';
-
-    qXML += '    <shuffleanswers>true</shuffleanswers>\n';
-
-    const pairs = q.data.pairs || [];
-    pairs.forEach(pair => {
-      qXML += '    <subquestion format="html">\n';
-      qXML += `      ${wrapCDATA(escapeXML(pair.left))}\n`;
-      qXML += '      <answer>\n';
-      qXML += `        ${wrapCDATA(escapeXML(pair.right))}\n`;
-      qXML += '      </answer>\n';
-      qXML += '    </subquestion>\n';
-    });
-
-    if (q.explanation) {
-      qXML += '    <generalfeedback format="html">\n';
-      qXML += `      ${wrapCDATA(escapeXML(q.explanation))}\n`;
-      qXML += '    </generalfeedback>\n';
-    }
-    
-    qXML += '  </question>\n';
-    return qXML;
-  }
-};
-
-export const downloadMoodleXML = (xml, filename) => {
+export function downloadMoodleXML(xml, filename) {
   const blob = new Blob([xml], { type: 'application/xml' });
   const url = URL.createObjectURL(blob);
   const a = document.createElement('a');
   a.href = url;
-  a.download = filename || 'moodle-quiz.xml';
+  a.download = filename;
   document.body.appendChild(a);
   a.click();
   document.body.removeChild(a);
   URL.revokeObjectURL(url);
-};
+}

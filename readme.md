@@ -90,6 +90,8 @@ FRONTEND_URL=http://localhost:3000
 # Server
 PORT=5000
 NODE_ENV=development
+ANTHROPIC_API_KEY=your-claude-api-key
+API_SECRET_KEY=your-master-api-key
 ```
 
 ### 3. Adatbázis létrehozása

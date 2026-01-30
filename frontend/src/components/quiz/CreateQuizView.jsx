@@ -271,12 +271,7 @@ const CreateQuizView = ({ onCreateSuccess, editQuiz = null }) => {
         }
         
         console.log('💾 Updating quiz:', quizId);
-        
-        // ✅ apiFetch automatically:
-        // - Adds X-API-Key header
-        // - Adds Content-Type header
-        // - Parses JSON response
-        // - Throws error if response.ok is false
+
         await apiFetch(`${API_URL}/api/quizzes/${quizId}`, {
           method: 'PUT',
           body: JSON.stringify(quizData)

@@ -1,9 +1,10 @@
-// AIQuizGenerator.jsx - FIXED error handling
+// AIQuizGenerator.jsx - Original design + AI Usage Indicator
 
 import React, { useState } from 'react';
 import { Sparkles, Upload, FileText, X, Loader2 } from 'lucide-react';
 import Card, { CardBody } from '../common/Card';
 import Button from '../common/Button';
+import AIUsageIndicator from './AIUsageIndicator';
 import { API_URL, apiFetch } from '../../utils/constants';
 
 const AIQuizGenerator = ({ onGenerate, onClose }) => {
@@ -93,7 +94,7 @@ const AIQuizGenerator = ({ onGenerate, onClose }) => {
       let errorMessage = 'Hiba történt a generálás során.';
       
       if (err.message.includes('AI Quota Exceeded') || err.message.includes('429')) {
-        errorMessage = '⚠️ Elérted a havi 5 ingyenes AI teszt limitet!\n\nA limit minden hónap 1-én nullázódik.';
+        errorMessage = '⚠️ Elérted a havi 3 ingyenes AI teszt limitet!\n\nA limit minden hónap 1-én nullázódik.';
       } else if (err.message.includes('Invalid response format')) {
         errorMessage = 'Az AI válasz formátuma hibás. Próbáld újra!';
       } else if (err.message.includes('No questions generated')) {
@@ -135,6 +136,11 @@ const AIQuizGenerator = ({ onGenerate, onClose }) => {
               >
                 <X className="w-6 h-6 text-gray-600 dark:text-gray-400" />
               </button>
+            </div>
+
+            {/* ✅ AI Usage Indicator - ADDED */}
+            <div className="mb-6">
+              <AIUsageIndicator />
             </div>
 
             {/* Form */}

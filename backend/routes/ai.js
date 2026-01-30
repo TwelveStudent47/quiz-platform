@@ -3,6 +3,7 @@ const express = require('express');
 const router = express.Router();
 const Anthropic = require('@anthropic-ai/sdk');
 require('dotenv').config();
+const { checkAIQuota, logAIUsage, getAIUsageStats } = require('../middleware/aiUsageLimit');
 
 const anthropic = new Anthropic({
   apiKey: process.env.ANTHROPIC_API_KEY
@@ -25,7 +26,7 @@ const TYPE_LABELS = {
 };
 
 // Generate quiz with Claude AI
-router.post('/generate-quiz', isAuthenticated, async (req, res) => {
+router.post('/generate-quiz', isAuthenticated, checkAIQuota, async (req, res) => {
   try {
     const { topic, documentation, questionCount, difficulty, questionTypes } = req.body;
 
@@ -60,6 +61,15 @@ router.post('/generate-quiz', isAuthenticated, async (req, res) => {
     
     const quizData = parseAIResponse(responseText);
 
+    await logAIUsage(req.user.id, {
+      topic,
+      questionCount,
+      difficulty,
+      tokensUsed: message.usage.input_tokens + message.usage.output_tokens,
+      costUsd: calculateCost(message.usage),
+      questionsGenerated: quizData.questions.length
+    });
+    
     console.log('✅ AI Generation successful:', quizData.questions.length, 'questions generated');
 
     res.json({
@@ -76,6 +86,16 @@ router.post('/generate-quiz', isAuthenticated, async (req, res) => {
       error: 'AI generation failed', 
       details: err.message 
     });
+  }
+});
+
+router.get('/usage', isAuthenticated, async (req, res) => {
+  try {
+    const stats = await getAIUsageStats(req.user.id);
+    res.json(stats);
+  } catch (err) {
+    console.error('❌ Failed to get AI usage:', err);
+    res.status(500).json({ error: 'Failed to get usage stats' });
   }
 });
 
@@ -516,6 +536,12 @@ function getDefaultPoints(type) {
 function calculateTimeLimit(questionCount) {
   // Average 1.5 minutes per question
   return Math.ceil(questionCount * 1.5);
+}
+
+function calculateCost(usage) {
+  const inputCost = (usage.input_tokens / 1000000) * 3;
+  const outputCost = (usage.output_tokens / 1000000) * 15;
+  return inputCost + outputCost;
 }
 
 module.exports = router;

@@ -12,11 +12,14 @@ const { requireApiKey } = require('./middleware/globalApiAuth');
 require('dotenv').config();
 
 const app = express();
+app.set('trust proxy', 1);
 const upload = multer({ storage: multer.memoryStorage() });
 
 const pool = new Pool({
   connectionString: process.env.DATABASE_URL,
-  ssl: false
+  ssl: process.env.NODE_ENV === 'production' ? {
+    rejectUnauthorized: false
+  } : false
 });
 
 app.use(cors({
@@ -27,13 +30,27 @@ app.use(cors({
 }));
 
 app.options('*', cors());
+app.use((req, res, next) => {
+  console.log(`${req.method} ${req.path}`);
+  console.log('Origin:', req.headers.origin);
+  console.log('Cookies:', req.headers.cookie);
+  console.log('Session ID:', req.sessionID);
+  console.log('Authenticated:', req.isAuthenticated?.());
+  next();
+});
 app.use(express.json({ limit: '10mb' }));
 app.use(express.urlencoded({ limit: '10mb', extended: true }));
 app.use(session({
   secret: process.env.SESSION_SECRET || 'your-secret-key',
   resave: false,
   saveUninitialized: false,
-  cookie: { secure: process.env.NODE_ENV === 'production' }
+  cookie: { 
+    secure: process.env.NODE_ENV === 'production',
+    httpOnly: true,
+    sameSite: process.env.NODE_ENV === 'production' ? 'none' : 'lax',
+    maxAge: 24 * 60 * 60 * 1000
+  },
+  proxy: true
 }));
 app.use(passport.initialize());
 app.use(passport.session());
@@ -41,7 +58,7 @@ app.use(passport.session());
 passport.use(new GoogleStrategy({
   clientID: process.env.GOOGLE_CLIENT_ID,
   clientSecret: process.env.GOOGLE_CLIENT_SECRET,
-  callbackURL: '/auth/google/callback'
+  callbackURL:  process.env.GOOGLE_CALLBACK_URL || '/auth/google/callback'
 }, async (accessToken, refreshToken, profile, done) => {
   try {
     const { rows } = await pool.query(
@@ -85,9 +102,20 @@ app.use('/api/ai', aiRoutes);
 app.get('/auth/google', passport.authenticate('google', { scope: ['profile', 'email'] }));
 
 app.get('/auth/google/callback',
-  passport.authenticate('google', { failureRedirect: '/login' }),
-  (req, res) => {
-    res.redirect(process.env.FRONTEND_URL || 'http://localhost:3000');
+  passport.authenticate('google', { 
+    failureRedirect: process.env.FRONTEND_URL + '/login',
+    session: true
+  }),
+  (req, res, next) => {
+    // Explicitly save session before redirect
+    req.session.save((err) => {
+      if (err) {
+        console.error('❌ Session save error:', err);
+        return next(err);
+      }
+      console.log('✅ Session saved for user:', req.user.email);
+      res.redirect(process.env.FRONTEND_URL || 'http://localhost:3000');
+    });
   }
 );
 

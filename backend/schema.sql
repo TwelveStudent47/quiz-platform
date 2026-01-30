@@ -71,6 +71,14 @@ CREATE TABLE IF NOT EXISTS user_subscriptions (
   updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
 
+CREATE TABLE IF NOT EXISTS "session" (
+  "sid" varchar NOT NULL,
+  "sess" json NOT NULL,
+  "expire" timestamp(6) NOT NULL,
+  PRIMARY KEY ("sid")
+);
+
+CREATE INDEX IF NOT EXISTS "IDX_session_expire" ON "session" ("expire");
 CREATE INDEX idx_quizzes_user_id ON quizzes(user_id);
 CREATE INDEX idx_quizzes_title ON quizzes USING gin(to_tsvector('english', title));
 CREATE INDEX idx_questions_quiz_id ON questions(quiz_id);

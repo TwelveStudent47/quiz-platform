@@ -6,9 +6,8 @@ const multer = require('multer');
 const { Pool } = require('pg');
 const xml2js = require('xml2js');
 const cors = require('cors');
+const pgSession = require('connect-pg-simple')(session);
 const { parseMoodleXML } = require('./moodleXMLParser');
-const aiRoutes = require('./routes/ai');
-const { requireApiKey } = require('./middleware/globalApiAuth');
 require('dotenv').config();
 
 const app = express();
@@ -41,14 +40,20 @@ app.use((req, res, next) => {
 app.use(express.json({ limit: '10mb' }));
 app.use(express.urlencoded({ limit: '10mb', extended: true }));
 app.use(session({
+  store: new pgSession({
+    pool: pool,
+    tableName: 'session',
+    createTableIfMissing: true
+  }),
   secret: process.env.SESSION_SECRET || 'your-secret-key',
   resave: false,
   saveUninitialized: false,
-  cookie: { 
+  cookie: {
     secure: process.env.NODE_ENV === 'production',
     httpOnly: true,
     sameSite: process.env.NODE_ENV === 'production' ? 'none' : 'lax',
-    maxAge: 24 * 60 * 60 * 1000
+    maxAge: 24 * 60 * 60 * 1000,
+    domain: process.env.NODE_ENV === 'production' ? '.exami.hu' : undefined
   },
   proxy: true
 }));
@@ -58,14 +63,13 @@ app.use(passport.session());
 passport.use(new GoogleStrategy({
   clientID: process.env.GOOGLE_CLIENT_ID,
   clientSecret: process.env.GOOGLE_CLIENT_SECRET,
-  callbackURL:  process.env.GOOGLE_CALLBACK_URL || '/auth/google/callback'
+  callbackURL: process.env.GOOGLE_CALLBACK_URL || '/auth/google/callback'
 }, async (accessToken, refreshToken, profile, done) => {
   try {
     const { rows } = await pool.query(
       'SELECT * FROM users WHERE google_id = $1',
       [profile.id]
     );
-    
     if (rows.length > 0) {
       return done(null, rows[0]);
     }
@@ -96,8 +100,7 @@ const isAuthenticated = (req, res, next) => {
   res.status(401).json({ error: 'Not authenticated' });
 };
 
-app.use(requireApiKey);
-app.use('/api/ai', aiRoutes);
+const aiRoutes = require('./routes/ai');
 
 app.get('/auth/google', passport.authenticate('google', { scope: ['profile', 'email'] }));
 
@@ -107,7 +110,6 @@ app.get('/auth/google/callback',
     session: true
   }),
   (req, res, next) => {
-    // Explicitly save session before redirect
     req.session.save((err) => {
       if (err) {
         console.error('❌ Session save error:', err);
@@ -132,6 +134,8 @@ app.get('/auth/user', (req, res) => {
     res.status(401).json({ error: 'Not authenticated' });
   }
 });
+
+app.use('/api/ai', aiRoutes);
 
 async function parseQuizFile(buffer, fileType) {
   if (fileType === 'json') {
@@ -243,7 +247,7 @@ app.post('/api/upload', isAuthenticated, upload.single('file'), async (req, res)
 
 app.post('/api/create-quiz', isAuthenticated, async (req, res) => {
   try {
-    const { title, description, topic, timeLimit, questions } = req.body;
+    const { title, description, topic, time_limit, questions } = req.body;
 
     if (!title || !questions || questions.length === 0) {
       return res.status(400).json({ error: 'Title and questions are required' });
@@ -251,7 +255,7 @@ app.post('/api/create-quiz', isAuthenticated, async (req, res) => {
 
     const quizResult = await pool.query(
       'INSERT INTO quizzes (user_id, title, description, topic, time_limit) VALUES ($1, $2, $3, $4, $5) RETURNING id',
-      [req.user.id, title, description || '', topic || '', timeLimit]
+      [req.user.id, title, description || '', topic || '', time_limit]
     );
     
     const quizId = quizResult.rows[0].id;
@@ -380,7 +384,6 @@ app.put('/api/quizzes/:id', isAuthenticated, async (req, res) => {
   }
 });
 
-
 app.post('/api/submit', isAuthenticated, async (req, res) => {
   try {
     const { quizId, answers, timeSpent } = req.body;
@@ -426,10 +429,6 @@ app.post('/api/submit', isAuthenticated, async (req, res) => {
           break;
         case 'matching': {
           if (userAnswer && typeof userAnswer === 'object' && data.pairs && data.correctPairs) {
-            // User answer: {"JavaScript": 0, "SQL": 1, "Java": 2}
-            // Correct pairs: {0: 0, 1: 1, 2: 2}
-            // We need to check if userAnswer[pair.left] === correctPairs[pairIdx]
-            
             let allCorrect = true;
             
             data.pairs.forEach((pair, pairIdx) => {
@@ -446,7 +445,6 @@ app.post('/api/submit', isAuthenticated, async (req, res) => {
           break;
         }
         case 'cloze':
-          case 'cloze':
           if (userAnswer && typeof userAnswer === 'object') {
             let correctCount = 0;
             let totalBlanks = data.blanks ? data.blanks.length : 0;
@@ -480,12 +478,8 @@ app.post('/api/submit', isAuthenticated, async (req, res) => {
           }
           break;
         case 'essay': {
-          // Essay questions are manually graded
-          // For now, we check if answer exists and award participation points
           if (userAnswer && userAnswer.text && userAnswer.text.trim().length > 0) {
-            // Participation credit: 0 points until manual grading
-            // Teachers will grade manually later
-            isCorrect = false;  // 0 points initially
+            isCorrect = false;
           }
           break;
         }
@@ -497,6 +491,7 @@ app.post('/api/submit', isAuthenticated, async (req, res) => {
         score += q.points || 1;
       }
     });
+    
     const result = await pool.query(
       'INSERT INTO attempts (user_id, quiz_id, score, total_points, total_questions, answers, time_spent) VALUES ($1, $2, $3, $4, $5, $6, $7) RETURNING *',
       [req.user.id, quizId, score, totalPoints, questions.length, JSON.stringify(answers), timeSpent]
@@ -604,7 +599,6 @@ app.post('/api/parse-xml', isAuthenticated, upload.single('file'), async (req, r
       return res.status(400).json({ error: 'No file uploaded' });
     }
 
-    // Check file type
     if (!file.originalname.endsWith('.xml')) {
       return res.status(400).json({ error: 'Only XML files are supported' });
     }

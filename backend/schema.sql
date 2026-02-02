@@ -78,6 +78,14 @@ CREATE TABLE IF NOT EXISTS "session" (
   PRIMARY KEY ("sid")
 );
 
+ALTER TABLE quizzes ALTER COLUMN title TYPE VARCHAR(500);
+ALTER TABLE quizzes ALTER COLUMN topic TYPE VARCHAR(200);
+ALTER TABLE quizzes ALTER COLUMN description TYPE TEXT;
+
+ALTER TABLE questions ALTER COLUMN question_text TYPE TEXT;
+ALTER TABLE questions ALTER COLUMN explanation TYPE TEXT;
+
+
 CREATE INDEX IF NOT EXISTS "IDX_session_expire" ON "session" ("expire");
 CREATE INDEX idx_quizzes_user_id ON quizzes(user_id);
 CREATE INDEX idx_quizzes_title ON quizzes USING gin(to_tsvector('english', title));

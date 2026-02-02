@@ -532,10 +532,10 @@ Ha hibát találsz, nyiss egy issue-t a [GitHub-on](https://github.com/TwelveStu
 - [x] Essay típusú kérdések (hosszú szöveges válasz)
 - [x] Dark mode
 - [x] **Quiz szerkesztés** (meglévő tesztek módosítása)
+- [x] **AI-powered kérdésgenerálás** Claude API-val
+- [x] **Válasz mentések típus változtatásnál**
 
 ### Folyamatban 🚧
-- [ ] **AI-powered kérdésgenerálás** Claude API-val
-- [ ] **Válasz mentések típus változtatásnál**
 - [ ] **Vágólapról válaszok másolása soronként/1 sorból ;-vel elválasztva**
 - [ ] **Gombnyomásra szerkesztés**
 

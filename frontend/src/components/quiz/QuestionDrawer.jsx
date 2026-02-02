@@ -49,44 +49,282 @@ const QuestionDrawer = ({
   };
 
   const changeQuestionType = (newType) => {
-    const updatedQuestion = { ...localQuestion, type: newType };
+    const oldType = localQuestion.type;
+    const oldData = localQuestion.data;
     
-    switch(newType) {
-      case 'single_choice':
-        updatedQuestion.data = { options: ['', '', '', ''], correctIndex: 0 };
-        break;
-      case 'multiple_choice':
-        updatedQuestion.data = { options: ['', '', '', ''], correctIndices: [] };
-        break;
-      case 'true_false':
-        updatedQuestion.data = { correctAnswer: true };
-        break;
-      case 'numeric':
-        updatedQuestion.data = { correctAnswer: 0, unit: '' };
-        break;
-      case 'matching':
-        updatedQuestion.data = { 
-          pairs: [{ left: '', right: '' }, { left: '', right: '' }], 
-          correctPairs: {} 
+    // Ha ugyanaz a típus, ne csinálj semmit
+    if (oldType === newType) return;
+    
+    console.log('🔄 Converting question type:', oldType, '→', newType);
+    
+    let newData = {};
+    
+    // ========================================
+    // INTELLIGENS KONVERZIÓ
+    // ========================================
+    
+    if (newType === 'single_choice') {
+      // → Single Choice
+      if (oldType === 'multiple_choice') {
+        newData = {
+          options: oldData.options || ['', '', '', ''],
+          correctIndex: oldData.correctIndices?.[0] ?? 0
         };
-        break;
-      case 'cloze':
-        updatedQuestion.data = { text: '', blanks: [] };
-        break;
-      case 'essay':
-        updatedQuestion.data = {
-          responseFormat: 'editor',
-          responseRequired: true,
-          responseFieldLines: 15,
-          minWordLimit: null,
-          maxWordLimit: null
+      } else if (oldType === 'true_false') {
+        newData = {
+          options: ['Igaz', 'Hamis'],
+          correctIndex: oldData.correctAnswer ? 0 : 1
         };
-        break;
-      default:
-        break;
+      } else if (oldType === 'numeric') {
+        const answer = oldData.correctAnswer || '';
+        newData = {
+          options: [answer.toString(), '', '', ''],
+          correctIndex: 0
+        };
+      } else if (oldType === 'matching') {
+        const opts = oldData.pairs?.map(p => p.left) || [];
+        newData = {
+          options: opts.length > 0 ? [...opts, ...Array(Math.max(0, 4 - opts.length)).fill('')] : ['', '', '', ''],
+          correctIndex: 0
+        };
+      } else if (oldType === 'cloze') {
+        const firstBlank = oldData.blanks?.[0];
+        if (firstBlank?.type === 'dropdown') {
+          newData = {
+            options: firstBlank.options || ['', '', '', ''],
+            correctIndex: firstBlank.correctIndex || 0
+          };
+        } else {
+          newData = {
+            options: ['', '', '', ''],
+            correctIndex: 0
+          };
+        }
+      } else {
+        newData = {
+          options: ['', '', '', ''],
+          correctIndex: 0
+        };
+      }
+    } 
+    
+    else if (newType === 'multiple_choice') {
+      // → Multiple Choice
+      if (oldType === 'single_choice') {
+        newData = {
+          options: oldData.options || ['', '', '', ''],
+          correctIndices: [oldData.correctIndex ?? 0]
+        };
+      } else if (oldType === 'true_false') {
+        newData = {
+          options: ['Igaz', 'Hamis'],
+          correctIndices: [oldData.correctAnswer ? 0 : 1]
+        };
+      } else if (oldType === 'numeric') {
+        const answer = oldData.correctAnswer || '';
+        newData = {
+          options: [answer.toString(), '', '', ''],
+          correctIndices: [0]
+        };
+      } else if (oldType === 'matching') {
+        const opts = oldData.pairs?.map(p => p.left) || [];
+        newData = {
+          options: opts.length > 0 ? [...opts, ...Array(Math.max(0, 4 - opts.length)).fill('')] : ['', '', '', ''],
+          correctIndices: [0]
+        };
+      } else if (oldType === 'cloze') {
+        const firstBlank = oldData.blanks?.[0];
+        if (firstBlank?.type === 'dropdown') {
+          newData = {
+            options: firstBlank.options || ['', '', '', ''],
+            correctIndices: [firstBlank.correctIndex || 0]
+          };
+        } else {
+          newData = {
+            options: ['', '', '', ''],
+            correctIndices: [0]
+          };
+        }
+      } else {
+        newData = {
+          options: ['', '', '', ''],
+          correctIndices: [0]
+        };
+      }
+    } 
+    
+    else if (newType === 'true_false') {
+      // → True/False
+      if (oldType === 'single_choice' || oldType === 'multiple_choice') {
+        const options = oldData.options || [];
+        
+        if (oldType === 'single_choice') {
+          const correctOpt = options[oldData.correctIndex] || '';
+          newData = {
+            correctAnswer: correctOpt.toLowerCase().includes('igaz') || correctOpt.toLowerCase() === 'true'
+          };
+        } else {
+          const firstCorrect = options[oldData.correctIndices?.[0]] || '';
+          newData = {
+            correctAnswer: firstCorrect.toLowerCase().includes('igaz') || firstCorrect.toLowerCase() === 'true'
+          };
+        }
+      } else if (oldType === 'numeric') {
+        newData = {
+          correctAnswer: (oldData.correctAnswer || 0) > 0
+        };
+      } else {
+        newData = {
+          correctAnswer: true
+        };
+      }
+    } 
+    
+    else if (newType === 'numeric') {
+      // → Numeric
+      if (oldType === 'single_choice' || oldType === 'multiple_choice') {
+        const options = oldData.options || [];
+        let correctOpt = '';
+        if (oldType === 'single_choice') {
+          correctOpt = options[oldData.correctIndex] || '';
+        } else {
+          correctOpt = options[oldData.correctIndices?.[0]] || '';
+        }
+        const num = parseFloat(correctOpt);
+        newData = {
+          correctAnswer: isNaN(num) ? 0 : num,
+          unit: oldData.unit || ''
+        };
+      } else if (oldType === 'true_false') {
+        newData = {
+          correctAnswer: oldData.correctAnswer ? 1 : 0,
+          unit: ''
+        };
+      } else {
+        newData = {
+          correctAnswer: 0,
+          unit: ''
+        };
+      }
+    } 
+    
+    else if (newType === 'matching') {
+      // → Matching
+      if (oldType === 'single_choice' || oldType === 'multiple_choice') {
+        const options = oldData.options || [];
+        const pairs = [];
+        for (let i = 0; i < Math.min(options.length, 4); i++) {
+          if (options[i]?.trim()) {
+            pairs.push({
+              left: options[i],
+              right: ''
+            });
+          }
+        }
+        if (pairs.length < 2) {
+          pairs.push({ left: '', right: '' });
+          pairs.push({ left: '', right: '' });
+        }
+        
+        const correctPairs = {};
+        pairs.forEach((_, idx) => {
+          correctPairs[idx] = idx;
+        });
+        
+        newData = { pairs, correctPairs };
+      } else {
+        newData = {
+          pairs: [
+            { left: '', right: '' },
+            { left: '', right: '' }
+          ],
+          correctPairs: { 0: 0, 1: 1 }
+        };
+      }
+    } 
+    
+    else if (newType === 'cloze') {
+      // → Cloze
+      if (oldType === 'single_choice') {
+        newData = {
+          text: localQuestion.text || 'Töltsd ki a _____ helyet.',
+          blanks: [
+            {
+              type: 'dropdown',
+              options: oldData.options || ['', '', '', ''],
+              correctIndex: oldData.correctIndex ?? 0
+            }
+          ]
+        };
+      } else if (oldType === 'multiple_choice') {
+        newData = {
+          text: localQuestion.text || 'Töltsd ki a _____ helyet.',
+          blanks: [
+            {
+              type: 'dropdown',
+              options: oldData.options || ['', '', '', ''],
+              correctIndex: oldData.correctIndices?.[0] ?? 0
+            }
+          ]
+        };
+      } else if (oldType === 'true_false') {
+        newData = {
+          text: localQuestion.text || 'A válasz _____.',
+          blanks: [
+            {
+              type: 'dropdown',
+              options: ['Igaz', 'Hamis'],
+              correctIndex: oldData.correctAnswer ? 0 : 1
+            }
+          ]
+        };
+      } else if (oldType === 'numeric') {
+        newData = {
+          text: localQuestion.text || 'A válasz: _____',
+          blanks: [
+            {
+              type: 'text',
+              correctAnswer: (oldData.correctAnswer || 0).toString(),
+              caseSensitive: false
+            }
+          ]
+        };
+      } else {
+        newData = {
+          text: 'Töltsd ki a _____ helyet.',
+          blanks: [
+            {
+              type: 'text',
+              correctAnswer: '',
+              caseSensitive: false
+            }
+          ]
+        };
+      }
+    } 
+    
+    else if (newType === 'essay') {
+      // → Essay
+      newData = {
+        responseFormat: 'editor',
+        responseRequired: true,
+        responseFieldLines: 15,
+        minWordLimit: null,
+        maxWordLimit: null
+      };
     }
     
-    setLocalQuestion(updatedQuestion);
+    // ========================================
+    // FRISSÍTÉS
+    // ========================================
+    
+    setLocalQuestion({
+      ...localQuestion,
+      type: newType,
+      data: newData
+    });
+    
+    console.log('✅ Converted data:', newData);
   };
 
   if (!isOpen) return null;

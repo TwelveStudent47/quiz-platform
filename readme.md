@@ -464,7 +464,7 @@ Pontszám: 3 (1 pont/helyes pár)
 
 ### Adatbázis Séma
 ```sql
-users (id, google_id, email, name, created_at)
+users (id, google_id, email, name, preferences, created_at)
 quizzes (id, user_id, title, description, topic, time_limit, questions, created_at)
 attempts (id, user_id, quiz_id, score, total_points, percentage, answers, time_spent, completed_at)
 sessions (sid, sess, expire)

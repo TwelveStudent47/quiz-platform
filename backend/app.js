@@ -29,14 +29,6 @@ app.use(cors({
 }));
 
 app.options('*', cors());
-app.use((req, res, next) => {
-  console.log(`${req.method} ${req.path}`);
-  console.log('Origin:', req.headers.origin);
-  console.log('Cookies:', req.headers.cookie);
-  console.log('Session ID:', req.sessionID);
-  console.log('Authenticated:', req.isAuthenticated?.());
-  next();
-});
 app.use(express.json({ limit: '10mb' }));
 app.use(express.urlencoded({ limit: '10mb', extended: true }));
 app.use(session({
@@ -550,6 +542,20 @@ app.get('/api/attempts/:id', isAuthenticated, async (req, res) => {
   } catch (err) {
     console.error(err);
     res.status(500).json({ error: 'Failed to fetch attempt details' });
+  }
+});
+
+app.put('/api/user/preferences', isAuthenticated, async (req, res) => {
+  try {
+    const { preferences } = req.body;
+    await pool.query(
+      'UPDATE users SET preferences = $1 WHERE id = $2',
+      [JSON.stringify(preferences), req.user.id]
+    );
+    res.json({ success: true });
+  } catch (err) {
+    console.error('Error updating preferences:', err);
+    res.status(500).json({ error: 'Failed to update preferences' });
   }
 });
 

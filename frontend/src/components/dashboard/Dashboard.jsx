@@ -1,11 +1,12 @@
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import Card, { CardBody } from '../common/Card';
-import { List } from 'lucide-react';
+import { List, Settings } from 'lucide-react';
 import Button from '../common/Button';
 import SearchBar from '../common/SearchBar';
 import QuizList from '../quiz/QuizList';
 import RecentResults from './RecentResults';
 import TopicStats from './TopicStats';
+import SettingsModal from './SettingsModal';
 
 const Dashboard = ({ 
   quizzes, 
@@ -19,6 +20,23 @@ const Dashboard = ({
   onViewAllResults,
   onEditQuiz
 }) => {
+  const [showSettings, setShowSettings] = useState(false);
+  const [preferences, setPreferences] = useState({ showTopicStats: false });
+
+  useEffect(() => {
+    // Felhasználói beállítások betöltése
+    const fetchUserPrefs = async () => {
+      try {
+        const res = await fetch(`${process.env.REACT_APP_API_URL || 'http://localhost:5000'}/auth/user`, { credentials: 'include' });
+        if (res.ok) {
+          const user = await res.json();
+          if (user.preferences) setPreferences(user.preferences);
+        }
+      } catch (err) { console.error(err); }
+    };
+    fetchUserPrefs();
+  }, []);
+
   return (
     <div className="space-y-6">
       {/* Header with "View All" button */}
@@ -33,15 +51,25 @@ const Dashboard = ({
                 Elérhető tesztek és eredmények
               </p>
             </div>
-            <Button
-              onClick={onViewAllQuizzes}
-              variant="secondary"
-              size="md"
-              className="w-full sm:w-auto inline-flex items-center justify-center gap-2"
-            >
-              <List className="w-4 h-4" />
-              Összes Teszt
-            </Button>
+            <div className="flex gap-2 w-full sm:w-auto">
+              <Button
+                onClick={() => setShowSettings(true)}
+                variant="secondary"
+                size="md"
+                className="flex-1 sm:flex-none inline-flex items-center justify-center gap-2"
+              >
+                <Settings className="w-4 h-4" />
+              </Button>
+              <Button
+                onClick={onViewAllQuizzes}
+                variant="secondary"
+                size="md"
+                className="flex-1 sm:flex-none inline-flex items-center justify-center gap-2"
+              >
+                <List className="w-4 h-4" />
+                Összes Teszt
+              </Button>
+            </div>
           </div>
           
           <SearchBar
@@ -52,7 +80,14 @@ const Dashboard = ({
         </CardBody>
       </Card>
 
-      <TopicStats />
+      {(preferences.showTopicStats ?? false) && <TopicStats />}
+
+      <SettingsModal 
+        isOpen={showSettings} 
+        onClose={() => setShowSettings(false)}
+        preferences={preferences}
+        onUpdate={setPreferences}
+      />
 
       <div className="grid md:grid-cols-2 gap-6">
         <QuizList

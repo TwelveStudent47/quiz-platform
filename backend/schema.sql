@@ -3,6 +3,7 @@ CREATE TABLE users (
   google_id VARCHAR(255) UNIQUE NOT NULL,
   email VARCHAR(255) NOT NULL,
   name VARCHAR(255),
+  preferences JSONB DEFAULT '{"showTopicStats": false}',
   created_at TIMESTAMP DEFAULT NOW()
 );
 

@@ -27,7 +27,7 @@ const QuizList = ({ quizzes, history, onStartQuiz, onDeleteQuiz, onEditQuiz }) =
               Még nem töltöttél ki tesztet
             </p>
           ) : (
-            quizzes.map((quiz) => (
+            recentQuizzes.map((quiz) => (
               <QuizCard
                 key={quiz.id}
                 quiz={quiz}

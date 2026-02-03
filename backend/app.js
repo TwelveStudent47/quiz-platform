@@ -553,6 +553,32 @@ app.get('/api/attempts/:id', isAuthenticated, async (req, res) => {
   }
 });
 
+app.get('/api/stats/topics', isAuthenticated, async (req, res) => {
+  try {
+    const userId = req.user.id;
+    
+    const query = `
+      SELECT 
+        q.topic,
+        COUNT(a.id)::int as attempt_count,
+        ROUND(AVG(a.percentage), 1)::float as avg_percentage,
+        MAX(a.percentage)::float as best_percentage,
+        COUNT(DISTINCT q.id)::int as quiz_count
+      FROM attempts a
+      JOIN quizzes q ON a.quiz_id = q.id
+      WHERE a.user_id = $1
+      GROUP BY q.topic
+      ORDER BY avg_percentage DESC
+    `;
+
+    const { rows } = await pool.query(query, [userId]);
+    res.json(rows);
+  } catch (err) {
+    console.error('Error fetching topic stats:', err);
+    res.status(500).json({ error: 'Internal server error' });
+  }
+});
+
 app.get('/api/stats/:quizId', isAuthenticated, async (req, res) => {
   try {
     const { rows } = await pool.query(

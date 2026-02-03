@@ -5,6 +5,7 @@ import Button from '../common/Button';
 import SearchBar from '../common/SearchBar';
 import QuizList from '../quiz/QuizList';
 import RecentResults from './RecentResults';
+import TopicStats from './TopicStats';
 
 const Dashboard = ({ 
   quizzes, 
@@ -50,6 +51,8 @@ const Dashboard = ({
           />
         </CardBody>
       </Card>
+
+      <TopicStats />
 
       <div className="grid md:grid-cols-2 gap-6">
         <QuizList

@@ -10,12 +10,15 @@ Egy modern, full-stack tanulási platform tesztek létrehozására, feltöltés�
 - **Session management** - Biztonságos session tárolás PostgreSQL-ben
 
 ### 📝 Teszt Kezelés
-- **Kérdés Készítő** - Interaktív vizuális szerkesztő 5 kérdéstípussal:
+- **Kérdés Készítő** - Interaktív vizuális szerkesztő 7 kérdéstípussal:
   - ✅ Egyszeres választás
   - ☑️ Többszörös választás
   - ✔️ Igaz/Hamis
   - 🔢 Numerikus válasz (egység támogatással)
   - 🔗 Párosítás (bal-jobb oldal)
+  - 📝 Kitöltendő (cloze) - dropdown és szöveges kitöltés
+  - 📄 Esszé - hosszú szöveges válasz szólimittel
+- **Vágólapról beillesztés** - Válaszok gyors hozzáadása vágólapról (soronként vagy ;-vel elválasztva)
 - **Fájl feltöltés** - JSON és Moodle XML formátum támogatása
 - **Moodle XML Export** - Exportálás LMS-be importáláshoz
 - **Teszt szerkesztés** - Címkép, téma, leírás, pontszámok, magyarázatok
@@ -159,10 +162,14 @@ quiz-platform/
 │   │   │   ├── dashboard/     # Dashboard, RecentResults
 │   │   │   ├── layout/        # Header, Navbar
 │   │   │   ├── quiz/          # QuizView, ReviewView, CreateQuizView
-│   │   │   │                  # AllQuizzesView, QuizList, QuizCard
+│   │   │   │   │              # AllQuizzesView, QuizList, QuizCard
+│   │   │   │   │              # QuestionDrawer, QuestionListItem
+│   │   │   │   └── creator/   # SingleChoiceEditor, MultipleChoiceEditor
+│   │   │   │                  # TrueFalseEditor, NumericEditor, MatchingEditor
+│   │   │   │                  # ClozeEditor, EssayEditor, PasteAnswersModal
 │   │   │   ├── results/       # AllResultsView
 │   │   │   ├── upload/        # UploadView
-│   │   │   └── editors/       # Question type editors (5 típus)
+│   │   │   └── ai/            # AIQuizGenerator
 │   │   │
 │   │   ├── context/
 │   │   │   └── AuthContext.jsx
@@ -535,9 +542,7 @@ Ha hibát találsz, nyiss egy issue-t a [GitHub-on](https://github.com/TwelveStu
 - [x] **AI-powered kérdésgenerálás** Claude API-val
 - [x] **Válasz mentések típus változtatásnál**
 - [x] **Vágólapról válaszok másolása soronként/1 sorból ;-vel elválasztva**
-
-### Folyamatban 🚧
-- [ ] **Gombnyomásra szerkesztés**
+- [x] **Kérdéskártyára kattintva szerkesztés** (nem csak az ikon, hanem a teljes kártya kattintható)
 
 ### Tervezve 📋
 - [ ] **Markdown támogatás** kérdésekben és magyarázatokban

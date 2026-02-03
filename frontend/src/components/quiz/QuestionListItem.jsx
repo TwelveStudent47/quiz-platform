@@ -44,7 +44,7 @@ const QuestionListItem = ({ question, index, onEdit, onDelete, isDragging }) => 
           : 'border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 hover:border-indigo-300 dark:hover:border-indigo-600 hover:shadow-md'
       }`}
     >
-      <div className="p-4">
+      <div className="p-4 cursor-pointer" onClick={onEdit}>
         <div className="flex items-start gap-3">
           {/* Drag Handle */}
           <div className="flex-shrink-0 pt-1 cursor-move opacity-0 group-hover:opacity-100 transition-opacity">
@@ -97,15 +97,16 @@ const QuestionListItem = ({ question, index, onEdit, onDelete, isDragging }) => 
           {/* Action Buttons */}
           <div className="flex-shrink-0 flex items-center gap-1">
             <button
-              onClick={onEdit}
+              onClick={(e) => { e.stopPropagation(); onEdit(); }}
               className="p-2 text-indigo-600 dark:text-indigo-400 hover:bg-indigo-50 dark:hover:bg-indigo-900/30 rounded-lg transition"
               title="Szerkesztés"
             >
               <Edit3 className="w-5 h-5" />
             </button>
-            
+
             <button
-              onClick={() => {
+              onClick={(e) => {
+                e.stopPropagation();
                 if (window.confirm('Biztosan törölni akarod ezt a kérdést?')) {
                   onDelete();
                 }

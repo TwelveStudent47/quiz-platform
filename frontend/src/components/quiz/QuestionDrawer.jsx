@@ -511,6 +511,16 @@ const QuestionDrawer = ({
                       handleLocalDataUpdate('options', newOptions);
                     }
                   }}
+                  pasteFromClipboard={(options) => {
+                    setLocalQuestion({
+                      ...localQuestion,
+                      data: {
+                        ...localQuestion.data,
+                        options: options,
+                        correctIndex: 0
+                      }
+                    });
+                  }}
                 />
               )}
 
@@ -537,10 +547,20 @@ const QuestionDrawer = ({
                   toggleMultipleChoice={(idx, optIdx) => {
                     const indices = localQuestion.data.correctIndices || [];
                     const idxPos = indices.indexOf(optIdx);
-                    const newIndices = idxPos > -1 
+                    const newIndices = idxPos > -1
                       ? indices.filter(i => i !== optIdx)
                       : [...indices, optIdx];
                     handleLocalDataUpdate('correctIndices', newIndices);
+                  }}
+                  pasteFromClipboard={(options) => {
+                    setLocalQuestion({
+                      ...localQuestion,
+                      data: {
+                        ...localQuestion.data,
+                        options: options,
+                        correctIndices: [0]
+                      }
+                    });
                   }}
                 />
               )}

@@ -1,7 +1,14 @@
-import React from 'react';
-import { Plus, Minus, CheckCircle } from 'lucide-react';
+import React, { useState } from 'react';
+import { Plus, Minus, CheckCircle, Clipboard } from 'lucide-react';
+import PasteAnswersModal from './PasteAnswersModal';
 
-const MultipleChoiceEditor = ({ question, qIndex, updateOption, addOption, removeOption, toggleMultipleChoice }) => {
+const MultipleChoiceEditor = ({ question, qIndex, updateOption, addOption, removeOption, toggleMultipleChoice, pasteFromClipboard }) => {
+  const [isModalOpen, setIsModalOpen] = useState(false);
+
+  const handleApplyOptions = (options) => {
+    pasteFromClipboard(options);
+  };
+
   return (
     <div>
       <div className="flex items-center justify-between mb-2">
@@ -9,6 +16,14 @@ const MultipleChoiceEditor = ({ question, qIndex, updateOption, addOption, remov
           Válaszlehetőségek * ({question.data.correctIndices?.length || 0} helyes)
         </label>
         <div className="flex items-center gap-2">
+          <button
+            onClick={() => setIsModalOpen(true)}
+            className="p-1 text-blue-600 dark:text-blue-400 hover:bg-blue-50 dark:hover:bg-blue-900/20 rounded transition-colors"
+            type="button"
+            title="Beillesztés vágólapról (soronként vagy ;-vel elválasztva)"
+          >
+            <Clipboard className="w-4 h-4" />
+          </button>
           <button
             onClick={() => removeOption(qIndex)}
             disabled={(question.data.options?.length || 0) <= 2}
@@ -57,6 +72,12 @@ const MultipleChoiceEditor = ({ question, qIndex, updateOption, addOption, remov
       <p className="text-xs text-gray-500 dark:text-gray-500 mt-2 transition-colors">
         💡 Pipáld be az összes helyes választ
       </p>
+
+      <PasteAnswersModal
+        isOpen={isModalOpen}
+        onClose={() => setIsModalOpen(false)}
+        onApply={handleApplyOptions}
+      />
     </div>
   );
 };

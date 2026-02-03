@@ -1,7 +1,14 @@
-import React from 'react';
-import { Plus, Minus } from 'lucide-react';
+import React, { useState } from 'react';
+import { Plus, Minus, Clipboard } from 'lucide-react';
+import PasteAnswersModal from './PasteAnswersModal';
 
-const SingleChoiceEditor = ({ question, qIndex, updateQuestionData, updateOption, addOption, removeOption }) => {
+const SingleChoiceEditor = ({ question, qIndex, updateQuestionData, updateOption, addOption, removeOption, pasteFromClipboard }) => {
+  const [isModalOpen, setIsModalOpen] = useState(false);
+
+  const handleApplyOptions = (options) => {
+    pasteFromClipboard(options);
+  };
+
   return (
     <div>
       <div className="flex items-center justify-between mb-2">
@@ -9,6 +16,14 @@ const SingleChoiceEditor = ({ question, qIndex, updateQuestionData, updateOption
           Válaszlehetőségek * ({question.data.options?.length || 0})
         </label>
         <div className="flex items-center gap-2">
+          <button
+            onClick={() => setIsModalOpen(true)}
+            className="p-1 text-blue-600 dark:text-blue-400 hover:bg-blue-50 dark:hover:bg-blue-900/20 rounded transition-colors"
+            type="button"
+            title="Beillesztés vágólapról (soronként vagy ;-vel elválasztva)"
+          >
+            <Clipboard className="w-4 h-4" />
+          </button>
           <button
             onClick={() => removeOption(qIndex)}
             disabled={(question.data.options?.length || 0) <= 2}
@@ -57,6 +72,12 @@ const SingleChoiceEditor = ({ question, qIndex, updateQuestionData, updateOption
       <p className="text-xs text-gray-500 dark:text-gray-500 mt-2 transition-colors">
         💡 Jelöld be a helyes választ a rádiógombbal
       </p>
+
+      <PasteAnswersModal
+        isOpen={isModalOpen}
+        onClose={() => setIsModalOpen(false)}
+        onApply={handleApplyOptions}
+      />
     </div>
   );
 };

@@ -534,9 +534,9 @@ Ha hibát találsz, nyiss egy issue-t a [GitHub-on](https://github.com/TwelveStu
 - [x] **Quiz szerkesztés** (meglévő tesztek módosítása)
 - [x] **AI-powered kérdésgenerálás** Claude API-val
 - [x] **Válasz mentések típus változtatásnál**
+- [x] **Vágólapról válaszok másolása soronként/1 sorból ;-vel elválasztva**
 
 ### Folyamatban 🚧
-- [ ] **Vágólapról válaszok másolása soronként/1 sorból ;-vel elválasztva**
 - [ ] **Gombnyomásra szerkesztés**
 
 ### Tervezve 📋

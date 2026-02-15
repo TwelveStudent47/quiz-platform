@@ -34,11 +34,11 @@ router.post('/generate-quiz', isAuthenticated, checkAIQuota, async (req, res) =>
       return res.status(400).json({ error: 'Missing required fields' });
     }
 
-    console.log('🤖 AI Quiz Generation requested:', { 
-      topic, 
-      questionCount, 
+    console.log('🤖 AI Quiz Generation requested:', {
+      topic,
+      questionCount,
       difficulty,
-      types: questionTypes 
+      types: questionTypes
     });
 
     // Build prompt
@@ -58,7 +58,7 @@ router.post('/generate-quiz', isAuthenticated, checkAIQuota, async (req, res) =>
     // Parse response
     const responseText = message.content[0].text;
     console.log('📝 AI Response length:', responseText.length);
-    
+
     const quizData = parseAIResponse(responseText);
 
     await logAIUsage(req.user.id, {
@@ -69,7 +69,7 @@ router.post('/generate-quiz', isAuthenticated, checkAIQuota, async (req, res) =>
       costUsd: calculateCost(message.usage),
       questionsGenerated: quizData.questions.length
     });
-    
+
     console.log('✅ AI Generation successful:', quizData.questions.length, 'questions generated');
 
     res.json({
@@ -82,9 +82,9 @@ router.post('/generate-quiz', isAuthenticated, checkAIQuota, async (req, res) =>
 
   } catch (err) {
     console.error('❌ AI Generation error:', err);
-    res.status(500).json({ 
-      error: 'AI generation failed', 
-      details: err.message 
+    res.status(500).json({
+      error: 'AI generation failed',
+      details: err.message
     });
   }
 });
@@ -122,7 +122,7 @@ DIFFICULTY GUIDELINES:
 • HARD: Complex reasoning, synthesis, edge cases, critical thinking
 
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-RESPONSE FORMAT (PURE JSON, NO MARKDOWN):
+RESPONSE FORMAT (PURE JSON WRAPPER, MARKDOWN INSIDE TEXT FIELDS):
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 
 {
@@ -133,7 +133,7 @@ RESPONSE FORMAT (PURE JSON, NO MARKDOWN):
     // SINGLE CHOICE (Egy válaszos)
     {
       "type": "single_choice",
-      "text": "Clear question text",
+      "text": "Clear question text (use **Markdown** for formatting)",
       "data": {
         "options": [
           "First option",
@@ -144,7 +144,7 @@ RESPONSE FORMAT (PURE JSON, NO MARKDOWN):
         "correctIndex": 0
       },
       "points": 1,
-      "explanation": "Why option A is correct and others are wrong"
+      "explanation": "Why option A is correct and others are wrong (use **Markdown** for formatting)"
     },
 
     // MULTIPLE CHOICE (Több válaszos)
@@ -253,25 +253,33 @@ RESPONSE FORMAT (PURE JSON, NO MARKDOWN):
 CRITICAL REQUIREMENTS:
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 
-1. OUTPUT PURE JSON ONLY - NO MARKDOWN, NO CODE BLOCKS, NO EXPLANATORY TEXT
+1. OUTPUT PURE JSON ONLY - no markdown code fences around the JSON, no explanatory text outside JSON
 2. Use ONLY the allowed question types: ${questionTypes.join(', ')}
 3. Distribute question types evenly if multiple types selected
 4. ALL questions must be in HUNGARIAN language
 5. Ensure factual accuracy - no made-up information
 6. Each question must have a clear, educational explanation
 7. Options must be plausible - avoid obvious wrong answers
-8. For cloze questions:
+8. USE MARKDOWN FORMATTING inside "text" and "explanation" fields:
+   - Use **félkövér** for key terms and important concepts
+   - Use *dőlt* for emphasis
+   - Use \`kód\` for code snippets, technical terms, or formulas
+   - Use lists (- item) when listing multiple items or steps
+   - Use > blockquotes for definitions or important notes
+   - This makes questions visually richer and more educational
+   - Do NOT use Markdown in option strings (keep those plain text)
+9. For cloze questions:
    - Use {0}, {1}, {2}... as placeholders
    - Mix dropdown and text blanks
    - Dropdown options should be plausible
-9. For matching questions:
-   - Minimum 3 pairs, maximum 6 pairs
-   - Shuffle the right column order (correctPairs shows matches)
-10. For essay questions:
+10. For matching questions:
+    - Minimum 3 pairs, maximum 6 pairs
+    - Shuffle the right column order (correctPairs shows matches)
+11. For essay questions:
     - Provide clear grading criteria
     - Set appropriate word limits
-11. Vary difficulty across questions if count > 5
-12. Points:
+12. Vary difficulty across questions if count > 5
+13. Points:
     - Single choice: 1 point
     - Multiple choice: 2 points
     - True/false: 1 point
@@ -295,10 +303,10 @@ function parseAIResponse(responseText) {
       .replace(/^[^{]*/, '') // Remove anything before first {
       .replace(/[^}]*$/, '') // Remove anything after last }
       .trim();
-    
+
     // Parse JSON
     const data = JSON.parse(cleanJson);
-    
+
     // Validate structure
     if (!data.questions || !Array.isArray(data.questions)) {
       throw new Error('Invalid response structure - missing questions array');
@@ -348,28 +356,28 @@ function validateQuestion(q, idx) {
   }
 
   // Type-specific validation
-  switch(q.type) {
+  switch (q.type) {
     case 'single_choice':
       return validateSingleChoice(q);
-    
+
     case 'multiple_choice':
       return validateMultipleChoice(q);
-    
+
     case 'true_false':
       return validateTrueFalse(q);
-    
+
     case 'numeric':
       return validateNumeric(q);
-    
+
     case 'matching':
       return validateMatching(q);
-    
+
     case 'cloze':
       return validateCloze(q);
-    
+
     case 'essay':
       return validateEssay(q);
-    
+
     default:
       throw new Error(`Unknown question type: ${q.type}`);
   }
@@ -380,13 +388,13 @@ function validateSingleChoice(q) {
   if (!Array.isArray(q.data.options) || q.data.options.length < 2) {
     throw new Error('Single choice needs at least 2 options');
   }
-  
-  if (typeof q.data.correctIndex !== 'number' || 
-      q.data.correctIndex < 0 || 
-      q.data.correctIndex >= q.data.options.length) {
+
+  if (typeof q.data.correctIndex !== 'number' ||
+    q.data.correctIndex < 0 ||
+    q.data.correctIndex >= q.data.options.length) {
     throw new Error('Invalid correctIndex');
   }
-  
+
   return q;
 }
 
@@ -394,18 +402,18 @@ function validateMultipleChoice(q) {
   if (!Array.isArray(q.data.options) || q.data.options.length < 2) {
     throw new Error('Multiple choice needs at least 2 options');
   }
-  
+
   if (!Array.isArray(q.data.correctIndices) || q.data.correctIndices.length === 0) {
     throw new Error('Multiple choice needs at least 1 correct answer');
   }
-  
+
   // Validate all indices are within range
   for (const idx of q.data.correctIndices) {
     if (idx < 0 || idx >= q.data.options.length) {
       throw new Error(`Invalid correctIndex: ${idx}`);
     }
   }
-  
+
   return q;
 }
 
@@ -424,12 +432,12 @@ function validateNumeric(q) {
       throw new Error('Numeric needs number correctAnswer');
     }
   }
-  
+
   // Unit is optional
   if (!q.data.unit) {
     q.data.unit = '';
   }
-  
+
   return q;
 }
 
@@ -437,14 +445,14 @@ function validateMatching(q) {
   if (!Array.isArray(q.data.pairs) || q.data.pairs.length < 2) {
     throw new Error('Matching needs at least 2 pairs');
   }
-  
+
   // Validate each pair
   for (const pair of q.data.pairs) {
     if (!pair.left || !pair.right) {
       throw new Error('Matching pairs need left and right values');
     }
   }
-  
+
   // Validate correctPairs
   if (!q.data.correctPairs || typeof q.data.correctPairs !== 'object') {
     // Auto-generate if missing (assume correct order)
@@ -453,7 +461,7 @@ function validateMatching(q) {
       q.data.correctPairs[idx] = idx;
     });
   }
-  
+
   return q;
 }
 
@@ -461,11 +469,11 @@ function validateCloze(q) {
   if (!q.data.text) {
     throw new Error('Cloze needs text with placeholders');
   }
-  
+
   if (!Array.isArray(q.data.blanks) || q.data.blanks.length === 0) {
     throw new Error('Cloze needs at least 1 blank');
   }
-  
+
   // Validate each blank
   for (const blank of q.data.blanks) {
     if (blank.type === 'dropdown') {
@@ -486,10 +494,10 @@ function validateCloze(q) {
       throw new Error(`Unknown blank type: ${blank.type}`);
     }
   }
-  
+
   // Ensure text field matches data.text
   q.text = q.data.text;
-  
+
   return q;
 }
 
@@ -498,23 +506,23 @@ function validateEssay(q) {
   if (!q.data.responseFormat) {
     q.data.responseFormat = 'editor';
   }
-  
+
   if (q.data.responseRequired === undefined) {
     q.data.responseRequired = true;
   }
-  
+
   if (!q.data.responseFieldLines) {
     q.data.responseFieldLines = 15;
   }
-  
+
   if (!q.data.minWordLimit) {
     q.data.minWordLimit = null;
   }
-  
+
   if (!q.data.maxWordLimit) {
     q.data.maxWordLimit = null;
   }
-  
+
   return q;
 }
 

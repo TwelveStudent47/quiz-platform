@@ -1,17 +1,18 @@
 import React from 'react';
+import MarkdownRenderer from '../common/MarkdownRenderer';
 import { X, CheckCircle, XCircle } from 'lucide-react';
 import Card, { CardBody } from '../common/Card';
 import Button from '../common/Button';
 
 const ReviewView = ({ attempt, onClose }) => {
-  const answers = typeof attempt.answers === 'string' 
-    ? JSON.parse(attempt.answers) 
+  const answers = typeof attempt.answers === 'string'
+    ? JSON.parse(attempt.answers)
     : attempt.answers;
-  
+
   const formatDate = (dateString) => {
-    return new Date(dateString).toLocaleDateString('hu-HU', { 
-      year: 'numeric', 
-      month: 'long', 
+    return new Date(dateString).toLocaleDateString('hu-HU', {
+      year: 'numeric',
+      month: 'long',
       day: 'numeric',
       hour: '2-digit',
       minute: '2-digit'
@@ -26,42 +27,42 @@ const ReviewView = ({ attempt, onClose }) => {
 
   const isAnswerCorrect = (question, userAnswer) => {
     const data = question.question_data;
-    
-    switch(question.question_type) {
+
+    switch (question.question_type) {
       case 'single_choice':
         return userAnswer === data.correctIndex;
       case 'multiple_choice':
-        return JSON.stringify((userAnswer || []).sort()) === 
-               JSON.stringify((data.correctIndices || []).sort());
+        return JSON.stringify((userAnswer || []).sort()) ===
+          JSON.stringify((data.correctIndices || []).sort());
       case 'true_false':
         return userAnswer === data.correctAnswer;
       case 'numeric':
         return Math.abs(parseFloat(userAnswer) - parseFloat(data.correctAnswer)) < 0.01;
       case 'matching': {
         if (!userAnswer || !data.pairs || !data.correctPairs) return false;
-        
+
         let allCorrect = true;
-        
+
         data.pairs.forEach((pair, pairIdx) => {
           const userRightIdx = userAnswer[pair.left];
           const correctRightIdx = data.correctPairs[pairIdx];
-          
+
           if (userRightIdx === undefined || userRightIdx !== correctRightIdx) {
             allCorrect = false;
           }
         });
-        
+
         return allCorrect;
       }
       case 'cloze': {
         if (!userAnswer || !data.blanks) return false;
-        
+
         let correctCount = 0;
         const totalBlanks = data.blanks.length;
-        
+
         data.blanks.forEach((blank, idx) => {
           const userBlankAnswer = userAnswer[idx];
-          
+
           if (blank.type === 'dropdown') {
             if (userBlankAnswer === blank.correctIndex) {
               correctCount++;
@@ -69,7 +70,7 @@ const ReviewView = ({ attempt, onClose }) => {
           } else if (blank.type === 'text') {
             const correctAnswer = blank.correctAnswer || '';
             const userTextAnswer = String(userBlankAnswer || '');
-            
+
             if (blank.caseSensitive) {
               if (userTextAnswer === correctAnswer) {
                 correctCount++;
@@ -81,7 +82,7 @@ const ReviewView = ({ attempt, onClose }) => {
             }
           }
         });
-        
+
         return correctCount === totalBlanks;
       }
       case 'essay':
@@ -99,7 +100,7 @@ const ReviewView = ({ attempt, onClose }) => {
       'numeric': 'Számos',
       'matching': 'Illesztéses',
       'cloze': 'Kitöltendő',
-      'essay' : 'Esszé'
+      'essay': 'Esszé'
     };
     return labels[type] || type;
   };
@@ -157,20 +158,19 @@ const ReviewView = ({ attempt, onClose }) => {
             <h3 className="text-xl font-bold text-gray-800 dark:text-white transition-colors">
               Minden kérdés áttekintése
             </h3>
-            
+
             {attempt.questions.map((question, idx) => {
               const userAnswer = answers[question.id];
               const data = question.question_data;
               const isCorrect = isAnswerCorrect(question, userAnswer);
-              
+
               return (
-                <div 
-                  key={question.id} 
-                  className={`p-6 rounded-lg border-2 transition-colors ${
-                    isCorrect 
-                      ? 'bg-green-50 dark:bg-green-900/20 border-green-200 dark:border-green-700' 
+                <div
+                  key={question.id}
+                  className={`p-6 rounded-lg border-2 transition-colors ${isCorrect
+                      ? 'bg-green-50 dark:bg-green-900/20 border-green-200 dark:border-green-700'
                       : 'bg-red-50 dark:bg-red-900/20 border-red-200 dark:border-red-700'
-                  }`}
+                    }`}
                 >
                   {/* Question header */}
                   <div className="flex items-start gap-3 mb-4">
@@ -181,14 +181,19 @@ const ReviewView = ({ attempt, onClose }) => {
                     )}
                     <div className="flex-1">
                       <div className="flex items-start justify-between">
-                        <p className="font-semibold text-gray-800 dark:text-white text-lg transition-colors">
-                          {idx + 1}. {question.question_type === 'cloze' ? '' : question.question_text}
-                        </p>
-                        <span className={`px-2 py-1 rounded text-xs font-medium ml-2 whitespace-nowrap transition-colors ${
-                          isCorrect 
-                            ? 'bg-green-200 dark:bg-green-800 text-green-800 dark:text-green-200' 
+                        <div className="font-semibold text-gray-800 dark:text-white text-lg transition-colors flex-1">
+                          <span className="mr-2 float-left">{idx + 1}.</span>
+                          {question.question_type !== 'cloze' && (
+                            <MarkdownRenderer content={question.question_text} />
+                          )}
+                          {question.question_type === 'cloze' && (
+                            <span>{question.question_text}</span>
+                          )}
+                        </div>
+                        <span className={`px-2 py-1 rounded text-xs font-medium ml-2 whitespace-nowrap transition-colors ${isCorrect
+                            ? 'bg-green-200 dark:bg-green-800 text-green-800 dark:text-green-200'
                             : 'bg-red-200 dark:bg-red-800 text-red-800 dark:text-red-200'
-                        }`}>
+                          }`}>
                           {question.points || 1} pont
                         </span>
                       </div>
@@ -201,9 +206,9 @@ const ReviewView = ({ attempt, onClose }) => {
                   {/* Question image */}
                   {question.question_image && (
                     <div className="mb-4 ml-9">
-                      <img 
-                        src={question.question_image} 
-                        alt="Question" 
+                      <img
+                        src={question.question_image}
+                        alt="Question"
                         className="w-full max-h-64 object-contain rounded-lg border border-gray-200 dark:border-gray-600"
                       />
                     </div>
@@ -217,26 +222,24 @@ const ReviewView = ({ attempt, onClose }) => {
                         {data.options.map((option, optIdx) => {
                           const isUserAnswer = userAnswer === optIdx;
                           const isCorrectAnswer = data.correctIndex === optIdx;
-                          
+
                           return (
                             <div
                               key={optIdx}
-                              className={`p-3 rounded-lg transition-colors ${
-                                isCorrectAnswer 
-                                  ? 'bg-green-100 dark:bg-green-900/30 border-2 border-green-300 dark:border-green-600' 
-                                  : isUserAnswer 
-                                  ? 'bg-red-100 dark:bg-red-900/30 border-2 border-red-300 dark:border-red-600'
-                                  : 'bg-white dark:bg-gray-700 border border-gray-200 dark:border-gray-600'
-                              }`}
+                              className={`p-3 rounded-lg transition-colors ${isCorrectAnswer
+                                  ? 'bg-green-100 dark:bg-green-900/30 border-2 border-green-300 dark:border-green-600'
+                                  : isUserAnswer
+                                    ? 'bg-red-100 dark:bg-red-900/30 border-2 border-red-300 dark:border-red-600'
+                                    : 'bg-white dark:bg-gray-700 border border-gray-200 dark:border-gray-600'
+                                }`}
                             >
                               <div className="flex items-center gap-2">
                                 <span className="font-medium text-gray-700 dark:text-gray-300">
                                   {String.fromCharCode(65 + optIdx)}.
                                 </span>
-                                <span className={`flex-1 transition-colors ${
-                                  isCorrectAnswer ? 'font-semibold text-green-800 dark:text-green-300' : 
-                                  isUserAnswer ? 'font-semibold text-red-800 dark:text-red-300' : 'text-gray-700 dark:text-gray-300'
-                                }`}>
+                                <span className={`flex-1 transition-colors ${isCorrectAnswer ? 'font-semibold text-green-800 dark:text-green-300' :
+                                    isUserAnswer ? 'font-semibold text-red-800 dark:text-red-300' : 'text-gray-700 dark:text-gray-300'
+                                  }`}>
                                   {option}
                                 </span>
                                 {isCorrectAnswer && !isUserAnswer && (
@@ -267,26 +270,24 @@ const ReviewView = ({ attempt, onClose }) => {
                         {data.options.map((option, optIdx) => {
                           const isUserAnswer = (userAnswer || []).includes(optIdx);
                           const isCorrectAnswer = (data.correctIndices || []).includes(optIdx);
-                          
+
                           return (
                             <div
                               key={optIdx}
-                              className={`p-3 rounded-lg transition-colors ${
-                                isCorrectAnswer 
-                                  ? 'bg-green-100 dark:bg-green-900/30 border-2 border-green-300 dark:border-green-600' 
-                                  : isUserAnswer 
-                                  ? 'bg-red-100 dark:bg-red-900/30 border-2 border-red-300 dark:border-red-600'
-                                  : 'bg-white dark:bg-gray-700 border border-gray-200 dark:border-gray-600'
-                              }`}
+                              className={`p-3 rounded-lg transition-colors ${isCorrectAnswer
+                                  ? 'bg-green-100 dark:bg-green-900/30 border-2 border-green-300 dark:border-green-600'
+                                  : isUserAnswer
+                                    ? 'bg-red-100 dark:bg-red-900/30 border-2 border-red-300 dark:border-red-600'
+                                    : 'bg-white dark:bg-gray-700 border border-gray-200 dark:border-gray-600'
+                                }`}
                             >
                               <div className="flex items-center gap-2">
                                 <span className="font-medium text-gray-700 dark:text-gray-300">
                                   {String.fromCharCode(65 + optIdx)}.
                                 </span>
-                                <span className={`flex-1 transition-colors ${
-                                  isCorrectAnswer ? 'font-semibold text-green-800 dark:text-green-300' : 
-                                  isUserAnswer ? 'font-semibold text-red-800 dark:text-red-300' : 'text-gray-700 dark:text-gray-300'
-                                }`}>
+                                <span className={`flex-1 transition-colors ${isCorrectAnswer ? 'font-semibold text-green-800 dark:text-green-300' :
+                                    isUserAnswer ? 'font-semibold text-red-800 dark:text-red-300' : 'text-gray-700 dark:text-gray-300'
+                                  }`}>
                                   {option}
                                 </span>
                                 {isCorrectAnswer && !isUserAnswer && (
@@ -317,9 +318,8 @@ const ReviewView = ({ attempt, onClose }) => {
                         <p className="text-sm text-gray-600 dark:text-gray-400 mb-2 transition-colors">
                           Te válaszod:
                         </p>
-                        <p className={`text-lg font-semibold transition-colors ${
-                          isCorrect ? 'text-green-700 dark:text-green-400' : 'text-red-700 dark:text-red-400'
-                        }`}>
+                        <p className={`text-lg font-semibold transition-colors ${isCorrect ? 'text-green-700 dark:text-green-400' : 'text-red-700 dark:text-red-400'
+                          }`}>
                           {userAnswer === true ? 'IGAZ' : userAnswer === false ? 'HAMIS' : 'Nincs válasz'}
                         </p>
                         {!isCorrect && (
@@ -338,9 +338,8 @@ const ReviewView = ({ attempt, onClose }) => {
                         <p className="text-sm text-gray-600 dark:text-gray-400 mb-2 transition-colors">
                           Te válaszod:
                         </p>
-                        <p className={`text-lg font-semibold transition-colors ${
-                          isCorrect ? 'text-green-700 dark:text-green-400' : 'text-red-700 dark:text-red-400'
-                        }`}>
+                        <p className={`text-lg font-semibold transition-colors ${isCorrect ? 'text-green-700 dark:text-green-400' : 'text-red-700 dark:text-red-400'
+                          }`}>
                           {userAnswer || 'Nincs válasz'} {data.unit || ''}
                         </p>
                         {!isCorrect && (
@@ -370,22 +369,21 @@ const ReviewView = ({ attempt, onClose }) => {
                               userRightIdx = userAnswer[pairIdx.toString()];
                             }
                           }
-                          
+
                           const correctRightIdx = data.correctPairs[pairIdx] ?? pairIdx;
                           const isPairCorrect = userRightIdx !== undefined && userRightIdx === correctRightIdx;
 
-                          const userRightText = userRightIdx !== undefined && data.pairs[userRightIdx] 
-                            ? data.pairs[userRightIdx].right 
+                          const userRightText = userRightIdx !== undefined && data.pairs[userRightIdx]
+                            ? data.pairs[userRightIdx].right
                             : null;
-                          
+
                           return (
                             <div
                               key={pairIdx}
-                              className={`p-4 rounded-lg border-2 transition-colors ${
-                                isPairCorrect 
-                                  ? 'bg-green-50 dark:bg-green-900/20 border-green-400 dark:border-green-600' 
+                              className={`p-4 rounded-lg border-2 transition-colors ${isPairCorrect
+                                  ? 'bg-green-50 dark:bg-green-900/20 border-green-400 dark:border-green-600'
                                   : 'bg-red-50 dark:bg-red-900/20 border-red-400 dark:border-red-600'
-                              }`}
+                                }`}
                             >
                               <div className="flex items-center justify-between gap-4">
                                 {/* Bal oldal + user válasz */}
@@ -394,13 +392,12 @@ const ReviewView = ({ attempt, onClose }) => {
                                     {pair.left}
                                   </span>
                                   <span className="text-2xl text-gray-400 dark:text-gray-500">→</span>
-                                  <span className={`font-semibold transition-colors ${
-                                    isPairCorrect ? 'text-green-700 dark:text-green-400' : 'text-red-700 dark:text-red-400'
-                                  }`}>
+                                  <span className={`font-semibold transition-colors ${isPairCorrect ? 'text-green-700 dark:text-green-400' : 'text-red-700 dark:text-red-400'
+                                    }`}>
                                     {userRightText || 'Nincs válasz'}
                                   </span>
                                 </div>
-                                
+
                                 {/* Badge */}
                                 <div>
                                   {isPairCorrect ? (
@@ -418,12 +415,12 @@ const ReviewView = ({ attempt, onClose }) => {
                                   )}
                                 </div>
                               </div>
-                              
+
                               {/* Helyes válasz ha rossz volt */}
                               {!isPairCorrect && (
                                 <div className="mt-3 pt-3 border-t border-gray-300 dark:border-gray-600 transition-colors">
                                   <p className="text-sm text-gray-600 dark:text-gray-400 transition-colors">
-                                    Helyes válasz: 
+                                    Helyes válasz:
                                     <span className="ml-2 font-bold text-green-700 dark:text-green-400">
                                       {pair.left} → {pair.right}
                                     </span>
@@ -441,13 +438,13 @@ const ReviewView = ({ attempt, onClose }) => {
                         <div className="text-base leading-relaxed mb-4">
                           {data.text.split(/(\{\d+\})/g).map((part, partIdx) => {
                             const match = part.match(/\{(\d+)\}/);
-                            
+
                             if (match) {
                               const blankIdx = parseInt(match[1]);
                               const blank = data.blanks[blankIdx];
-                              
+
                               if (!blank) return null;
-                              
+
                               const userBlankAnswer = userAnswer?.[blankIdx];
                               const isBlankCorrect = (() => {
                                 if (blank.type === 'dropdown') {
@@ -463,21 +460,20 @@ const ReviewView = ({ attempt, onClose }) => {
                                 }
                                 return false;
                               })();
-                              
+
                               if (blank.type === 'dropdown') {
                                 const userOptionText = userBlankAnswer !== undefined && blank.options[userBlankAnswer]
                                   ? blank.options[userBlankAnswer]
                                   : '(nincs válasz)';
                                 const correctOptionText = blank.options[blank.correctIndex] || '';
-                                
+
                                 return (
                                   <span
                                     key={partIdx}
-                                    className={`inline-block mx-1 px-3 py-1 rounded-lg border-2 font-semibold transition-colors ${
-                                      isBlankCorrect
+                                    className={`inline-block mx-1 px-3 py-1 rounded-lg border-2 font-semibold transition-colors ${isBlankCorrect
                                         ? 'bg-green-100 dark:bg-green-900/30 border-green-400 dark:border-green-600 text-green-800 dark:text-green-300'
                                         : 'bg-red-100 dark:bg-red-900/30 border-red-400 dark:border-red-600 text-red-800 dark:text-red-300'
-                                    }`}
+                                      }`}
                                   >
                                     {userOptionText}
                                     {!isBlankCorrect && (
@@ -490,15 +486,14 @@ const ReviewView = ({ attempt, onClose }) => {
                               } else if (blank.type === 'text') {
                                 const userText = userBlankAnswer || '(üres)';
                                 const correctText = blank.correctAnswer || '';
-                                
+
                                 return (
                                   <span
                                     key={partIdx}
-                                    className={`inline-block mx-1 px-3 py-1 rounded-lg border-2 font-semibold transition-colors ${
-                                      isBlankCorrect
+                                    className={`inline-block mx-1 px-3 py-1 rounded-lg border-2 font-semibold transition-colors ${isBlankCorrect
                                         ? 'bg-green-100 dark:bg-green-900/30 border-green-400 dark:border-green-600 text-green-800 dark:text-green-300'
                                         : 'bg-red-100 dark:bg-red-900/30 border-red-400 dark:border-red-600 text-red-800 dark:text-red-300'
-                                    }`}
+                                      }`}
                                   >
                                     {userText}
                                     {!isBlankCorrect && (
@@ -510,7 +505,7 @@ const ReviewView = ({ attempt, onClose }) => {
                                 );
                               }
                             }
-                            
+
                             return <span key={partIdx} className="text-gray-800 dark:text-gray-200">{part}</span>;
                           })}
                         </div>
@@ -530,14 +525,14 @@ const ReviewView = ({ attempt, onClose }) => {
                               {userAnswer?.text || '(Nincs válasz)'}
                             </p>
                           </div>
-                          
+
                           {userAnswer?.wordCount && (
                             <p className="text-sm text-gray-600 dark:text-gray-400 mt-3 transition-colors">
                               Szavak száma: <span className="font-semibold">{userAnswer.wordCount}</span>
                             </p>
                           )}
                         </div>
-                        
+
                         {/* Manual grading notice */}
                         <div className="bg-yellow-50 dark:bg-yellow-900/20 p-4 rounded-lg border border-yellow-300 dark:border-yellow-700 transition-colors">
                           <p className="text-sm font-semibold text-yellow-800 dark:text-yellow-400 mb-1 transition-colors">
@@ -557,9 +552,9 @@ const ReviewView = ({ attempt, onClose }) => {
                       <p className="text-sm font-semibold text-blue-900 dark:text-blue-300 mb-1 transition-colors">
                         💡 Magyarázat:
                       </p>
-                      <p className="text-sm text-blue-800 dark:text-blue-400 transition-colors">
-                        {question.question_explanation}
-                      </p>
+                      <div className="text-sm text-blue-800 dark:text-blue-400 transition-colors">
+                        <MarkdownRenderer content={question.question_explanation} />
+                      </div>
                     </div>
                   )}
                 </div>

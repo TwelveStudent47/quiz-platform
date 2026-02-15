@@ -464,7 +464,7 @@ Pontszám: 3 (1 pont/helyes pár)
 
 ### Adatbázis Séma
 ```sql
-users (id, google_id, email, name, created_at)
+users (id, google_id, email, name, preferences, created_at)
 quizzes (id, user_id, title, description, topic, time_limit, questions, created_at)
 attempts (id, user_id, quiz_id, score, total_points, percentage, answers, time_spent, completed_at)
 sessions (sid, sess, expire)
@@ -543,10 +543,10 @@ Ha hibát találsz, nyiss egy issue-t a [GitHub-on](https://github.com/TwelveStu
 - [x] **Válasz mentések típus változtatásnál**
 - [x] **Vágólapról válaszok másolása soronként/1 sorból ;-vel elválasztva**
 - [x] **Kérdéskártyára kattintva szerkesztés** (nem csak az ikon, hanem a teljes kártya kattintható)
+- [x] **Témaköri statisztikák** (témakör szerinti teljesítmény)
 
 ### Tervezve 📋
 - [ ] **Markdown támogatás** kérdésekben és magyarázatokban
-- [ ] **Témaköri statisztikák** (témakör szerinti teljesítmény)
 - [ ] **Spaced repetition algoritmus** (intelligens ismétlés)
 - [ ] **Export eredmények PDF-be**
 - [ ] **Social sharing** (eredmények megosztása)

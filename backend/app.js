@@ -29,14 +29,6 @@ app.use(cors({
 }));
 
 app.options('*', cors());
-app.use((req, res, next) => {
-  console.log(`${req.method} ${req.path}`);
-  console.log('Origin:', req.headers.origin);
-  console.log('Cookies:', req.headers.cookie);
-  console.log('Session ID:', req.sessionID);
-  console.log('Authenticated:', req.isAuthenticated?.());
-  next();
-});
 app.use(express.json({ limit: '10mb' }));
 app.use(express.urlencoded({ limit: '10mb', extended: true }));
 app.use(session({
@@ -550,6 +542,46 @@ app.get('/api/attempts/:id', isAuthenticated, async (req, res) => {
   } catch (err) {
     console.error(err);
     res.status(500).json({ error: 'Failed to fetch attempt details' });
+  }
+});
+
+app.put('/api/user/preferences', isAuthenticated, async (req, res) => {
+  try {
+    const { preferences } = req.body;
+    await pool.query(
+      'UPDATE users SET preferences = $1 WHERE id = $2',
+      [JSON.stringify(preferences), req.user.id]
+    );
+    res.json({ success: true });
+  } catch (err) {
+    console.error('Error updating preferences:', err);
+    res.status(500).json({ error: 'Failed to update preferences' });
+  }
+});
+
+app.get('/api/stats/topics', isAuthenticated, async (req, res) => {
+  try {
+    const userId = req.user.id;
+    
+    const query = `
+      SELECT 
+        q.topic,
+        COUNT(a.id)::int as attempt_count,
+        ROUND(AVG(a.percentage), 1)::float as avg_percentage,
+        MAX(a.percentage)::float as best_percentage,
+        COUNT(DISTINCT q.id)::int as quiz_count
+      FROM attempts a
+      JOIN quizzes q ON a.quiz_id = q.id
+      WHERE a.user_id = $1
+      GROUP BY q.topic
+      ORDER BY avg_percentage DESC
+    `;
+
+    const { rows } = await pool.query(query, [userId]);
+    res.json(rows);
+  } catch (err) {
+    console.error('Error fetching topic stats:', err);
+    res.status(500).json({ error: 'Internal server error' });
   }
 });
 

@@ -1,13 +1,13 @@
 import React, { useEffect } from 'react';
 import { X } from 'lucide-react';
 
-const Modal = ({ 
-  isOpen, 
-  onClose, 
-  title, 
-  children, 
+const Modal = ({
+  isOpen,
+  onClose,
+  title,
+  children,
   size = 'md',
-  showCloseButton = true 
+  showCloseButton = true
 }) => {
   useEffect(() => {
     const handleEscape = (e) => {
@@ -31,14 +31,14 @@ const Modal = ({
   };
 
   return (
-    <div className="fixed inset-0 z-50 overflow-y-auto">
+    <div className="fixed inset-0 z-[100] overflow-y-auto">
       <div className="flex min-h-screen items-center justify-center p-4">
         {/* Backdrop */}
-        <div 
+        <div
           className="fixed inset-0 bg-black bg-opacity-50 transition-opacity"
           onClick={onClose}
         />
-        
+
         {/* Modal */}
         <div className={`relative bg-white dark:bg-gray-800 rounded-xl shadow-xl ${sizes[size]} w-full max-h-[90vh] overflow-y-auto transition-colors`}>
           {/* Header */}
@@ -55,7 +55,7 @@ const Modal = ({
               )}
             </div>
           )}
-          
+
           {/* Body */}
           <div className="px-6 py-4">
             {children}

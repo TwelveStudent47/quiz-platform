@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { X, Save, Image as ImageIcon, Trash2 } from 'lucide-react';
+import { X, Save, Image as ImageIcon, Trash2, HelpCircle } from 'lucide-react';
 import Button from '../common/Button';
 import SingleChoiceEditor from './creator/SingleChoiceEditor';
 import MultipleChoiceEditor from './creator/MultipleChoiceEditor';
@@ -8,11 +8,14 @@ import NumericEditor from './creator/NumericEditor';
 import MatchingEditor from './creator/MatchingEditor';
 import ClozeEditor from './creator/ClozeEditor';
 import EssayEditor from './creator/EssayEditor';
+import MarkdownRenderer from '../common/MarkdownRenderer';
+import Modal from '../common/Modal';
+import MarkdownCheatSheet from '../common/MarkdownCheatSheet';
 
-const QuestionDrawer = ({ 
-  isOpen, 
-  onClose, 
-  question, 
+const QuestionDrawer = ({
+  isOpen,
+  onClose,
+  question,
   questionIndex,
   onSave,
   onDelete,
@@ -28,6 +31,8 @@ const QuestionDrawer = ({
   handleImageUpload
 }) => {
   const [localQuestion, setLocalQuestion] = useState(question);
+  const [showPreview, setShowPreview] = useState(false);
+  const [showCheatSheet, setShowCheatSheet] = useState(false);
 
   useEffect(() => {
     setLocalQuestion(question);
@@ -38,9 +43,9 @@ const QuestionDrawer = ({
   };
 
   const handleLocalDataUpdate = (field, value) => {
-    setLocalQuestion({ 
-      ...localQuestion, 
-      data: { ...localQuestion.data, [field]: value } 
+    setLocalQuestion({
+      ...localQuestion,
+      data: { ...localQuestion.data, [field]: value }
     });
   };
 
@@ -51,18 +56,18 @@ const QuestionDrawer = ({
   const changeQuestionType = (newType) => {
     const oldType = localQuestion.type;
     const oldData = localQuestion.data;
-    
+
     // Ha ugyanaz a típus, ne csinálj semmit
     if (oldType === newType) return;
-    
+
     console.log('🔄 Converting question type:', oldType, '→', newType);
-    
+
     let newData = {};
-    
+
     // ========================================
     // INTELLIGENS KONVERZIÓ
     // ========================================
-    
+
     if (newType === 'single_choice') {
       // → Single Choice
       if (oldType === 'multiple_choice') {
@@ -106,8 +111,8 @@ const QuestionDrawer = ({
           correctIndex: 0
         };
       }
-    } 
-    
+    }
+
     else if (newType === 'multiple_choice') {
       // → Multiple Choice
       if (oldType === 'single_choice') {
@@ -151,13 +156,13 @@ const QuestionDrawer = ({
           correctIndices: [0]
         };
       }
-    } 
-    
+    }
+
     else if (newType === 'true_false') {
       // → True/False
       if (oldType === 'single_choice' || oldType === 'multiple_choice') {
         const options = oldData.options || [];
-        
+
         if (oldType === 'single_choice') {
           const correctOpt = options[oldData.correctIndex] || '';
           newData = {
@@ -178,8 +183,8 @@ const QuestionDrawer = ({
           correctAnswer: true
         };
       }
-    } 
-    
+    }
+
     else if (newType === 'numeric') {
       // → Numeric
       if (oldType === 'single_choice' || oldType === 'multiple_choice') {
@@ -206,8 +211,8 @@ const QuestionDrawer = ({
           unit: ''
         };
       }
-    } 
-    
+    }
+
     else if (newType === 'matching') {
       // → Matching
       if (oldType === 'single_choice' || oldType === 'multiple_choice') {
@@ -225,12 +230,12 @@ const QuestionDrawer = ({
           pairs.push({ left: '', right: '' });
           pairs.push({ left: '', right: '' });
         }
-        
+
         const correctPairs = {};
         pairs.forEach((_, idx) => {
           correctPairs[idx] = idx;
         });
-        
+
         newData = { pairs, correctPairs };
       } else {
         newData = {
@@ -241,8 +246,8 @@ const QuestionDrawer = ({
           correctPairs: { 0: 0, 1: 1 }
         };
       }
-    } 
-    
+    }
+
     else if (newType === 'cloze') {
       // → Cloze
       if (oldType === 'single_choice') {
@@ -301,8 +306,8 @@ const QuestionDrawer = ({
           ]
         };
       }
-    } 
-    
+    }
+
     else if (newType === 'essay') {
       // → Essay
       newData = {
@@ -313,17 +318,17 @@ const QuestionDrawer = ({
         maxWordLimit: null
       };
     }
-    
+
     // ========================================
     // FRISSÍTÉS
     // ========================================
-    
+
     setLocalQuestion({
       ...localQuestion,
       type: newType,
       data: newData
     });
-    
+
     console.log('✅ Converted data:', newData);
   };
 
@@ -331,12 +336,21 @@ const QuestionDrawer = ({
 
   return (
     <>
+      <Modal
+        isOpen={showCheatSheet}
+        onClose={() => setShowCheatSheet(false)}
+        title="Formázási segédlet"
+        size="lg"
+      >
+        <MarkdownCheatSheet />
+      </Modal>
+
       {/* Backdrop */}
-      <div 
+      <div
         className="fixed inset-0 bg-black/50 z-40 transition-opacity"
         onClick={onClose}
       />
-      
+
       {/* Drawer */}
       <div className="fixed right-0 top-0 h-full w-full md:w-3/4 lg:w-2/3 xl:w-1/2 bg-white dark:bg-gray-800 z-50 shadow-2xl overflow-hidden flex flex-col transition-transform">
         {/* Header */}
@@ -373,16 +387,48 @@ const QuestionDrawer = ({
           <div className="space-y-4 max-w-3xl mx-auto">
             {/* Question Text */}
             <div>
-              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                Kérdés szövege *
-              </label>
+              <div className="flex justify-between items-center mb-2">
+                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300">
+                  Kérdés szövege *
+                </label>
+                <div className="flex items-center gap-3">
+                  <button
+                    type="button"
+                    onClick={() => setShowCheatSheet(true)}
+                    className="flex items-center gap-1 text-xs font-medium text-gray-500 hover:text-indigo-600 dark:text-gray-400 dark:hover:text-indigo-400 transition-colors"
+                    title="Formázási segédlet"
+                  >
+                    <HelpCircle className="w-4 h-4" />
+                    <span className="hidden sm:inline">Formázás</span>
+                  </button>
+                  {localQuestion.text && (
+                    <button
+                      type="button"
+                      onClick={() => setShowPreview(!showPreview)}
+                      className="text-xs font-medium text-indigo-600 dark:text-indigo-400 hover:text-indigo-800 dark:hover:text-indigo-300 transition-colors"
+                    >
+                      {showPreview ? 'Előnézet elrejtése' : 'Előnézet mutatása'}
+                    </button>
+                  )}
+                </div>
+              </div>
               <textarea
                 value={localQuestion.text}
                 onChange={(e) => handleLocalUpdate('text', e.target.value)}
-                placeholder="Írd ide a kérdést..."
-                rows={3}
-                className="w-full px-4 py-3 text-base border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-indigo-500 dark:focus:ring-indigo-400 focus:border-transparent bg-white dark:bg-gray-700 text-gray-900 dark:text-white placeholder-gray-500 dark:placeholder-gray-500 transition-colors"
+                placeholder="Írd ide a kérdést... (Markdown támogatott)"
+                rows={4}
+                className="w-full px-4 py-3 text-base border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-indigo-500 dark:focus:ring-indigo-400 focus:border-transparent bg-white dark:bg-gray-700 text-gray-900 dark:text-white placeholder-gray-500 dark:placeholder-gray-500 transition-colors font-mono text-sm"
               />
+              {showPreview && localQuestion.text && (
+                <div className="mt-3 p-4 bg-gray-50 dark:bg-gray-900/50 rounded-lg border border-gray-200 dark:border-gray-700">
+                  <p className="text-xs font-bold text-gray-500 dark:text-gray-400 mb-2 uppercase tracking-wider">
+                    Előnézet
+                  </p>
+                  <div className="text-gray-800 dark:text-gray-200">
+                    <MarkdownRenderer content={localQuestion.text} />
+                  </div>
+                </div>
+              )}
             </div>
 
             {/* Type and Points */}
@@ -459,10 +505,10 @@ const QuestionDrawer = ({
                 )}
               </div>
               {localQuestion.image && (
-                <img 
-                  src={localQuestion.image} 
-                  alt="Preview" 
-                  className="mt-3 w-full h-32 object-cover rounded-lg border border-gray-200 dark:border-gray-600" 
+                <img
+                  src={localQuestion.image}
+                  alt="Preview"
+                  className="mt-3 w-full h-32 object-cover rounded-lg border border-gray-200 dark:border-gray-600"
                 />
               )}
             </div>
@@ -475,10 +521,20 @@ const QuestionDrawer = ({
               <textarea
                 value={localQuestion.explanation}
                 onChange={(e) => handleLocalUpdate('explanation', e.target.value)}
-                placeholder="Miért ez a helyes válasz?"
+                placeholder="Miért ez a helyes válasz? (Markdown támogatott)"
                 rows={2}
                 className="w-full px-4 py-3 text-base border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-indigo-500 dark:focus:ring-indigo-400 focus:border-transparent bg-white dark:bg-gray-700 text-gray-900 dark:text-white placeholder-gray-500 dark:placeholder-gray-500 transition-colors"
               />
+              {localQuestion.explanation && (
+                <div className="mt-2 text-sm text-gray-500 dark:text-gray-400">
+                  <details>
+                    <summary className="cursor-pointer hover:text-indigo-600 dark:hover:text-indigo-400">Előnézet mutatása</summary>
+                    <div className="mt-2 p-3 bg-blue-50 dark:bg-blue-900/20 border border-blue-100 dark:border-blue-800 rounded-lg">
+                      <MarkdownRenderer content={localQuestion.explanation} />
+                    </div>
+                  </details>
+                </div>
+              )}
             </div>
 
             {/* Divider */}
@@ -636,7 +692,7 @@ const QuestionDrawer = ({
               <Save className="w-5 h-5" />
               Mentés
             </Button>
-            
+
             {onDelete && (
               <Button
                 onClick={() => {
@@ -652,7 +708,7 @@ const QuestionDrawer = ({
                 <Trash2 className="w-5 h-5" />
               </Button>
             )}
-            
+
             <Button
               onClick={onClose}
               variant="secondary"

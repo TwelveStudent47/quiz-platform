@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { Edit3, Download, Clock, Sparkles } from 'lucide-react';
+import { Edit3, Download, Clock, Sparkles, Plus } from 'lucide-react';
 import Card, { CardBody } from '../common/Card';
 import Button from '../common/Button';
 import QuestionDrawer from './QuestionDrawer';
@@ -462,6 +462,14 @@ const CreateQuizView = ({ onCreateSuccess, editQuiz = null }) => {
               <h3 className="text-base sm:text-lg font-bold text-gray-800 dark:text-white transition-colors">
                 Kérdések <span className="text-indigo-600 dark:text-indigo-400">({questions.length})</span>
               </h3>
+              <button
+                onClick={addQuestion}
+                className="flex items-center gap-2 px-3 sm:px-4 py-2 bg-gradient-to-r from-indigo-600 to-purple-600 dark:from-indigo-500 dark:to-purple-500 text-white rounded-lg shadow hover:shadow-md hover:scale-105 transition-all text-sm font-semibold flex-shrink-0"
+                title="Új kérdés hozzáadása"
+              >
+                <Plus className="w-4 h-4" />
+                <span>Új kérdés</span>
+              </button>
             </div>
 
             {questions.length === 0 ? (
@@ -554,7 +562,6 @@ const CreateQuizView = ({ onCreateSuccess, editQuiz = null }) => {
       {/* Sticky Navigation */}
       <StickyQuestionNav
         questions={questions}
-        onAddQuestion={addQuestion}
         onJumpToQuestion={jumpToQuestion}
       />
     </div>

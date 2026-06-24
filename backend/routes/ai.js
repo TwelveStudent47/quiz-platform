@@ -46,7 +46,7 @@ router.post('/generate-quiz', isAuthenticated, checkAIQuota, async (req, res) =>
 
     // Call Claude API
     const message = await anthropic.messages.create({
-      model: 'claude-sonnet-4-20250514',
+      model: 'claude-haiku-4-5-20251001',
       max_tokens: 16000,
       temperature: 0.8,
       messages: [{

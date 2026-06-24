@@ -732,7 +732,7 @@ app.post('/api/parse-xml', isAuthenticated, upload.single('file'), async (req, r
     res.json(quizData);
   } catch (err) {
     console.error('❌ Parse XML error:', err);
-    res.status(500).json({ error: 'Failed to parse XML: ' + err.message });
+    res.status(500).json({ error: 'Failed to parse XML file' });
   }
 });
 

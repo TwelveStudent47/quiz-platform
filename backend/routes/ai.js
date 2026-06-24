@@ -82,10 +82,7 @@ router.post('/generate-quiz', isAuthenticated, checkAIQuota, async (req, res) =>
 
   } catch (err) {
     console.error('❌ AI Generation error:', err);
-    res.status(500).json({
-      error: 'AI generation failed',
-      details: err.message
-    });
+    res.status(500).json({ error: 'AI generation failed' });
   }
 });
 

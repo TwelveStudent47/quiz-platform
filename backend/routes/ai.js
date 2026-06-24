@@ -34,6 +34,14 @@ router.post('/generate-quiz', isAuthenticated, checkAIQuota, async (req, res) =>
       return res.status(400).json({ error: 'Missing required fields' });
     }
 
+    if (!Number.isInteger(questionCount) || questionCount < 1 || questionCount > 50) {
+      return res.status(400).json({ error: 'questionCount must be an integer between 1 and 50' });
+    }
+
+    if (documentation && documentation.length > 20000) {
+      return res.status(400).json({ error: 'documentation must not exceed 20000 characters' });
+    }
+
     console.log('🤖 AI Quiz Generation requested:', {
       topic,
       questionCount,
@@ -46,7 +54,7 @@ router.post('/generate-quiz', isAuthenticated, checkAIQuota, async (req, res) =>
 
     // Call Claude API
     const message = await anthropic.messages.create({
-      model: 'claude-sonnet-4-20250514',
+      model: 'claude-haiku-4-5-20251001',
       max_tokens: 16000,
       temperature: 0.8,
       messages: [{
@@ -82,10 +90,7 @@ router.post('/generate-quiz', isAuthenticated, checkAIQuota, async (req, res) =>
 
   } catch (err) {
     console.error('❌ AI Generation error:', err);
-    res.status(500).json({
-      error: 'AI generation failed',
-      details: err.message
-    });
+    res.status(500).json({ error: 'AI generation failed' });
   }
 });
 

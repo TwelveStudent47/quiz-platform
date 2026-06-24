@@ -46,7 +46,7 @@ const QuizView = ({ quiz, onComplete }) => {
 
   const loadQuiz = async () => {
     try {
-      const data = await quizAPI.getById(quiz.id);
+      const data = await quizAPI.getForPlay(quiz.id);
       setQuizData(data.quiz);
 
       const shuffledQuestions = shuffleArray(data.questions).map(q => {

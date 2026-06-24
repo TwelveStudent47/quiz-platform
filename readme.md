@@ -42,6 +42,10 @@ Egy modern, full-stack tanulási platform tesztek létrehozására, feltöltés�
 - **Legutóbbi eredmények** - 5 legfrissebb próbálkozás
 - **Teljesítmény badge-ek** - Vizuális visszajelzés (🏆 Kiváló, ⭐ Jó, 👍 Átlagos, 📚 Gyakorolj még)
 
+### 🤖 AI Kérdésgenerálás
+- **AI Teszt Generátor** - Claude AI alapú teszt és kérdésgenerálás témakör/dokumentáció alapján
+- **Havi kvóta rendszer** - Korlátozott ingyenes AI generálás felhasználónként
+
 ### 🔍 Egyéb Funkciók
 - **Keresés** - Gyors keresés cím és témakör alapján
 - **Responsive design** - Mobil, tablet, desktop optimalizálás
@@ -221,6 +225,8 @@ quiz-platform/
    - **Igaz/Hamis** - Boolean kérdés
    - **Numerikus** - Szám válasz (opcionális egység)
    - **Párosítás** - Bal-jobb oldal párosítása
+   - **Kitöltendő (cloze)** - Dropdown vagy szöveges kitöltés szövegen belül
+   - **Esszé** - Hosszú szöveges válasz szólimittel
 4. Állítsd be a pontszámokat és magyarázatokat
 5. Kattints **"Teszt Mentése"** vagy **"Moodle XML Export"**
 
@@ -390,6 +396,8 @@ Pontszám: 3 (1 pont/helyes pár)
    - **Igaz/Hamis** - IGAZ vagy HAMIS gomb
    - **Numerikus** - Szám beírása
    - **Párosítás** - Dropdown-ok minden párhoz
+   - **Kitöltendő (cloze)** - Dropdown vagy szöveges mező a szövegen belül
+   - **Esszé** - Szabad szöveges válasz
 4. Ha van időkorlát, a timer visszaszámol
 5. Kattints a **"Beküldés"** gombra
 6. Látod az eredményt:
@@ -443,15 +451,14 @@ Pontszám: 3 (1 pont/helyes pár)
 ## 🛠️ Technológiák
 
 ### Backend
-- **Express.js 4.18** - Web framework
-- **PostgreSQL 14** - Relációs adatbázis
+- **Express.js 4** - Web framework
+- **PostgreSQL** - Relációs adatbázis
 - **Passport.js** - OAuth authentikáció (Google Strategy)
 - **express-session** - Session management
 - **connect-pg-simple** - PostgreSQL session store
-- **Multer** - Fájl feltöltés kezelés
+- **Multer** - Fájl feltöltés kezelés (memóriába, méretkorláttal)
 - **xml2js** - XML parsing (Moodle import)
-- **bcrypt** - Password hashing (ha később local auth)
-- **helmet** - Security headers
+- **@anthropic-ai/sdk** - AI kérdésgenerálás (Claude API)
 - **cors** - Cross-Origin Resource Sharing
 
 ### Frontend
@@ -465,9 +472,12 @@ Pontszám: 3 (1 pont/helyes pár)
 ### Adatbázis Séma
 ```sql
 users (id, google_id, email, name, preferences, created_at)
-quizzes (id, user_id, title, description, topic, time_limit, questions, created_at)
-attempts (id, user_id, quiz_id, score, total_points, percentage, answers, time_spent, completed_at)
-sessions (sid, sess, expire)
+quizzes (id, user_id, title, description, topic, time_limit, created_at, updated_at)
+questions (id, quiz_id, question_type, question_text, question_image, question_data, points, explanation, order_index)
+attempts (id, user_id, quiz_id, score, total_points, total_questions, percentage, answers, time_spent, completed_at)
+ai_usage (id, user_id, usage_type, tokens_used, cost_usd, metadata, created_at)
+user_subscriptions (id, user_id, plan, ai_quota_monthly, ai_quota_used, quota_reset_date, is_active)
+session (sid, sess, expire)
 ```
 
 ---
@@ -486,10 +496,13 @@ sessions (sid, sess, expire)
 | Method | Endpoint | Leírás |
 |--------|----------|---------|
 | POST | `/api/upload` | Teszt feltöltése (JSON/XML) |
-| POST | `/api/create` | Teszt létrehozása (Kérdés Készítő) |
+| POST | `/api/parse-xml` | Moodle XML fájl feldolgozása feltöltés előtt |
+| POST | `/api/create-quiz` | Teszt létrehozása (Kérdés Készítő) |
 | GET | `/api/quizzes` | Összes teszt listázása |
 | GET | `/api/quizzes?search=term` | Tesztek keresése |
-| GET | `/api/quizzes/:id` | Egy teszt lekérése |
+| GET | `/api/quizzes/:id` | Egy teszt lekérése (szerkesztéshez, helyes válaszokkal) |
+| GET | `/api/quizzes/:id/play` | Egy teszt lekérése kitöltéshez (helyes válaszok nélkül) |
+| PUT | `/api/quizzes/:id` | Teszt szerkesztése |
 | DELETE | `/api/quizzes/:id` | Teszt törlése |
 | POST | `/api/submit` | Teszt beküldése |
 
@@ -499,6 +512,14 @@ sessions (sid, sess, expire)
 | GET | `/api/history` | Összes eredmény (50 legutóbbi) |
 | GET | `/api/attempts/:id` | Egy eredmény részletei |
 | GET | `/api/stats/:quizId` | Teszt statisztikák |
+| GET | `/api/stats/topics` | Témaköri statisztikák |
+| PUT | `/api/user/preferences` | Felhasználói beállítások mentése |
+
+### AI Kérdésgenerálás
+| Method | Endpoint | Leírás |
+|--------|----------|---------|
+| POST | `/api/ai/generate-quiz` | Teszt generálása Claude AI-val |
+| GET | `/api/ai/usage` | AI havi kvóta és felhasználás lekérése |
 
 ---
 
@@ -544,9 +565,9 @@ Ha hibát találsz, nyiss egy issue-t a [GitHub-on](https://github.com/TwelveStu
 - [x] **Vágólapról válaszok másolása soronként/1 sorból ;-vel elválasztva**
 - [x] **Kérdéskártyára kattintva szerkesztés** (nem csak az ikon, hanem a teljes kártya kattintható)
 - [x] **Témaköri statisztikák** (témakör szerinti teljesítmény)
+- [x] **Markdown támogatás** kérdésekben és magyarázatokban
 
 ### Tervezve 📋
-- [ ] **Markdown támogatás** kérdésekben és magyarázatokban
 - [ ] **Spaced repetition algoritmus** (intelligens ismétlés)
 - [ ] **Export eredmények PDF-be**
 - [ ] **Social sharing** (eredmények megosztása)

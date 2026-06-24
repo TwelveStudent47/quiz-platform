@@ -31,6 +31,10 @@ export const quizAPI = {
   getById: async (id) => {
     return await apiFetch(`${API_URL}/api/quizzes/${id}`);
   },
+
+  getForPlay: async (id) => {
+    return await apiFetch(`${API_URL}/api/quizzes/${id}/play`);
+  },
   
   upload: async (formData) => {
     return await apiFetch(`${API_URL}/api/upload`, {

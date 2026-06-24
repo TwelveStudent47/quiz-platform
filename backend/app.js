@@ -314,6 +314,79 @@ app.get('/api/quizzes/:id', isAuthenticated, async (req, res) => {
   }
 });
 
+app.get('/api/quizzes/:id/play', isAuthenticated, async (req, res) => {
+  try {
+    const quizResult = await pool.query(
+      'SELECT * FROM quizzes WHERE id = $1 AND user_id = $2',
+      [req.params.id, req.user.id]
+    );
+
+    if (quizResult.rows.length === 0) {
+      return res.status(404).json({ error: 'Quiz not found' });
+    }
+
+    const questionsResult = await pool.query(
+      'SELECT * FROM questions WHERE quiz_id = $1 ORDER BY order_index',
+      [req.params.id]
+    );
+
+    const sanitizedQuestions = questionsResult.rows.map(q => {
+      const data = typeof q.question_data === 'string'
+        ? JSON.parse(q.question_data)
+        : q.question_data;
+
+      let sanitizedData = data;
+
+      switch (q.question_type) {
+        case 'single_choice':
+          sanitizedData = { options: data.options };
+          break;
+        case 'multiple_choice':
+          sanitizedData = { options: data.options };
+          break;
+        case 'true_false':
+          sanitizedData = {};
+          break;
+        case 'numeric':
+          sanitizedData = { unit: data.unit };
+          break;
+        case 'matching':
+          sanitizedData = {
+            pairs: data.pairs.map(pair => ({ left: pair.left, right: pair.right })),
+            shuffledRightItems: data.shuffledRightItems
+          };
+          break;
+        case 'cloze':
+          sanitizedData = {
+            text: data.text,
+            blanks: data.blanks.map(blank => ({
+              type: blank.type,
+              options: blank.options
+            }))
+          };
+          break;
+        case 'essay':
+          sanitizedData = {
+            minWordLimit: data.minWordLimit,
+            maxWordLimit: data.maxWordLimit,
+            responseFieldLines: data.responseFieldLines
+          };
+          break;
+      }
+
+      return { ...q, question_data: sanitizedData };
+    });
+
+    res.json({
+      quiz: quizResult.rows[0],
+      questions: sanitizedQuestions
+    });
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ error: 'Failed to fetch quiz' });
+  }
+});
+
 app.put('/api/quizzes/:id', isAuthenticated, async (req, res) => {
   try {
     const quizId = parseInt(req.params.id, 10);

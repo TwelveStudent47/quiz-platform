@@ -34,6 +34,14 @@ router.post('/generate-quiz', isAuthenticated, checkAIQuota, async (req, res) =>
       return res.status(400).json({ error: 'Missing required fields' });
     }
 
+    if (!Number.isInteger(questionCount) || questionCount < 1 || questionCount > 50) {
+      return res.status(400).json({ error: 'questionCount must be an integer between 1 and 50' });
+    }
+
+    if (documentation && documentation.length > 20000) {
+      return res.status(400).json({ error: 'documentation must not exceed 20000 characters' });
+    }
+
     console.log('🤖 AI Quiz Generation requested:', {
       topic,
       questionCount,

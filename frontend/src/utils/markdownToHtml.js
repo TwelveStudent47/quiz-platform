@@ -42,8 +42,12 @@ export function markdownToHtml(text) {
     // Strikethrough (~~text~~)
     html = html.replace(/~~(.+?)~~/g, '<del>$1</del>');
 
-    // Links [text](url)
-    html = html.replace(/\[([^\]]+)\]\(([^)]+)\)/g, '<a href="$2">$1</a>');
+    // Links [text](url) — only allow safe URL schemes to avoid XSS via javascript:/data: links
+    html = html.replace(/\[([^\]]+)\]\(([^)]+)\)/g, (match, label, url) => {
+        const trimmedUrl = url.trim();
+        const isSafe = /^(https?:|mailto:|\/|#)/i.test(trimmedUrl);
+        return isSafe ? `<a href="${trimmedUrl}">${label}</a>` : label;
+    });
 
     // Blockquotes (> text)
     html = html.replace(/^> (.+)$/gm, '<blockquote>$1</blockquote>');

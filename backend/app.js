@@ -12,7 +12,10 @@ require('dotenv').config();
 
 const app = express();
 app.set('trust proxy', 1);
-const upload = multer({ storage: multer.memoryStorage() });
+const upload = multer({
+  storage: multer.memoryStorage(),
+  limits: { fileSize: 2 * 1024 * 1024 }
+});
 
 const pool = new Pool({
   connectionString: process.env.DATABASE_URL,

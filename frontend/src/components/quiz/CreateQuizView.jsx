@@ -148,10 +148,9 @@ const CreateQuizView = ({ onCreateSuccess, editQuiz = null }) => {
     alert(`✅ ${aiData.questions.length} kérdés sikeresen generálva! Szerkeszd és mentsd el a tesztet.`);
   };
 
-  const handleImageUpload = (qIndex, e) => {
-    const file = e.target.files[0];
+  const handleImageUpload = (qIndex, file) => {
     if (!file) return;
-    
+
     if (!file.type.startsWith('image/')) {
       alert('Csak képfájlokat tölthetsz fel!');
       return;

@@ -33,6 +33,7 @@ const QuestionDrawer = ({
   const [localQuestion, setLocalQuestion] = useState(question);
   const [showPreview, setShowPreview] = useState(false);
   const [showCheatSheet, setShowCheatSheet] = useState(false);
+  const [isDraggingImage, setIsDraggingImage] = useState(false);
 
   useEffect(() => {
     setLocalQuestion(question);
@@ -51,6 +52,24 @@ const QuestionDrawer = ({
 
   const handleSave = () => {
     onSave(localQuestion);
+  };
+
+  const processImageFile = (file) => {
+    if (!file) return;
+
+    handleImageUpload(questionIndex, file);
+
+    const reader = new FileReader();
+    reader.onloadend = () => {
+      handleLocalUpdate('image', reader.result);
+    };
+    reader.readAsDataURL(file);
+  };
+
+  const handleImageDrop = (e) => {
+    e.preventDefault();
+    setIsDraggingImage(false);
+    processImageFile(e.dataTransfer.files[0]);
   };
 
   const changeQuestionType = (newType) => {
@@ -473,25 +492,26 @@ const QuestionDrawer = ({
                 Kép (opcionális)
               </label>
               <div className="flex gap-2">
-                <label className="flex-1 flex items-center justify-center gap-2 px-4 py-3 border-2 border-dashed border-gray-300 dark:border-gray-600 rounded-lg cursor-pointer hover:border-indigo-400 dark:hover:border-indigo-500 transition bg-white dark:bg-gray-700">
+                <label
+                  onDragOver={(e) => { e.preventDefault(); setIsDraggingImage(true); }}
+                  onDragLeave={() => setIsDraggingImage(false)}
+                  onDrop={handleImageDrop}
+                  className={`flex-1 flex items-center justify-center gap-2 px-4 py-3 border-2 border-dashed rounded-lg cursor-pointer transition bg-white dark:bg-gray-700 ${
+                    isDraggingImage
+                      ? 'border-indigo-500 bg-indigo-50 dark:bg-indigo-900/30'
+                      : 'border-gray-300 dark:border-gray-600 hover:border-indigo-400 dark:hover:border-indigo-500'
+                  }`}
+                >
                   <ImageIcon className="w-5 h-5 text-gray-400 dark:text-gray-500" />
                   <span className="text-gray-600 dark:text-gray-400">
-                    {localQuestion.image ? 'Kép kiválasztva ✓' : 'Kép feltöltése'}
+                    {isDraggingImage
+                      ? 'Engedd el a kép feltöltéséhez'
+                      : localQuestion.image ? 'Kép kiválasztva ✓' : 'Kép feltöltése vagy húzd ide'}
                   </span>
                   <input
                     type="file"
                     accept="image/*"
-                    onChange={(e) => {
-                      handleImageUpload(questionIndex, e);
-                      // Update local state after upload
-                      const reader = new FileReader();
-                      reader.onloadend = () => {
-                        handleLocalUpdate('image', reader.result);
-                      };
-                      if (e.target.files[0]) {
-                        reader.readAsDataURL(e.target.files[0]);
-                      }
-                    }}
+                    onChange={(e) => processImageFile(e.target.files[0])}
                     className="hidden"
                   />
                 </label>

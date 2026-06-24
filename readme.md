@@ -544,9 +544,9 @@ Ha hibát találsz, nyiss egy issue-t a [GitHub-on](https://github.com/TwelveStu
 - [x] **Vágólapról válaszok másolása soronként/1 sorból ;-vel elválasztva**
 - [x] **Kérdéskártyára kattintva szerkesztés** (nem csak az ikon, hanem a teljes kártya kattintható)
 - [x] **Témaköri statisztikák** (témakör szerinti teljesítmény)
+- [x] **Markdown támogatás** kérdésekben és magyarázatokban
 
 ### Tervezve 📋
-- [ ] **Markdown támogatás** kérdésekben és magyarázatokban
 - [ ] **Spaced repetition algoritmus** (intelligens ismétlés)
 - [ ] **Export eredmények PDF-be**
 - [ ] **Social sharing** (eredmények megosztása)

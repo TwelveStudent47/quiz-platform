@@ -34,6 +34,7 @@ const QuestionDrawer = ({
   const [showPreview, setShowPreview] = useState(false);
   const [showCheatSheet, setShowCheatSheet] = useState(false);
   const [isDraggingImage, setIsDraggingImage] = useState(false);
+  const [showImageModal, setShowImageModal] = useState(false);
 
   useEffect(() => {
     setLocalQuestion(question);
@@ -364,6 +365,19 @@ const QuestionDrawer = ({
         <MarkdownCheatSheet />
       </Modal>
 
+      <Modal
+        isOpen={showImageModal}
+        onClose={() => setShowImageModal(false)}
+        title="Kép előnézet"
+        size="lg"
+      >
+        <img
+          src={localQuestion.image}
+          alt="Kép előnézet"
+          className="w-full rounded-lg"
+        />
+      </Modal>
+
       {/* Backdrop */}
       <div
         className="fixed inset-0 bg-black/50 z-40 transition-opacity"
@@ -525,11 +539,17 @@ const QuestionDrawer = ({
                 )}
               </div>
               {localQuestion.image && (
-                <img
-                  src={localQuestion.image}
-                  alt="Preview"
-                  className="mt-3 w-full h-32 object-cover rounded-lg border border-gray-200 dark:border-gray-600"
-                />
+                <button
+                  type="button"
+                  onClick={() => setShowImageModal(true)}
+                  className="block mt-3 w-full"
+                >
+                  <img
+                    src={localQuestion.image}
+                    alt="Preview"
+                    className="w-full h-32 object-cover rounded-lg border border-gray-200 dark:border-gray-600 cursor-zoom-in hover:opacity-90 transition"
+                  />
+                </button>
               )}
             </div>
 

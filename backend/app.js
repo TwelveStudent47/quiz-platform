@@ -379,7 +379,16 @@ app.put('/api/quizzes/:id', isAuthenticated, async (req, res) => {
 app.post('/api/submit', isAuthenticated, async (req, res) => {
   try {
     const { quizId, answers, timeSpent } = req.body;
-    
+
+    const { rows: quizCheck } = await pool.query(
+      'SELECT id FROM quizzes WHERE id = $1 AND user_id = $2',
+      [quizId, req.user.id]
+    );
+
+    if (quizCheck.length === 0) {
+      return res.status(403).json({ error: 'Not authorized' });
+    }
+
     const { rows: questions } = await pool.query(
       'SELECT id, question_type, question_data, points FROM questions WHERE quiz_id = $1',
       [quizId]
